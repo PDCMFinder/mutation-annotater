@@ -1,0 +1,3 @@
+[console_scripts]
+spawn = spawn.cli:cli
+
