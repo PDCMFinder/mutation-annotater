@@ -1,3 +1,4 @@
+#!/usr/bin/sh
 #BSUB -j $1_annotater_$(date)
 #BSUB --mail-user=afollette@ebi.ac.uk
 #BSUB  -B -N

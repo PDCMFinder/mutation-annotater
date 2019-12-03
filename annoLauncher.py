@@ -6,6 +6,8 @@ import re
 import subprocess as sp
 import os
 
+print("python version is {0}".format(sys.version))
+
 if len(sys.argv) == 2:
     dataDir = sys.argv[1]
 else : print("Please enter root directory of data as parameters")
@@ -28,7 +30,7 @@ def main():
 
         print('bsub bash' + jobScript + jobName + ' ' + file)
 
-        cmd = ['bsub','bash', jobScript, jobName, file] 
+        cmd = ['bsub ','bash ', jobScript,' ', jobName,' ', file] 
         sp.call(cmd)
 
 

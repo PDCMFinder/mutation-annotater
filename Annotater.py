@@ -30,7 +30,7 @@ def run():
 
     formatToVCFAndSave(file)
     annotateVCF(vcfFilePath,file)
-    sp.call(("python annotationMerger.py {0}".format(file)), shell=True)
+    sp.call(("bash mergeWrapper.sh {0}".format(file)), shell=True)
 
 
 

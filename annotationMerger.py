@@ -14,6 +14,7 @@ import pandas as pa
 
 mergedPointsMissed = 0
 
+
 if len(sys.argv) > 1:
     TSVfilePath = sys.argv[1]
     parentDirectory = os.path.dirname(sys.argv[1])
@@ -21,6 +22,9 @@ else :
     sys.stderr.write("Warning: Merger is being ran without file input. This should only be used for testing")
 
 def run():
+
+    print("AnnoMergers python version {0}".format(sys.version))
+
     mergeRowsAndWrite()
     IOutilities.saveToExcel(TSVfilePath)
 

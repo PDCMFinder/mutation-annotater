@@ -3,9 +3,15 @@
 import pandas as pa
 import IOutilities
 import re
+import sys
 
 
 def run(annoRows, parentDirectory):
+    
+    print("*****versions*************")
+    print(pa.__version__)
+    print("pythong version is {0}".format(sys.version))
+
     EMBLrows = filterRowsByDB(annoRows, "EMBL")
     NCBIrows = filterRowsByDB(annoRows, "NCBI")
 
@@ -106,7 +112,7 @@ def returnTopMatchingScore(row, NCBIrows):
     isCanonicalMatch = re.search(canonicalRe,extras)
     if isCanonicalMatch: isCanonical = isCanonicalMatch.group(0)
 
-    condensedRows = NCBIrows.apply(lambda x: calculateMatchingScore(x,row, symbol, biotype, impact, isCanonical), axis=1)
+    condensedRows[:] = NCBIrows.apply(lambda x: calculateMatchingScore(x,row, symbol, biotype, impact, isCanonical), axis=1)
     scoredRows = pa.concat(condensedRows.tolist(), ignore_index=True)
 
     highestScore = scoredRows[scoredRows['Score'] == scoredRows['Score'].max()]
