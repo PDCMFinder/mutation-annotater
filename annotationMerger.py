@@ -17,11 +17,11 @@ mergedPointsMissed = 0
 if len(sys.argv) > 1:
     TSVfilePath = sys.argv[1]
     parentDirectory = os.path.dirname(sys.argv[1])
-else :
+else:
     sys.stderr.write("Warning: Merger is being ran without file input. This should only be used for testing")
 
-def run():
 
+def run():
     mergeRowsAndWrite()
     IOutilities.saveToExcel(TSVfilePath)
 
@@ -46,8 +46,9 @@ def mergeRowsAndWrite():
             reader = csv.DictReader(tsvFile, delimiter=",")
         annoReader = pa.read_csv(annoFile, delimiter='\t', error_bad_lines=False, header=97)
 
-        message = "Merging original data : {0} /n and annotated data : {1} at {2}".format(TSVfilePath, annoFile, time.ctime())
-        IOutilities.logMessage(parentDirectory, message) 
+        message = "Merging original data : {0} /n and annotated data : {1} at {2}".format(TSVfilePath, annoFile,
+                                                                                          time.ctime())
+        IOutilities.logMessage(parentDirectory, message)
 
         headers = buildHeaders()
         outFileWriter.writerow(headers)
@@ -71,12 +72,14 @@ def mergeRowsAndWrite():
                     IOutilities.logMessage(parentDirectory, message)
             else:
 
-                message2 = ("Info: row {0} is broken or legacy".format(rowNum)) 
+                message2 = ("Info: row {0} is broken or legacy".format(rowNum))
                 print(row)
                 IOutilities.logMessage(parentDirectory, message2)
 
         masterLog = "{0}/masterLog".format(os.path.dirname(os.path.dirname(parentDirectory)))
-        message = "{0} The completed file file {1} has {2} data points (including header)".format(time.ctime(),finalTemplate, rowAdded)
+        message = "{0} The completed file file {1} has {2} data points (including header)".format(time.ctime(),
+                                                                                                  finalTemplate,
+                                                                                                  rowAdded)
         IOutilities.masterlogMessage(masterLog, message)
 
 
@@ -104,7 +107,6 @@ def compareKeysOfFileAndReturnMatchingRows(row, annoReader):
 
     resultdf = annoReader[annoReader['Location'].str.contains(chrStartPosKey)].drop_duplicates()
 
-
     if len(resultdf) == 0:
         logMissedPosition(row, chrStartPosKey)
     return resultdf
@@ -119,11 +121,11 @@ def formatChrPosKey(row):
     if len(ref) > 0 and len(alt) > 0 and (ref[0] == alt[0]):
         adjustedSeq = (str)((int)(seqStart) + 1)
         if len(ref) == 1:
-            chrPosKey = "{0}:{1}-{2}".format(chr,seqStart, adjustedSeq)
-        else :
+            chrPosKey = "{0}:{1}-{2}".format(chr, seqStart, adjustedSeq)
+        else:
             chrPosKey = "{0}:{1}".format(chr, adjustedSeq)
-    else :
-        chrPosKey ="{0}:{1}".format(chr, seqStart)
+    else:
+        chrPosKey = "{0}:{1}".format(chr, seqStart)
 
     return chrPosKey
 
@@ -148,45 +150,47 @@ def buildHeaders():
 
 
 def buildFinalTemplate(twoMatchingRows, row):
-
     inputLen = len(twoMatchingRows)
     emblGeneColumnName = 'Gene'
     emblFeatureColumnName = 'Feature'
 
-    if inputLen == 2 :
-        annoRow = twoMatchingRows.iloc[0]
-        NCBIrow = twoMatchingRows.iloc[1]
-    elif inputLen == 1 :
-        annoRow = twoMatchingRows.iloc[0]
-        extra = getFromRow(annoRow, 'Extra')
-        extraAnno = extraColumnToJSON(extra)
+    if inputLen > 0:
+        if inputLen > 1:
+            annoRow = twoMatchingRows.iloc[0]
+            NCBIrow = twoMatchingRows.iloc[1]
+        elif inputLen == 1:
+            annoRow = twoMatchingRows.iloc[0]
+            extra = getFromRow(annoRow, 'Extra')
+            extraAnno = extraColumnToJSON(extra)
 
-        if twoMatchingRows['Gene'].str.contains("^ENS") & twoMatchingRows['Feature'].str.contains("ENS"):
-            NCBIrow = pa.DataFrame()
-        else:
-            emblGeneColumnName = 'Gene'
-            emblFeatureColumnName = 'Feature'
-    else :
+            if twoMatchingRows['Gene'].str.contains("^ENS") & twoMatchingRows['Feature'].str.contains("ENS"):
+                NCBIrow = pa.DataFrame()
+            else:
+                emblGeneColumnName = 'Gene'
+                emblFeatureColumnName = 'Feature'
+
+        builtRow = [getFromRow(row, 'Model_ID'), getFromRow(row, 'Sample_ID'), getFromRow(row, 'sample_origin'),
+                    getFromRow(row, 'host strain nomenclature'),
+                    getFromRow(row, 'Passage'), getFromRow(extraAnno, 'SYMBOL'), getFromRow(extraAnno, 'BIOTYPE'),
+                    parseHGSVc(getFromRow(extraAnno, 'HGVSc')), getFromRow(extraAnno, 'VARIANT_CLASS'),
+                    getFromRow(annoRow, 'Codons'),
+                    buildAminoAcidChange(getFromRow(annoRow, 'Amino_acids'), getFromRow(annoRow, 'Protein_position')),
+                    getFromRow(annoRow, 'Consequence'),
+                    parseFunctionalPredictions(getFromRow(extraAnno, 'PolyPhen'), getFromRow(extraAnno, 'SIFT')),
+                    getFromRow(row, 'read_depth'), getFromRow(row, 'Allele_frequency'), getFromRow(row, 'chromosome'),
+                    getFromRow(row, 'seq_start_position'),
+                    getFromRow(row, 'ref_allele'), getFromRow(row, 'alt_allele'), getFromRow(row, 'ucsc_gene_id'),
+                    getFromRow(NCBIrow, 'Gene'),
+                    getFromRow(NCBIrow, 'Feature'), getFromRow(annoRow, emblGeneColumnName),
+                    getFromRow(annoRow, emblFeatureColumnName),
+                    getFromRow(annoRow, 'Existing_variation'),
+                    getFromRow(row, 'genome_assembly'), getFromRow(row, 'Platform')]
+
+    else:
         builtRow = list()
 
-
-    builtRow = [getFromRow(row, 'Model_ID'), getFromRow(row, 'Sample_ID'), getFromRow(row, 'sample_origin'),
-            getFromRow(row, 'host strain nomenclature'),
-            getFromRow(row, 'Passage'), getFromRow(extraAnno, 'SYMBOL'), getFromRow(extraAnno, 'BIOTYPE'),
-            parseHGSVc(getFromRow(extraAnno, 'HGVSc')), getFromRow(extraAnno, 'VARIANT_CLASS'),
-            getFromRow(annoRow, 'Codons'),
-            buildAminoAcidChange(getFromRow(annoRow, 'Amino_acids'), getFromRow(annoRow, 'Protein_position')),
-            getFromRow(annoRow, 'Consequence'),
-            parseFunctionalPredictions(getFromRow(extraAnno, 'PolyPhen'), getFromRow(extraAnno, 'SIFT')),
-            getFromRow(row, 'read_depth'), getFromRow(row, 'Allele_frequency'), getFromRow(row, 'chromosome'),
-            getFromRow(row, 'seq_start_position'),
-            getFromRow(row, 'ref_allele'), getFromRow(row, 'alt_allele'), getFromRow(row, 'ucsc_gene_id'),
-            getFromRow(NCBIrow, 'Gene'),
-            getFromRow(NCBIrow, 'Feature'), getFromRow(annoRow, emblGeneColumnName), getFromRow(annoRow, emblFeatureColumnName),
-            getFromRow(annoRow, 'Existing_variation'),
-            getFromRow(row, 'genome_assembly'), getFromRow(row, 'Platform')]
-
     return builtRow
+
 
 def getFromRow(row, attributeID):
     returnStr = ""
@@ -221,6 +225,7 @@ def logMissedPosition(row, chrStartPosKey):
         row["ref_allele"],
         row["alt_allele"], row['Sample_ID'])
     IOutilities.logMessage(os.path.dirname(TSVfilePath), message)
+
 
 if len(sys.argv) > 1:
     run()
