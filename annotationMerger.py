@@ -151,6 +151,7 @@ def buildHeaders():
 
 def buildFinalTemplate(twoMatchingRows, row):
     inputLen = len(twoMatchingRows)
+    annoRow = pa.DataFrame()
     emblGeneColumnName = 'Gene'
     emblFeatureColumnName = 'Feature'
 
@@ -161,8 +162,10 @@ def buildFinalTemplate(twoMatchingRows, row):
             NCBIrow = twoMatchingRows.iloc[1]
         elif inputLen == 1:
             annoRow = twoMatchingRows.iloc[0]
+            reGene = getFromRow(twoMatchingRows, 'Gene')
+            reFeature = getFromRow(twoMatchingRows, 'Feature')
 
-            if twoMatchingRows['Gene'].str.contains("^ENS") & twoMatchingRows['Feature'].str.contains("ENS"):
+            if re.search("^ENS",reGene) and (re.search("^ENS",reFeature)):
                 NCBIrow = pa.DataFrame()
             else:
                 emblGeneColumnName = 'Gene'
