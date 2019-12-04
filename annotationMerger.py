@@ -148,13 +148,10 @@ def buildHeaders():
 
 def buildFinalTemplate(twoMatchingRows, row):
 
-    if len(twoMatchingRows) ==2:
+    if len(twoMatchingRows) == 2:
         annoRow = twoMatchingRows.iloc[0]
         NCBIrow = twoMatchingRows.iloc[1]
-    elif len(twoMatchingRows ==1):
-        annoRow = twoMatchingRows.iloc[0]
 
-    if len(twoMatchingRows == 0):
         extra = getFromRow(annoRow, 'Extra')
         extraAnno = extraColumnToJSON(extra)
 
