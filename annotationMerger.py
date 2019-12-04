@@ -143,27 +143,34 @@ def buildHeaders():
 
 
 def buildFinalTemplate(twoMatchingRows, row):
-    annoRow = twoMatchingRows.iloc[0]
-    NCBIrow = twoMatchingRows.iloc[1]
 
-    extra = getFromRow(annoRow, 'Extra')
-    extraAnno = extraColumnToJSON(extra)
+    if len(twoMatchingRows) ==2:
+        annoRow = twoMatchingRows.iloc[0]
+        NCBIrow = twoMatchingRows.iloc[1]
+    elif len(twoMatchingRows ==1):
+        annoRow = twoMatchingRows.iloc[0]
 
-    return [getFromRow(row, 'Model_ID'), getFromRow(row, 'Sample_ID'), getFromRow(row, 'sample_origin'),
-            getFromRow(row, 'host strain nomenclature'),
-            getFromRow(row, 'Passage'), getFromRow(extraAnno, 'SYMBOL'), getFromRow(extraAnno, 'BIOTYPE'),
-            parseHGSVc(getFromRow(extraAnno, 'HGVSc')), getFromRow(extraAnno, 'VARIANT_CLASS'),
-            getFromRow(annoRow, 'Codons'),
-            buildAminoAcidChange(getFromRow(annoRow, 'Amino_acids'), getFromRow(annoRow, 'Protein_position')),
-            getFromRow(annoRow, 'Consequence'),
-            parseFunctionalPredictions(getFromRow(extraAnno, 'PolyPhen'), getFromRow(extraAnno, 'SIFT')),
-            getFromRow(row, 'read_depth'), getFromRow(row, 'Allele_frequency'), getFromRow(row, 'chromosome'),
-            getFromRow(row, 'seq_start_position'),
-            getFromRow(row, 'ref_allele'), getFromRow(row, 'alt_allele'), getFromRow(row, 'ucsc_gene_id'),
-            getFromRow(NCBIrow, 'Gene'),
-            getFromRow(NCBIrow, 'Feature'), getFromRow(annoRow, 'Gene'), getFromRow(annoRow, 'Feature'),
-            getFromRow(annoRow, 'Existing_variation'),
-            getFromRow(row, 'genome_assembly'), getFromRow(row, 'Platform')]
+    if len(twoMatchingRows == 0):
+        extra = getFromRow(annoRow, 'Extra')
+        extraAnno = extraColumnToJSON(extra)
+
+        return [getFromRow(row, 'Model_ID'), getFromRow(row, 'Sample_ID'), getFromRow(row, 'sample_origin'),
+                getFromRow(row, 'host strain nomenclature'),
+                getFromRow(row, 'Passage'), getFromRow(extraAnno, 'SYMBOL'), getFromRow(extraAnno, 'BIOTYPE'),
+                parseHGSVc(getFromRow(extraAnno, 'HGVSc')), getFromRow(extraAnno, 'VARIANT_CLASS'),
+                getFromRow(annoRow, 'Codons'),
+                buildAminoAcidChange(getFromRow(annoRow, 'Amino_acids'), getFromRow(annoRow, 'Protein_position')),
+                getFromRow(annoRow, 'Consequence'),
+                parseFunctionalPredictions(getFromRow(extraAnno, 'PolyPhen'), getFromRow(extraAnno, 'SIFT')),
+                getFromRow(row, 'read_depth'), getFromRow(row, 'Allele_frequency'), getFromRow(row, 'chromosome'),
+                getFromRow(row, 'seq_start_position'),
+                getFromRow(row, 'ref_allele'), getFromRow(row, 'alt_allele'), getFromRow(row, 'ucsc_gene_id'),
+                getFromRow(NCBIrow, 'Gene'),
+                getFromRow(NCBIrow, 'Feature'), getFromRow(annoRow, 'Gene'), getFromRow(annoRow, 'Feature'),
+                getFromRow(annoRow, 'Existing_variation'),
+                getFromRow(row, 'genome_assembly'), getFromRow(row, 'Platform')]
+    else:
+        return list()
 
 
 def getFromRow(row, attributeID):
