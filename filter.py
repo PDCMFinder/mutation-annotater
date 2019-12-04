@@ -26,7 +26,7 @@ def run(annoRows, parentDirectory):
         rowsReadyToBuild = pa.concat([EMBLcanon, NCBIcanon])
     elif (EMBLcanonCount > 0 and NCBIcanonCount > 0):
         filteredRows = pa.concat([EMBLcanon,NCBIcanon])
-        rowsReadyToBuild = selectColumnsByCriteria(filteredRows)
+        rowsReadyToBuild = selectColumnsByCriteria(filteredRows).reset_index(drop=True)
     return rowsReadyToBuild
 
 def filterToCompleteData(annoRows,EMBLrows, NCBIrows, parentDirectory):
@@ -115,6 +115,8 @@ def returnTopMatchingScore(row, NCBIrows):
 
 def calculateMatchingScore(NCBIrows,row, symbol, isCanonical, biotype, impact):
 
+   concatEMBL = pa.DataFrame()
+   concatNcbi = pa.DataFrame()
    ncbi = pa.DataFrame()
    embl = pa.DataFrame()
 
@@ -134,10 +136,10 @@ def calculateMatchingScore(NCBIrows,row, symbol, isCanonical, biotype, impact):
 
        row['Score'] = NCBIrow['Score']
 
-       concatNCBI=pa.concat([ncbi,pa.DataFrame(NCBIrow).transpose()])
+       concatNcbi=pa.concat([ncbi,pa.DataFrame(NCBIrow).transpose()])
        concatEmbl=pa.concat([embl,pa.DataFrame(row).transpose()])
 
-   return pa.concat([concatEmbl,concatNCBI])
+   return pa.concat([concatEmbl,concatNcbi])
 
 def selectAnnotationByCriteria(row):
 

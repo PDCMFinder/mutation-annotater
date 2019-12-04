@@ -55,3 +55,4 @@ class TestFilter(TestCase):
         actualChrPos = annotationMerger.formatChrPosKey(row)
 
         self.assertEqual(expectedChrPosKey, actualChrPos)
+

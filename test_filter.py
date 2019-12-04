@@ -1,9 +1,9 @@
-from unittest import TestCase
+import unittest
 import filter
 import pandas as ps
 
 
-class TestFilter(TestCase):
+class TestFilter(unittest.TestCase):
 
     tmpLogLocation = "/tmp/"
 
