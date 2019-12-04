@@ -155,19 +155,21 @@ def buildFinalTemplate(twoMatchingRows, row):
     emblFeatureColumnName = 'Feature'
 
     if inputLen > 0:
+
         if inputLen > 1:
             annoRow = twoMatchingRows.iloc[0]
             NCBIrow = twoMatchingRows.iloc[1]
         elif inputLen == 1:
             annoRow = twoMatchingRows.iloc[0]
-            extra = getFromRow(annoRow, 'Extra')
-            extraAnno = extraColumnToJSON(extra)
 
             if twoMatchingRows['Gene'].str.contains("^ENS") & twoMatchingRows['Feature'].str.contains("ENS"):
                 NCBIrow = pa.DataFrame()
             else:
                 emblGeneColumnName = 'Gene'
                 emblFeatureColumnName = 'Feature'
+
+        extra = getFromRow(annoRow, 'Extra')
+        extraAnno = extraColumnToJSON(extra)
 
         builtRow = [getFromRow(row, 'Model_ID'), getFromRow(row, 'Sample_ID'), getFromRow(row, 'sample_origin'),
                     getFromRow(row, 'host strain nomenclature'),
