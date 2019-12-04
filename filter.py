@@ -3,7 +3,6 @@
 import pandas as pa
 import IOutilities
 import re
-import sys
 
 
 def run(annoRows, parentDirectory):

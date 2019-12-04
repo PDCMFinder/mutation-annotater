@@ -149,9 +149,6 @@ def buildFinalTemplate(twoMatchingRows, row):
     extra = getFromRow(annoRow, 'Extra')
     extraAnno = extraColumnToJSON(extra)
 
-    print(getFromRow(extraAnno, 'BIOTYPE'))
-    print(getFromRow(extraAnno, 'PolyPhen'))
-
     return [getFromRow(row, 'Model_ID'), getFromRow(row, 'Sample_ID'), getFromRow(row, 'sample_origin'),
             getFromRow(row, 'host strain nomenclature'),
             getFromRow(row, 'Passage'), getFromRow(extraAnno, 'SYMBOL'), getFromRow(extraAnno, 'BIOTYPE'),
@@ -171,7 +168,7 @@ def buildFinalTemplate(twoMatchingRows, row):
 
 def getFromRow(row, attributeID):
     returnStr = ""
-    if row.get(attributeID) and (type(row.get(attributeID)) == str):
+    if row.get(attributeID) and ((type(row.get(attributeID)) == str) or type(row.get(attributeID)) == unicode):
         returnStr = row.get(attributeID)
 
     return returnStr
