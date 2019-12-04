@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
 import pandas as pa
 import IOutilities
@@ -8,10 +8,6 @@ import sys
 
 def run(annoRows, parentDirectory):
     
-    print("*****versions*************")
-    print(pa.__version__)
-    print("pythong version is {0}".format(sys.version))
-
     EMBLrows = filterRowsByDB(annoRows, "EMBL")
     NCBIrows = filterRowsByDB(annoRows, "NCBI")
 
@@ -79,63 +75,70 @@ def selectAnnotationByMatch(EMBLrows,NCBIrows):
     fixedNCBIrows = NCBIrows.reset_index(drop=True)
     fixedEMBLrows = EMBLrows.reset_index(drop=True)
 
-    scoreSeriesCondensed = fixedEMBLrows.apply(lambda x: returnTopMatchingScore(x, fixedNCBIrows), axis=1)
-    scoreSeries = pa.concat(scoreSeriesCondensed.tolist(), ignore_index=True)
+    scoreSeries = returnTopMatchingScore(fixedEMBLrows, fixedNCBIrows) 
     highestScoredEMBL = scoreSeries[scoreSeries['Score'] == scoreSeries['Score'].max()]
-
-    if len(highestScoredEMBL) != 2:
-        assert("ROWS HAVE THE SAME SCORING")
-
+ 
     return highestScoredEMBL.drop(['Score'],axis=1)
 
 
 def returnTopMatchingScore(row, NCBIrows):
 
-    extras = row.loc['Extra']
+    concatRows = pa.DataFrame()
 
-    symbolRe = "SYMBOL=[A-Za-z0-9]{0,15}"
-    biotypeRe = "BIOTYPE=[A-Za-z_]{0,50}"
-    impactRe = "IMPACT=(HIGH|MODERATE|MODIFIER|LOW)"
-    canonicalRe = "CANONICAL=(YES|NO)"
+    for index, row in row.iterrows():
 
-    symbol = "NOT-FOUND"
-    biotype = "NOT-FOUND"
-    impact = "NOT-FOUND"
-    isCanonical = "NOT-FOUND"
+      extras = row.loc['Extra']
 
-    symbolMatch = re.search(symbolRe, extras)
-    if symbolMatch: symbol = symbolMatch.group(0)
-    biotypeMatch = re.search(biotypeRe,extras)
-    if biotypeMatch: biotype = biotypeMatch.group(0)
-    impactMatch = re.search(impactRe,extras)
-    if impactMatch : impact = impactMatch.group(0)
-    isCanonicalMatch = re.search(canonicalRe,extras)
-    if isCanonicalMatch: isCanonical = isCanonicalMatch.group(0)
+      symbolRe = "SYMBOL=[A-Za-z0-9]{0,15}"
+      biotypeRe = "BIOTYPE=[A-Za-z_]{0,50}"
+      impactRe = "IMPACT=(HIGH|MODERATE|MODIFIER|LOW)"
+      canonicalRe = "CANONICAL=(YES|NO)"
 
-    condensedRows[:] = NCBIrows.apply(lambda x: calculateMatchingScore(x,row, symbol, biotype, impact, isCanonical), axis=1)
-    scoredRows = pa.concat(condensedRows.tolist(), ignore_index=True)
+      symbol = "NOT-FOUND"
+      biotype = "NOT-FOUND"
+      impact = "NOT-FOUND"
+      isCanonical = "NOT-FOUND"
 
-    highestScore = scoredRows[scoredRows['Score'] == scoredRows['Score'].max()]
-    return highestScore
+      symbolMatch = re.search(symbolRe, extras)
+      if symbolMatch: symbol = symbolMatch.group(0)
+      biotypeMatch = re.search(biotypeRe,extras)
+      if biotypeMatch: biotype = biotypeMatch.group(0)
+      impactMatch = re.search(impactRe,extras)
+      if impactMatch : impact = impactMatch.group(0)
+      isCanonicalMatch = re.search(canonicalRe,extras)
+      if isCanonicalMatch: isCanonical = isCanonicalMatch.group(0)
 
-def calculateMatchingScore(x,row, symbol, isCanonical, biotype, impact):
+      scoredRows = calculateMatchingScore(NCBIrows,row, symbol, biotype, impact, isCanonical)
+      concatRows = pa.concat([scoredRows,concatRows])
 
-    x['Score'] = 0
+      highestScore = concatRows[concatRows['Score'] == concatRows['Score'].max()]
+      return highestScore
 
-    if len(x) > 1:
-        extras = x.loc['Extra']
+def calculateMatchingScore(NCBIrows,row, symbol, isCanonical, biotype, impact):
 
-        if re.search(symbol,extras): x.loc['Score'] += 1000
-        if re.search(isCanonical,extras): x.loc['Score'] += 100
-        if re.search(biotype,extras): x.loc['Score'] += 10
-        if re.search(impact,extras): x.loc['Score'] += 1
+   ncbi = pa.DataFrame()
+   embl = pa.DataFrame()
 
-    row['Score'] = x['Score']
+   for index,NCBIrow in NCBIrows.iterrows():
+       
+       NCBIrow['Score'] = 0
 
-    ncbi = pa.DataFrame(x).transpose()
-    embl = pa.DataFrame(row).transpose()
+       #print(NCBIrow)
 
-    return pa.concat([embl,ncbi])
+       if len(NCBIrow) > 1:
+            extras = NCBIrow.loc['Extra']
+
+            if re.search(symbol,extras): NCBIrow.loc['Score'] += 1000
+            if re.search(isCanonical,extras): NCBIrow.loc['Score'] += 100
+            if re.search(biotype,extras): NCBIrow.loc['Score'] += 10
+            if re.search(impact,extras): NCBIrow.loc['Score'] += 1
+
+       row['Score'] = NCBIrow['Score']
+
+       concatNCBI=pa.concat([ncbi,pa.DataFrame(NCBIrow).transpose()])
+       concatEmbl=pa.concat([embl,pa.DataFrame(row).transpose()])
+
+   return pa.concat([concatEmbl,concatNCBI])
 
 def selectAnnotationByCriteria(row):
 

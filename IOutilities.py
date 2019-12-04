@@ -12,12 +12,8 @@ def saveToExcel (file):
 def logMessage (fileParentDir, logMessage) :
     with open(fileParentDir + "/data.log", 'a+') as log:
 
-       print(logMessage)
-       log.write(logMessage + "\n")
-
-def logNoise (fileParentDir, logMessage) :
-    with open(fileParentDir + "/noise.log", 'a+') as log:
-        log.write(logMessage)
+        print(logMessage)
+        log.write(logMessage + "\n")
 
 def chmodFile(annoFilename):
         os.chmod(annoFilename, 0o666)

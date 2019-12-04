@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
 
 #BSUB -j $1_annotater_$(date)
@@ -60,13 +60,18 @@ def formatToVCFAndSave(filePath):
     IOutilities.flushCloseFile(vcfFile)
 
     vcfSorter.sort(vcfFilePath, vcfFilePath)
+    #uniqVCF(vcfFilePath,vcfFilePath)
     os.path.dirname(os.path.dirname(filePath))
 
     masterLog = "{0}/masterLog".format(os.path.dirname(os.path.dirname(os.path.dirname(filePath))))
     message = "The file {0} has {1} data points (including header)".format(filePath, rowCount)
     IOutilities.masterlogMessage(masterLog,message)
 
+def uniqVCF(vcfFilePath,vcfOutFile):
 
+    cmds = ['uniq ',vcfFilePath,' > ', vcfFilePath]
+    print(cmds)
+    sp.calls(cmds,shell=False)
 
 def attemptToWriteRowToVCFisNotSuccessful (row, vcfFile) :
 
@@ -115,7 +120,7 @@ def annotateVCF(vcfFile, file):
 
     vepCMD = """vep -e -q -check_existing  -symbol -polyphen -sift -merged --use_transcript_ref —hgvs —hgvsg —variant_class -canonical -fork 4 -format vcf -force -offline -no_stats -cache -dir_cache {0} -fasta {1} -i {2} -o {3}""".format(alleleDB,fastaDir,vepIn, vepOut)
 
-    print("singularity exec ensembl-vep.simg {0}".format(vepCMD))
+    #print("singularity exec ensembl-vep.simg {0}".format(vepCMD))
 
     sp.call(
         "singularity exec ensembl-vep.simg {0}".format(vepCMD), shell=True)

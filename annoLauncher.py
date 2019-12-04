@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/local/bin/python2.7
 # -*- coding: utf-8 -*-
 
 import sys
@@ -25,13 +25,14 @@ def main():
         baseName = os.path.basename(file)
         provider = os.path.basename(os.path.dirname(os.path.dirname(file)))
 
+	print(provider)
+	
         jobName = "{0}-{1}".format(provider,baseName)
         jobScript = '/nfs/nobackup/spot/mouseinformatics/pdx/omicAnno/annoJob.sh'
 
-        print('bsub bash' + jobScript + jobName + ' ' + file)
-
-        cmd = ['bsub ','bash ', jobScript,' ', jobName,' ', file] 
-        sp.call(cmd)
+        cmd = "bash {0} {1} {2}".format(jobScript,jobName,file)
+        print(cmd) 
+        sp.call(cmd,shell=True)
 
 
 def walkDirForMutData(dataDir):
