@@ -199,7 +199,7 @@ def buildFinalTemplate(twoMatchingRows, row):
 
 def getFromRow(row, attributeID):
     returnStr = ""
-    if row.get(attributeID) and ((type(row.get(attributeID)) == str) or type(row.get(attributeID)) == unicode):
+    if row.get(attributeID) and ((type(row.get(attributeID)) == str) or (type(row.get(attributeID)) == unicode)):
         returnStr = row.get(attributeID)
 
     return returnStr
