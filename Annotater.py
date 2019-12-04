@@ -69,9 +69,9 @@ def formatToVCFAndSave(filePath):
 
 def uniqVCF(vcfFilePath,vcfOutFile):
 
-    cmds = ['uniq ',vcfFilePath,' > ', vcfFilePath]
+    cmds = ['uniq ',vcfFilePath,' > ', vcfOutFile]
     print(cmds)
-    sp.calls(cmds,shell=False)
+    sp.call(cmds,shell=False)
 
 def attemptToWriteRowToVCFisNotSuccessful (row, vcfFile) :
 

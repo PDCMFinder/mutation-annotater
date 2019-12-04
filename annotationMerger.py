@@ -40,7 +40,10 @@ def mergeRowsAndWrite():
             open(TSVfilePath, 'r') as tsvFile:
 
         outFileWriter = csv.writer(finalTemplate, delimiter="\t")
-        TSVreader = csv.DictReader(tsvFile, delimiter="\t")
+        if TSVfilePath.endswith(".tsv"):
+            reader = csv.DictReader(tsvFile, delimiter="\t")
+        elif TSVfilePath.endswith(".csv"):
+            reader = csv.DictReader(tsvFile, delimiter=",")
         annoReader = pa.read_csv(annoFile, delimiter='\t', error_bad_lines=False, header=97)
 
         message = "Merging original data : {0} /n and annotated data : {1} at {2}".format(TSVfilePath, annoFile, time.ctime())
@@ -52,7 +55,7 @@ def mergeRowsAndWrite():
         rowNum = 0
         rowAdded = 0
 
-        for row in TSVreader:
+        for row in reader:
             rowNum += 1
 
             if rowIsValidForMerge(row):
@@ -66,6 +69,7 @@ def mergeRowsAndWrite():
                                                                                                                  mergedRow)))
                     IOutilities.logMessage(parentDirectory, message)
             else:
+
                 message2 = ("Info: row {0} is broken or legacy".format(rowNum)) 
                 print(row)
                 IOutilities.logMessage(parentDirectory, message2)
@@ -80,7 +84,7 @@ def rowIsValidForMerge(row):
 
 
 def rowIsHg38(row):
-    hg38Regex = "(?i)(hg38|grch38|38)"
+    hg38Regex = "(?i)(hg38|GRCh38|38)"
     return re.match(hg38Regex, getFromRow(row, "genome_assembly"))
 
 
