@@ -67,6 +67,7 @@ def mergeRowsAndWrite():
                     message = ("Info: Dropping row for incorrect template size. RowNum {0} - Len {1}".format(rowNum,
                                                                                                              len(
                                                                                                                  mergedRow)))
+                    print(row)
                     IOutilities.logMessage(parentDirectory, message)
             else:
 
