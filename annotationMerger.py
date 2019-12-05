@@ -9,7 +9,7 @@ import time
 import re
 import pandas as pa
 
-import filter
+import Annofilter
 import IOutilities
 
 mergedPointsMissed = 0
@@ -97,7 +97,7 @@ def mergeRows(row, annoReader):
     if (len(annoRows) == 0):
         builtRow = pa.Series()
     else:
-        twoMatchingRows = filter.run(annoRows, parentDirectory)
+        twoMatchingRows = Annofilter.run(annoRows, parentDirectory)
         builtRow = buildFinalTemplate(twoMatchingRows, row)
     return builtRow
 
@@ -113,7 +113,7 @@ def compareKeysOfFileAndReturnMatchingRows(row, annoReader):
 
 
 def formatChrPosKey(row):
-    chr = IOutilities.formatChromo(getFromRow(row, "chromosome"))
+    formatedchr = IOutilities.formatChromo(getFromRow(row, "chromosome"))
     seqStart = getFromRow(row, "seq_start_position")
     ref = getFromRow(row, "ref_allele")
     alt = getFromRow(row, "alt_allele")
@@ -121,11 +121,11 @@ def formatChrPosKey(row):
     if len(ref) > 0 and len(alt) > 0 and (ref[0] == alt[0]):
         adjustedSeq = (str)((int)(seqStart) + 1)
         if len(ref) == 1:
-            chrPosKey = "{0}:{1}-{2}".format(chr, seqStart, adjustedSeq)
+            chrPosKey = "{0}:{1}-{2}".format(formatedchr, seqStart, adjustedSeq)
         else:
-            chrPosKey = "{0}:{1}".format(chr, adjustedSeq)
+            chrPosKey = "{0}:{1}".format(formatedchr, adjustedSeq)
     else:
-        chrPosKey = "{0}:{1}".format(chr, seqStart)
+        chrPosKey = "{0}:{1}".format(formatedchr, seqStart)
 
     return chrPosKey
 
@@ -199,7 +199,11 @@ def buildFinalTemplate(twoMatchingRows, row):
 
 def getFromRow(row, attributeID):
     returnStr = ""
-    if row.get(attributeID) and ((type(row.get(attributeID)) == str) or (type(row.get(attributeID)) == unicode)):
+
+    attribute = row.get(attributeID)
+    attributeIsStrOrUnicode = (type(attribute) == str or type(attributeID) == unicode)
+
+    if attribute and attributeIsStrOrUnicode:
         returnStr = row.get(attributeID)
 
     return returnStr

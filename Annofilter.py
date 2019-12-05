@@ -80,11 +80,11 @@ def selectAnnotationByMatch(EMBLrows,NCBIrows):
     return highestScoredEMBL.drop(['Score'],axis=1)
 
 
-def returnTopMatchingScore(row, NCBIrows):
+def returnTopMatchingScore(allRows, NCBIrows):
 
     concatRows = pa.DataFrame()
 
-    for index, row in row.iterrows():
+    for index, row in allRows.iterrows():
 
       extras = row.loc['Extra']
 
@@ -107,7 +107,7 @@ def returnTopMatchingScore(row, NCBIrows):
       isCanonicalMatch = re.search(canonicalRe,extras)
       if isCanonicalMatch: isCanonical = isCanonicalMatch.group(0)
 
-      scoredRows = calculateMatchingScore(NCBIrows,row, symbol, biotype, impact, isCanonical)
+      scoredRows = calculateMatchingScore(NCBIrows, allRows, symbol, biotype, impact, isCanonical)
       concatRows = pa.concat([scoredRows,concatRows])
 
       highestScore = concatRows[concatRows['Score'] == concatRows['Score'].max()]
@@ -115,7 +115,7 @@ def returnTopMatchingScore(row, NCBIrows):
 
 def calculateMatchingScore(NCBIrows,row, symbol, isCanonical, biotype, impact):
 
-   concatEMBL = pa.DataFrame()
+   concatEmbl = pa.DataFrame()
    concatNcbi = pa.DataFrame()
    ncbi = pa.DataFrame()
    embl = pa.DataFrame()
