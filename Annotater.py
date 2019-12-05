@@ -93,12 +93,14 @@ def checkForImproperInsertionFormat(row):
 
     properSeqFormatRE = "^[0-9]{1,10}-[0-9]{1,10}$"
     pos = row["seq_start_position"]
+    ref = row["ref_allele"]
+    alt = row["alt_allele"]
 
     refIsImproperInsertionFormat = (row["ref_allele"] == "-")
     posIsProperInsertionFormat = re.match(properSeqFormatRE, pos)
 
     if refIsImproperInsertionFormat and not bool(posIsProperInsertionFormat) :
-        message = "Warning: datapoint is amibigous and dropped by VEP. This is a temporary work-around"
+        message = "Warning: datapoint is amibigous and dropped by VEP. This is a temporary work-around at {0} with ref {1} and alt {2}".format(pos,ref,alt)
         IOutilities.logMessage(parentDirectoryPath, message)
         posPlus1 = int(pos) + 1
         return "{0}-{1}".format(pos, posPlus1)
