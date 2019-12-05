@@ -203,7 +203,7 @@ def getFromRow(row, attributeID):
     attribute = row.get(attributeID)
     attributeIsStrOrUnicode = (type(attribute) == str or type(attributeID) == unicode)
 
-    if attribute and attributeIsStrOrUnicode:
+    if bool(attribute) and attributeIsStrOrUnicode:
         returnStr = row.get(attributeID)
 
     return returnStr
