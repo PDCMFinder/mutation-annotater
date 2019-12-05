@@ -212,7 +212,7 @@ def getFromRow(row, attributeID):
 
 def parseHGSVc(HGSV):
     regexToRemoveAccession = "(?m)c\\.(.+$)"
-    hgsvMatch = re.findall(regexToRemoveAccession, HGSV)
+    hgsvMatch = re.findall(regexToRemoveAccession, str(HGSV))
     return hgsvMatch[0] if len(hgsvMatch) > 0 else ""
 
 

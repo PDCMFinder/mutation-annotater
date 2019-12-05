@@ -41,15 +41,16 @@ class TestFilter(TestCase):
     def test_GivenTwoMatchingColumns_WhenRowBuilderIsCalled_Then_ReturnCorrectlyBuiltRow(self):
 
         # Given
-        data = ["4_1804915_A/G", "4:1804915", "G", "ENSG00000068078", "ENST00000260795", "Transcript",
+        emblRow = ["4_1804915_A/G", "4:1804915", "G", "ENSG00000068078", "ENST00000260795", "Transcript",
                 "3_prime_UTR_variant", \
                 "1509", "-", "-", "-", "-", "rs1466726466", \
                 "IMPACT=MODIFIER;STRAND=1;VARIANT_CLASS=SNV;SYMBOL=FGFR3;SYMBOL_SOURCE=HGNC;HGNC_ID=HGNC "]
 
-        data1 = ["4_1804915_A/G", "4:1804915", "G", "2261", "NR_148971.1", "Transcript",
-                 "3_prime_UTR_variant", \
-                 "1509", "-", "-", "-", "-", "rs1466726466", \
-                 "IMPACT=MODIFIER;STRAND=1;BIOTYPE=lncRNA;VARIANT_CLASS=SNV;SYMBOL=FGFR3;SYMBOL_SOURCE=HGNC;HGNC_ID=HGNC "]
+        ncbiRow = {'Feature_type': 'Transcript', 'Extra': 'IMPACT=HIGH;STRAND=-1;VARIANT_'
+                                                                          'CLASS=deletion;SYMBOL=KEAP1;SYMBOL_SOURCE=EntrezGene;HGNC_ID=HGNC:23177;BIOTYPE=protein_coding;CANONICAL=YES;ENSP=NP_987096.1;SOURCE=RefSeq;GIVEN_REF=T;USED_REF=T;EXON=3/6;HGVSc=NM_203500.2:c.1225del;HGVSp=NP_987096.1:p.Met409Ter',
+                   '#Uploaded_variation': '19_10491677_T/-', 'cDNA_position': '1388', 'Feature': 'NM_203500.2', 'Codons': 'Atg/tg', 'Existing_variation': '-', 'Location': '19:10491677', 'CDS_position': '1225',
+                   'Protein_position': '409', 'Consequence': 'frameshift_variant', 'Allele': '-', 'Gene': '9817', 'Amino_acids': 'M/X'}
+
         colNames = ["#Uploaded_variation", "Location", "Allele", "Gene", "Feature", "Feature_type", "Consequence",
                     "cDNA_position", "CDS_position", "Protein_position", "Amino_acids", "Codons",
                     "Existing_variation",
@@ -62,8 +63,8 @@ class TestFilter(TestCase):
          'Atg/tg', 'M409X', 'frameshift_variant', '', '11572', '96,47', '19', '10491677', 'T', '-', '', '9817',
          'NM_203500.2', None, None, '-', 'GRCh38', 'Targeted NGS']
 
-        EMBLdf = ps.DataFrame([data], columns=colNames)
-        NCBIdf = ps.DataFrame([data1], columns=colNames)
+        EMBLdf = ps.DataFrame([emblRow], columns=colNames)
+        NCBIdf = ps.DataFrame([ncbiRow], columns=colNames)
         inputRows = ps.concat([EMBLdf, NCBIdf])
 
         # When
