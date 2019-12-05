@@ -63,6 +63,7 @@ def selectColumnsByCriteria(filteredRows):
         else : selectedRow = NCBIrows
         selectedAnnoRows = selectAnnotationByCriteria(selectedRow)
     elif rowsExistForBoth(EMBLrows, NCBIrows):
+
         selectedAnnoRows = selectAnnotationByMatch(EMBLrows,NCBIrows)
     else :
         selectedAnnoRows = pa.DataFrame()
@@ -75,8 +76,9 @@ def selectAnnotationByMatch(EMBLrows,NCBIrows):
     fixedEMBLrows = EMBLrows.reset_index(drop=True)
 
     scoreSeries = returnTopMatchingScore(fixedEMBLrows, fixedNCBIrows)
- 
-    return scoreSeries.drop(['Score'],axis=1)
+    droppedScore = scoreSeries.drop(['Score'],axis=1)
+
+    return droppedScore.iloc[0:2]
 
 
 def returnTopMatchingScore(allRows, NCBIrows):
@@ -109,8 +111,8 @@ def returnTopMatchingScore(allRows, NCBIrows):
       scoredRows = calculateMatchingScore(NCBIrows, allRows, symbol, biotype, impact, isCanonical)
       concatRows = pa.concat([scoredRows,concatRows])
 
-      highestScore = concatRows[concatRows['Score'] == concatRows['Score'].max()]
-      return highestScore
+    highestScore = concatRows[concatRows['Score'] == concatRows['Score'].max()]
+    return highestScore
 
 def calculateMatchingScore(NCBIrows,row, symbol, isCanonical, biotype, impact):
 
