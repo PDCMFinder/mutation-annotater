@@ -1,8 +1,5 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
-import filter
-import IOutilities
-
 import csv
 import json
 import os
@@ -11,6 +8,9 @@ import time
 
 import re
 import pandas as pa
+
+import filter
+import IOutilities
 
 mergedPointsMissed = 0
 
