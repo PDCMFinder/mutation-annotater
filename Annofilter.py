@@ -74,10 +74,9 @@ def selectAnnotationByMatch(EMBLrows,NCBIrows):
     fixedNCBIrows = NCBIrows.reset_index(drop=True)
     fixedEMBLrows = EMBLrows.reset_index(drop=True)
 
-    scoreSeries = returnTopMatchingScore(fixedEMBLrows, fixedNCBIrows) 
-    highestScoredEMBL = scoreSeries[scoreSeries['Score'] == scoreSeries['Score'].max()]
+    scoreSeries = returnTopMatchingScore(fixedEMBLrows, fixedNCBIrows)
  
-    return highestScoredEMBL.drop(['Score'],axis=1)
+    return scoreSeries.drop(['Score'],axis=1)
 
 
 def returnTopMatchingScore(allRows, NCBIrows):
@@ -121,23 +120,23 @@ def calculateMatchingScore(NCBIrows,row, symbol, isCanonical, biotype, impact):
    embl = pa.DataFrame()
 
    for index,NCBIrow in NCBIrows.iterrows():
-       
-       NCBIrow['Score'] = 0
 
-       #print(NCBIrow)
+       transposedRow = pa.DataFrame(NCBIrow).transpose()
 
-       if len(NCBIrow) > 1:
-            extras = NCBIrow.loc['Extra']
+       transposedRow['Score'] = 0
 
-            if re.search(symbol,extras): NCBIrow.loc['Score'] += 1000
-            if re.search(isCanonical,extras): NCBIrow.loc['Score'] += 100
-            if re.search(biotype,extras): NCBIrow.loc['Score'] += 10
-            if re.search(impact,extras): NCBIrow.loc['Score'] += 1
+       if len(transposedRow) > 1:
+            extras = transposedRow.loc['Extra']
 
-       row['Score'] = NCBIrow['Score']
+            if re.search(symbol,extras): transposedRow.loc['Score'] += 1000
+            if re.search(isCanonical,extras): transposedRow.loc['Score'] += 100
+            if re.search(biotype,extras): transposedRow.loc['Score'] += 10
+            if re.search(impact,extras): transposedRow.loc['Score'] += 1
 
-       concatNcbi=pa.concat([ncbi,pa.DataFrame(NCBIrow).transpose()])
-       concatEmbl=pa.concat([embl,pa.DataFrame(row).transpose()])
+       row['Score'] = transposedRow['Score']
+
+       concatNcbi=pa.concat([ncbi,pa.DataFrame(transposedRow)])
+       concatEmbl=pa.concat([embl,pa.DataFrame(row)])
 
    return pa.concat([concatEmbl,concatNcbi])
 
