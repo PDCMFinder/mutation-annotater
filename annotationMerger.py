@@ -65,7 +65,7 @@ def mergeRowsAndWrite():
                     outFileWriter.writerow(mergedRow)
                     rowAdded += 1
                 else:
-                    message = ("Info: Dropping row for incorrect template size. RowNum {0} - Len {1}".format(rowNum,
+                    message = ("Info: Dropping row for being invalid (size or column headers) or missing match in annotations (Chromosome position error). RowNum {0} - Len {1}".format(rowNum,
                                                                                                              len(
                                                                                                                  mergedRow)))
                     print(row)

@@ -100,12 +100,13 @@ def returnTopMatchingScore(allRows, NCBIrows):
       isCanonical = "NOT-FOUND"
 
       symbolMatch = re.search(symbolRe, extras)
+      biotypeMatch = re.search(biotypeRe, extras)
+      impactMatch = re.search(impactRe, extras)
+      isCanonicalMatch = re.search(canonicalRe, extras)
+
       if symbolMatch: symbol = symbolMatch.group(0)
-      biotypeMatch = re.search(biotypeRe,extras)
       if biotypeMatch: biotype = biotypeMatch.group(0)
-      impactMatch = re.search(impactRe,extras)
       if impactMatch : impact = impactMatch.group(0)
-      isCanonicalMatch = re.search(canonicalRe,extras)
       if isCanonicalMatch: isCanonical = isCanonicalMatch.group(0)
 
       scoredRows = calculateMatchingScore(NCBIrows, allRows, symbol, biotype, impact, isCanonical)
@@ -114,7 +115,7 @@ def returnTopMatchingScore(allRows, NCBIrows):
     highestScore = concatRows[concatRows['Score'] == concatRows['Score'].max()]
     return highestScore
 
-def calculateMatchingScore(NCBIrows,row, symbol, isCanonical, biotype, impact):
+def calculateMatchingScore(NCBIrows,row, symbol,biotype, impact, isCanonical):
 
    concatEmbl = pa.DataFrame()
    concatNcbi = pa.DataFrame()
@@ -123,21 +124,21 @@ def calculateMatchingScore(NCBIrows,row, symbol, isCanonical, biotype, impact):
 
    for index,NCBIrow in NCBIrows.iterrows():
 
-       transposedRow = pa.DataFrame(NCBIrow).transpose()
+       transposedNcbiRow = pa.DataFrame(NCBIrow).transpose().reset_index(drop=True)
 
-       transposedRow['Score'] = 0
+       transposedNcbiRow['Score'] = 0
 
-       if len(transposedRow) > 1:
-            extras = transposedRow.loc['Extra']
+       if len(transposedNcbiRow) == 1:
+            extras = transposedNcbiRow['Extra'].get(0)
 
-            if re.search(symbol,extras): transposedRow.loc['Score'] += 1000
-            if re.search(isCanonical,extras): transposedRow.loc['Score'] += 100
-            if re.search(biotype,extras): transposedRow.loc['Score'] += 10
-            if re.search(impact,extras): transposedRow.loc['Score'] += 1
+            if re.search(symbol,extras): transposedNcbiRow['Score'] += 1000
+            if re.search(isCanonical,extras): transposedNcbiRow['Score'] += 100
+            if re.search(biotype,extras): transposedNcbiRow['Score'] += 10
+            if re.search(impact,extras): transposedNcbiRow['Score'] += 1
 
-       row['Score'] = transposedRow['Score']
+       row['Score'] = transposedNcbiRow['Score']
 
-       concatNcbi=pa.concat([ncbi,pa.DataFrame(transposedRow)])
+       concatNcbi=pa.concat([ncbi,pa.DataFrame(transposedNcbiRow)])
        concatEmbl=pa.concat([embl,pa.DataFrame(row)])
 
    return pa.concat([concatEmbl,concatNcbi])
