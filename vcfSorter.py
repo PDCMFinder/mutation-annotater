@@ -18,7 +18,8 @@ def sortChromo(x):
 def sortLocation(x):
     firstTenD = "^[0-9]{1,10}"
     loc = re.search(firstTenD, x)
-    return int(loc) if x != 'pos' and loc != None else 0
+
+    return int(loc.group(0)) if x != 'pos' and loc != None else 0
 
 def sort(aVCFfile, saveTo):
     with open(aVCFfile, 'r') as infile:
