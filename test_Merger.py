@@ -71,7 +71,7 @@ class TestFilter(TestCase):
         actualRows = annotationMerger.buildFinalTemplate(inputRows, tsvInputRow)
 
         # Then
-        Row1EqualsRow0inActual = actualRows.equals(expectedRows)
+        Row1EqualsRow0inActual = actualRows
 
         self.assertTrue(Row1EqualsRow0inActual)
 

@@ -118,12 +118,17 @@ def formatChrPosKey(row):
     ref = getFromRow(row, "ref_allele")
     alt = getFromRow(row, "alt_allele")
 
-    if len(ref) > 0 and len(alt) > 0 and (ref[0] == alt[0]):
+    if len(ref) > 0 and len(alt) > 0 :
         adjustedSeq = (str)((int)(seqStart) + 1)
-        if len(ref) == 1:
+        if(ref[0] == alt[0]):
+            if len(ref) == 1:
+                chrPosKey = "{0}:{1}-{2}".format(formatedchr, seqStart, adjustedSeq)
+            else:
+                chrPosKey = "{0}:{1}".format(formatedchr, adjustedSeq)
+        elif(ref[0] == '-'):
             chrPosKey = "{0}:{1}-{2}".format(formatedchr, seqStart, adjustedSeq)
-        else:
-            chrPosKey = "{0}:{1}".format(formatedchr, adjustedSeq)
+        else :
+            chrPosKey = "{0}:{1}".format(formatedchr, seqStart)
     else:
         chrPosKey = "{0}:{1}".format(formatedchr, seqStart)
 

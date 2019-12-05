@@ -1,23 +1,14 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
 
-#BSUB -j $1_annotater_$(date)
-#BSUB --mail-user=afollette@ebi.ac.uk
-#BSUB  -B -N
-#BSUB -e /homes/afollette/$i.err.%j
-#BSUB -o /homes/afollette/$i.out.%j
-#BSUB -M 10000
-#BSUB -n 4
-
-
-
-import IOutilities
-import vcfSorter
-
 import os
 import csv
 import subprocess as sp
 import sys
+import re
+
+import IOutilities
+import vcfSorter
 
 file = sys.argv[1]
 
@@ -67,9 +58,9 @@ def formatToVCFAndSave(filePath):
     message = "The file {0} has {1} data points (including header)".format(filePath, rowCount)
     IOutilities.masterlogMessage(masterLog,message)
 
-def uniqVCF(vcfFilePath,vcfOutFile):
+def uniqVCF(vcfPath,vcfOutFile):
 
-    cmds = ['uniq ',vcfFilePath,' > ', vcfOutFile]
+    cmds = ['uniq ',vcfPath,' > ', vcfOutFile]
     print(cmds)
     sp.call(cmds,shell=False)
 
@@ -88,13 +79,32 @@ def attemptToWriteRowToVCFisNotSuccessful (row, vcfFile) :
         IOutilities.logMessage(parentDirectoryPath, "Warning found legacy data : {0}".format(row.items()))
     return isEOF_orError
 
-def formatRowToVCFAndWrite (row, vcfFile) :
+def formatRowToVCFAndWrite(row, vcfFile) :
 
     chromo = IOutilities.formatChromo(row["chromosome"])
 
-    vcfRow = "{0}\t{1}\t.\t{2}\t{3}\t.\t.\t.\t\n".format(chromo, row["seq_start_position"],
+    seq_start_pos = checkForImproperInsertionFormat(row)
+
+    vcfRow = "{0}\t{1}\t.\t{2}\t{3}\t.\t.\t.\t\n".format(chromo, seq_start_pos,
                                                          row["ref_allele"], row["alt_allele"])
     vcfFile.write(vcfRow)
+
+def checkForImproperInsertionFormat(row):
+
+    properSeqFormatRE = "^[0-9]{1,10}-[0-9]{1,10}$"
+    pos = row["seq_start_position"]
+
+    refIsImproperInsertionFormat = (row["ref_allele"] == "-")
+    posIsProperInsertionFormat = re.match(properSeqFormatRE, pos)
+
+    if refIsImproperInsertionFormat and not bool(posIsProperInsertionFormat) :
+        message = "Warning: datapoint is amibigous and dropped by VEP. This is a temporary work-around"
+        IOutilities.logMessage(parentDirectoryPath, message)
+        posPlus1 = int(pos) + 1
+        return "{0}-{1}".format(pos, posPlus1)
+
+    return pos
+
 
 def genomeDataIsMissing (row) :
     return not row["chromosome"] or not row["seq_start_position"] or not row["ref_allele"] or not row["alt_allele"]
@@ -103,10 +113,6 @@ def allGenomicDataIsMissing (row) :
     return not row["chromosome"] and not row["seq_start_position"] and not row["ref_allele"] and not row["alt_allele"]
 
 def annotateVCF(vcfFile, file):
-
-    vcfFileName = os.path.basename(vcfFilePath)
-    provider = os.path.dirname(parentDirectoryPath)
-    providerName = os.path.basename(provider)
 
     fastaDir = "/nfs/nobackup/spot/mouseinformatics/pdx/vepDBs/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
     alleleDB = "/nfs/nobackup/spot/mouseinformatics/pdx/vepDBs/homo_sapiens_vep_98_GRCh38"
