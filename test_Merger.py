@@ -54,15 +54,20 @@ class TestFilter(TestCase):
                     "cDNA_position", "CDS_position", "Protein_position", "Amino_acids", "Codons",
                     "Existing_variation",
                     "Extra"]
-        expectedData = []
+        tsvInputRow =  {'alt_allele': '-', 'read_depth': '11572', 'ensembl_gene_id': '', 'rs_id_Variant': '', 'Platform': 'Targeted NGS', 'ucsc_gene_id': '',
+                          'ref_allele': 'T', 'chromosome': '19', 'ncbi_gene_id': '9817', 'nucleotide_change': '1225delA', 'hgnc_symbol': 'KEAP1', 'consequence': 'stop gain', 'Allele_frequency': '96,47', 'Passage': '27', 'amino_acid_change': 'M409X', 'Model_ID': 'LCF16',
+                        'datasource': 'CURIE-LC', 'ensembl_transcript_id': '', 'Sample_ID': 'LCF16p27:26/08/2016', 'seq_start_position': '10491677', 'genome_assembly': 'GRCh38', 'sample_origin': 'xenograft'}
 
+        expectedBuiltRow = ['LCF16', 'LCF16p27:26/08/2016', 'xenograft', None, '27', u'KEAP1', u'protein_coding', u'1225del', u'deletion',
+         'Atg/tg', 'M409X', 'frameshift_variant', '', '11572', '96,47', '19', '10491677', 'T', '-', '', '9817',
+         'NM_203500.2', None, None, '-', 'GRCh38', 'Targeted NGS']
 
         EMBLdf = ps.DataFrame([data], columns=colNames)
         NCBIdf = ps.DataFrame([data1], columns=colNames)
         inputRows = ps.concat([EMBLdf, NCBIdf])
 
         # When
-        actualRows = annotationMerger.buildFinalTemplate(inputRows, self.tmpLogLocation)
+        actualRows = annotationMerger.buildFinalTemplate(inputRows, tsvInputRow)
 
         # Then
         Row1EqualsRow0inActual = actualRows.equals(expectedRows)

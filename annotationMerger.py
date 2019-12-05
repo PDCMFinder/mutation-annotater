@@ -162,14 +162,15 @@ def buildFinalTemplate(twoMatchingRows, row):
             NCBIrow = twoMatchingRows.iloc[1]
         elif inputLen == 1:
             annoRow = twoMatchingRows.iloc[0]
-            reGene = getFromRow(twoMatchingRows, 'Gene')
-            reFeature = getFromRow(twoMatchingRows, 'Feature')
+            reGene = str(getFromRow(twoMatchingRows, 'Gene'))
+            reFeature = str(getFromRow(twoMatchingRows, 'Feature'))
 
-            if re.search("^ENS",reGene) and (re.search("^ENS",reFeature)):
+            if (re.search("^ENS",reGene)) and bool((re.search("^ENS",reFeature))):
                 NCBIrow = pa.DataFrame()
             else:
-                emblGeneColumnName = 'Gene'
-                emblFeatureColumnName = 'Feature'
+                NCBIrow = twoMatchingRows.iloc[0]
+                emblGeneColumnName = ''
+                emblFeatureColumnName = ''
 
         extra = getFromRow(annoRow, 'Extra')
         extraAnno = extraColumnToJSON(extra)
@@ -200,10 +201,10 @@ def buildFinalTemplate(twoMatchingRows, row):
 def getFromRow(row, attributeID):
     returnStr = ""
 
-    attribute = row.get(attributeID)
+    attribute = str(row.get(attributeID))
     attributeIsStrOrUnicode = (type(attribute) == str or type(attributeID) == unicode)
 
-    if bool(attribute) and attributeIsStrOrUnicode:
+    if attribute and attributeIsStrOrUnicode:
         returnStr = row.get(attributeID)
 
     return returnStr
