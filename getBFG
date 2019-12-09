@@ -1,3 +1,4 @@
 #!/usr/bin/bash
 
-bsub -M 10000 -R "rusage
+bsub -n 4 -M 20000 -R "rusage[mem=20000]" -Is $SHELL 
+ 

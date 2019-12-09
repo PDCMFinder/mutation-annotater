@@ -1,10 +1,9 @@
 import csv
-import operator
 import re
-import sys
 
 
-def sortFun(x):
+
+def sortChromo(x):
 
     decMatch = "^[0-9]{1,2}$"
     isDec = re.match(decMatch, x)
@@ -17,13 +16,16 @@ def sortFun(x):
         return 0
 
 def sortLocation(x):
-    return int(x) if x != 'pos' else 0
+    firstTenD = "^[0-9]{1,10}"
+    loc = re.search(firstTenD, x)
+
+    return int(loc.group(0)) if x != 'pos' and loc != None else 0
 
 def sort(aVCFfile, saveTo):
     with open(aVCFfile, 'r') as infile:
         reader = csv.reader(infile, delimiter='\t')
         secondKey = sorted(reader, key=lambda x: sortLocation(x[1]))
-        sortedFile = sorted(secondKey, key=lambda x: sortFun(x[0]))
+        sortedFile = sorted(secondKey, key=lambda x: sortChromo(x[0]))
 
     with open(saveTo, 'w') as outFile:
         writer = csv.writer(outFile, delimiter='\t')

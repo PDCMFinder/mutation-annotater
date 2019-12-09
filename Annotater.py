@@ -1,24 +1,14 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
 
-#BSUB -j $1_annotater_$(date)
-#BSUB --mail-user=afollette@ebi.ac.uk
-#BSUB  -B -N
-#BSUB -e /homes/afollette/$i.err.%j
-#BSUB -o /homes/afollette/$i.out.%j
-#BSUB -M 10000
-#BSUB -n 4
-
-
-
-import IOutilities
-import vcfSorter
-
 import os
 import csv
 import subprocess as sp
 import sys
 import re
+
+import IOutilities
+import vcfSorter
 
 file = sys.argv[1]
 
@@ -68,9 +58,9 @@ def formatToVCFAndSave(filePath):
     message = "The file {0} has {1} data points (including header)".format(filePath, rowCount)
     IOutilities.masterlogMessage(masterLog,message)
 
-def uniqVCF(vcfFilePath,vcfOutFile):
+def uniqVCF(vcfPath,vcfOutFile):
 
-    cmds = ['uniq ',vcfFilePath,' > ', vcfOutFile]
+    cmds = ['uniq ',vcfPath,' > ', vcfOutFile]
     print(cmds)
     sp.call(cmds,shell=False)
 
@@ -90,7 +80,7 @@ def attemptToWriteRowToVCFisNotSuccessful(row, vcfFile) :
         IOutilities.logMessage(parentDirectoryPath, "Warning found legacy data : {0}".format(row.items()))
     return isEOF_orError
 
-def formatRowToVCFAndWrite (row, vcfFile) :
+def formatRowToVCFAndWrite(row, vcfFile) :
 
     chromo = IOutilities.formatChromo(row["chromosome"])
 
