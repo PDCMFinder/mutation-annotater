@@ -5,10 +5,6 @@ import os
 import re
 
 
-def saveToExcel (file):
-
-    print("Saved {0}".format(file))
-
 def logMessage (fileParentDir, logMessage) :
     with open(fileParentDir + "/data.log", 'a+') as log:
 

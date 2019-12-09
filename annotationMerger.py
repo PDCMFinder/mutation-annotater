@@ -23,8 +23,7 @@ else:
 
 def run():
     mergeRowsAndWrite()
-    IOutilities.saveToExcel(TSVfilePath)
-
+    print("File Saved")
 
 def isColumnHeader(line):
     return ((line[0] == '#') and (line[1] != '#'))

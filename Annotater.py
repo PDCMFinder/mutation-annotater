@@ -21,6 +21,7 @@ def run():
 
     formatToVCFAndSave(file)
     annotateVCF(vcfFilePath,file)
+    print("Annotating is complete")
     sp.call(("bash mergeWrapper.sh {0}".format(file)), shell=True)
 
 
@@ -37,6 +38,8 @@ def formatToVCFAndSave(filePath):
         reader = csv.DictReader(tsvOrCsvFile, delimiter=",")
 
     assert(reader != None)
+
+    print("Writing {0} to VCF".format(filePath))
 
     vcfFile.write("#chrom\tpos\tid\tref\talt\tqual\tfilter\tinfo\n")
 
@@ -108,7 +111,7 @@ def annotateVCF(vcfFile, file):
 
     vepCMD = """vep -e -q -check_existing  -symbol -polyphen -sift -merged --use_transcript_ref —hgvs —hgvsg —variant_class -canonical -fork 4 -format vcf -force -offline -no_stats -cache -dir_cache {0} -fasta {1} -i {2} -o {3}""".format(alleleDB,fastaDir,vepIn, vepOut)
 
-    #print("singularity exec ensembl-vep.simg {0}".format(vepCMD))
+    print("singularity exec ensembl-vep.simg {0}".format(vepCMD))
 
     sp.call(
         "singularity exec ensembl-vep.simg {0}".format(vepCMD), shell=True)
