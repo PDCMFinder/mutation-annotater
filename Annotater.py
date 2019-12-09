@@ -18,6 +18,7 @@ import os
 import csv
 import subprocess as sp
 import sys
+import re
 
 file = sys.argv[1]
 
@@ -73,11 +74,12 @@ def uniqVCF(vcfFilePath,vcfOutFile):
     print(cmds)
     sp.call(cmds,shell=False)
 
-def attemptToWriteRowToVCFisNotSuccessful (row, vcfFile) :
+def attemptToWriteRowToVCFisNotSuccessful(row, vcfFile) :
 
     isEOF_orError = False
+    hg38RE = "(?i)(hg38|grch38|38)"
 
-    if (row["genome_assembly"] == "Hg38") or (row["genome_assembly"] == "GRCh38"):
+    if bool(re.match(hg38RE, row["genome_assembly"])):
         if genomeDataIsMissing(row):
             IOutilities.logMessage(parentDirectoryPath, "Row has incomplete data : {0} in file {1} caused by missing chro,seq start, ref or alt allele data".format(row.items(), vcfFilePath))
         elif allGenomicDataIsMissing(row):
@@ -103,10 +105,6 @@ def allGenomicDataIsMissing (row) :
     return not row["chromosome"] and not row["seq_start_position"] and not row["ref_allele"] and not row["alt_allele"]
 
 def annotateVCF(vcfFile, file):
-
-    vcfFileName = os.path.basename(vcfFilePath)
-    provider = os.path.dirname(parentDirectoryPath)
-    providerName = os.path.basename(provider)
 
     fastaDir = "/nfs/nobackup/spot/mouseinformatics/pdx/vepDBs/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
     alleleDB = "/nfs/nobackup/spot/mouseinformatics/pdx/vepDBs/homo_sapiens_vep_98_GRCh38"
