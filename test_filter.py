@@ -1,5 +1,5 @@
 import unittest
-import Annofilter
+import AnnoFilter
 import pandas as ps
 
 
@@ -11,7 +11,7 @@ class TestFilter(unittest.TestCase):
         #Given
         expected = ps.DataFrame()
         #When
-        actualRow = Annofilter.run(expected, self.tmpLogLocation)
+        actualRow = AnnoFilter.run(expected, self.tmpLogLocation)
         #Then
         self.assertEqual(type(expected), type(actualRow))
         self.assertEqual(len(expected), len(actualRow))
@@ -28,7 +28,7 @@ class TestFilter(unittest.TestCase):
         expectedRow = ps.DataFrame([data], columns=colNames)
 
         #When
-        actualRow = Annofilter.run(expectedRow, self.tmpLogLocation)
+        actualRow = AnnoFilter.run(expectedRow, self.tmpLogLocation)
 
         #Then
 
@@ -49,7 +49,7 @@ class TestFilter(unittest.TestCase):
         expectedRow = ps.DataFrame([data], columns=colNames)
 
         # When
-        actualRow = Annofilter.run(expectedRow, self.tmpLogLocation)
+        actualRow = AnnoFilter.run(expectedRow, self.tmpLogLocation)
 
         # Then
 
@@ -67,7 +67,7 @@ class TestFilter(unittest.TestCase):
         expectedRow = ps.DataFrame([data], columns=colNames)
 
         # When
-        actualRow = Annofilter.run(expectedRow, self.tmpLogLocation)
+        actualRow = AnnoFilter.run(expectedRow, self.tmpLogLocation)
 
         # Then
         Row1EqualsRow0inActual = actualRow.equals(expectedRow[0:])
@@ -85,7 +85,7 @@ class TestFilter(unittest.TestCase):
                     "Extra"]
         expectedRow = ps.DataFrame([data], columns=colNames)
         # When
-        actualRow = Annofilter.run(expectedRow, self.tmpLogLocation)
+        actualRow = AnnoFilter.run(expectedRow, self.tmpLogLocation)
 
         # Then
         Row1EqualsRow0inActual = actualRow.equals(expectedRow[0:])
@@ -111,7 +111,7 @@ class TestFilter(unittest.TestCase):
         expectedRows = ps.concat([EMBLdf,NCBIdf])
 
         # When
-        actualRows = Annofilter.run(expectedRows, self.tmpLogLocation)
+        actualRows = AnnoFilter.run(expectedRows, self.tmpLogLocation)
 
         # Then
         Row1EqualsRow0inActual = actualRows.equals(expectedRows)
@@ -138,7 +138,7 @@ class TestFilter(unittest.TestCase):
         expectedRows = ps.concat([EMBLdf,NCBIdf])
 
         # When
-        actualRows = Annofilter.run(expectedRows, self.tmpLogLocation)
+        actualRows = AnnoFilter.run(expectedRows, self.tmpLogLocation)
 
         # Then
         Row1EqualsRow0inActual = actualRows.equals(expectedRows)
@@ -167,7 +167,7 @@ class TestFilter(unittest.TestCase):
         expectedRows = ps.concat([EMBLdf, NCBIdf])
 
         # When
-        actualRows = Annofilter.run(expectedRows, self.tmpLogLocation)
+        actualRows = AnnoFilter.run(expectedRows, self.tmpLogLocation)
 
         # Then
         Row1EqualsRow0inActual = actualRows.equals(expectedRows)
@@ -194,7 +194,7 @@ class TestFilter(unittest.TestCase):
         expectedRows = ps.concat([EMBLdf, ncNCBIdf])
 
         # When
-        actualRows = Annofilter.run(expectedRows, self.tmpLogLocation)
+        actualRows = AnnoFilter.run(expectedRows, self.tmpLogLocation)
 
         # Then
         Row1EqualsRow0inActual = actualRows.equals(expectedRows)
@@ -221,7 +221,7 @@ class TestFilter(unittest.TestCase):
         expectedRows = ps.concat([EMBLdf, ncNCBIdf])
 
         # When
-        actualRows = Annofilter.run(expectedRows, self.tmpLogLocation)
+        actualRows = AnnoFilter.run(expectedRows, self.tmpLogLocation)
 
         # Then
         Row1EqualsRow0inActual = actualRows.equals(expectedRows)
@@ -253,7 +253,7 @@ class TestFilter(unittest.TestCase):
         inputDF = ps.concat([protienCodingDF,miscDF,lncDF])
 
         # When
-        actualRow = Annofilter.run(inputDF, self.tmpLogLocation)
+        actualRow = AnnoFilter.run(inputDF, self.tmpLogLocation)
 
         actualRowEqualsExpected = protienCodingDF.equals(actualRow)
 
@@ -286,7 +286,7 @@ class TestFilter(unittest.TestCase):
         inputDF = ps.concat([protienCodingDF, miscDF, lncDF])
 
         # When
-        actualRow = Annofilter.run(inputDF, self.tmpLogLocation)
+        actualRow = AnnoFilter.run(inputDF, self.tmpLogLocation)
 
         actualRowEqualsExpected = protienCodingDF.equals(actualRow)
 
@@ -319,7 +319,7 @@ class TestFilter(unittest.TestCase):
         inputDF = ps.concat([protienCodingDF, miscDF, lncDF])
 
         # When
-        actualRow = Annofilter.run(inputDF, self.tmpLogLocation)
+        actualRow = AnnoFilter.run(inputDF, self.tmpLogLocation)
 
         actualRowEqualsExpected = protienCodingDF.equals(actualRow)
 
@@ -351,7 +351,7 @@ class TestFilter(unittest.TestCase):
         inputDF = ps.concat([lowImpact,expectedRow,modifierImpact])
 
         # When
-        actualRow = Annofilter.run(inputDF, self.tmpLogLocation)
+        actualRow = AnnoFilter.run(inputDF, self.tmpLogLocation)
 
         ps.testing.assert_frame_equal(actualRow,expectedRow)
 
@@ -382,7 +382,7 @@ class TestFilter(unittest.TestCase):
         inputDF = ps.concat([expectedRow, secondDF, thirdDF])
 
         # When
-        actualRow = Annofilter.run(inputDF, self.tmpLogLocation)
+        actualRow = AnnoFilter.run(inputDF, self.tmpLogLocation)
 
         ps.testing.assert_frame_equal(actualRow, expectedRow)
 
@@ -423,7 +423,7 @@ class TestFilter(unittest.TestCase):
         expectedDF = expectedDF.reset_index(drop=True)
 
         # When
-        actualDF = Annofilter.run(inputDF, self.tmpLogLocation)
+        actualDF = AnnoFilter.run(inputDF, self.tmpLogLocation)
 
         ps.testing.assert_frame_equal(actualDF, expectedDF)
 
@@ -468,7 +468,7 @@ class TestFilter(unittest.TestCase):
         expectedDF = ps.concat([expectedRow, secondExpectedRow]).reset_index(drop=True)
 
         # When
-        actualDF = Annofilter.run(inputDF, self.tmpLogLocation)
+        actualDF = AnnoFilter.run(inputDF, self.tmpLogLocation)
 
         ps.testing.assert_frame_equal(actualDF, expectedDF)
 
@@ -514,6 +514,6 @@ class TestFilter(unittest.TestCase):
         expectedDF = ps.concat([expectedRow, secondExpectedRow]).reset_index(drop=True)
 
         # When
-        actualDF = Annofilter.run(inputDF, self.tmpLogLocation)
+        actualDF = AnnoFilter.run(inputDF, self.tmpLogLocation)
 
         ps.testing.assert_frame_equal(actualDF, expectedDF)

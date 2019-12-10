@@ -1,5 +1,5 @@
 from unittest import TestCase
-import annotationMerger
+import AnnotationMerger
 import pandas as ps
 
 
@@ -17,7 +17,7 @@ class TestFilter(TestCase):
         rowDic = {'chromosome': chromo, 'seq_start_position' : seq_start, 'ref_allele' : refAllele, 'alt_allele' : altAllele }
         row = ps.Series(rowDic)
 
-        actualChrPos = annotationMerger.formatChrPosKey(row)
+        actualChrPos = AnnotationMerger.formatChrPosKey(row)
 
         self.assertEqual(expectedChrPosKey,actualChrPos)
 
@@ -34,7 +34,7 @@ class TestFilter(TestCase):
                   'alt_allele': altAllele}
         row = ps.Series(rowDic)
 
-        actualChrPos = annotationMerger.formatChrPosKey(row)
+        actualChrPos = AnnotationMerger.formatChrPosKey(row)
 
         self.assertEqual(expectedChrPosKey, actualChrPos)
 
@@ -68,7 +68,7 @@ class TestFilter(TestCase):
         inputRows = ps.concat([EMBLdf, NCBIdf])
 
         # When
-        actualRows = annotationMerger.buildFinalTemplate(inputRows, tsvInputRow)
+        actualRows = AnnotationMerger.buildFinalTemplate(inputRows, tsvInputRow)
 
         # Then
         Row1EqualsRow0inActual = actualRows

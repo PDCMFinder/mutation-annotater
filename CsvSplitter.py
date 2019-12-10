@@ -49,7 +49,7 @@ def split(filehandler, delimiter=',', row_limit=10000,
         current_out_writer.writerow(row)
 
 
-def breakDownLargeFiles(rootDataDir, rowLimit):
+def breakDownLargeFiles(rootDataDir, rowLimit,size):
 
     dataFile = ".{1,20}.tsv$"
 
@@ -57,17 +57,18 @@ def breakDownLargeFiles(rootDataDir, rowLimit):
         if root.endswith("mut"):
             for afile in files :
                 filePath = root + "/" + afile
-                if re.match(dataFile,afile) and os.stat(filePath).st_size >  10000000 :
+                if re.match(dataFile,afile) and os.stat(filePath).st_size >  int(size) :
                     print("Breaking up CSV ")
                     print(filePath)
                     fileHandler = open(filePath, 'r')
-                    name = afile + "_%s"
+                    name = "dataChunk_%s.tsv"
                     split(fileHandler, delimiter='\t', row_limit=int(rowLimit),output_name_template=name, output_path=root, keep_headers=True )
 
 
-if len(sys.argv) == 3:
+if len(sys.argv) == 4:
     dataDir = sys.argv[1]
     rowLimit = sys.argv[2]
-    breakDownLargeFiles(dataDir, rowLimit)
+    size = sys.argv[3]
+    breakDownLargeFiles(dataDir, rowLimit, size)
 else:
     print("please provider the data directory and row limit")

@@ -11,19 +11,25 @@ import IOutilities
 import vcfSorter
 
 file = sys.argv[1]
+fileName = os.path.basename(file)
+parentDirectoryPath = os.path.dirname(file)
+provider = os.path.dirname(parentDirectoryPath)
+Updog = os.path.dirname(provider)
+
+
+vcfFilePath = file + '.vcf'
+masterLog = Updog + "/log"
+logDir = parentDirectoryPath + "/log_{0}".format(fileName[:-4])
+if not os.path.exists(logDir):
+    os.makedirs(logDir)
+
 
 def run():
-
-    global parentDirectoryPath
-    parentDirectoryPath = os.path.dirname(file)
-    global vcfFilePath
-    vcfFilePath = file + '.vcf'
 
     formatToVCFAndSave(file)
     annotateVCF(vcfFilePath,file)
     print("Annotating is complete")
     sp.call(("bash mergeWrapper.sh {0}".format(file)), shell=True)
-
 
 
 def formatToVCFAndSave(filePath):
@@ -36,13 +42,10 @@ def formatToVCFAndSave(filePath):
         reader = csv.DictReader(tsvOrCsvFile, delimiter="\t")
     elif filePath.endswith(".csv"):
         reader = csv.DictReader(tsvOrCsvFile, delimiter=",")
-
     assert(reader != None)
 
     print("Writing {0} to VCF".format(filePath))
-
     vcfFile.write("#chrom\tpos\tid\tref\talt\tqual\tfilter\tinfo\n")
-
     rowCount = 0
 
     for row in reader:
@@ -52,20 +55,11 @@ def formatToVCFAndSave(filePath):
 
     IOutilities.flushCloseFile(tsvOrCsvFile)
     IOutilities.flushCloseFile(vcfFile)
-
     vcfSorter.sort(vcfFilePath, vcfFilePath)
-    #uniqVCF(vcfFilePath,vcfFilePath)
-    os.path.dirname(os.path.dirname(filePath))
 
-    masterLog = "{0}/masterLog".format(os.path.dirname(os.path.dirname(os.path.dirname(filePath))))
     message = "The file {0} has {1} data points (including header)".format(filePath, rowCount)
     IOutilities.masterlogMessage(masterLog,message)
 
-def uniqVCF(vcfPath,vcfOutFile):
-
-    cmds = ['uniq ',vcfPath,' > ', vcfOutFile]
-    print(cmds)
-    sp.call(cmds,shell=False)
 
 def attemptToWriteRowToVCFisNotSuccessful(row, vcfFile) :
 
@@ -74,13 +68,13 @@ def attemptToWriteRowToVCFisNotSuccessful(row, vcfFile) :
 
     if bool(re.match(hg38RE, row["genome_assembly"])):
         if genomeDataIsMissing(row):
-            IOutilities.logMessage(parentDirectoryPath, "Row has incomplete data : {0} in file {1} caused by missing chro,seq start, ref or alt allele data".format(row.items(), vcfFilePath))
+            IOutilities.logMessage(logDir,fileName, "Row has incomplete data : {0} in file {1} caused by missing chro,seq start, ref or alt allele data".format(row.items(), vcfFilePath))
         elif allGenomicDataIsMissing(row):
             isEOF_orError = True
         else:
             formatRowToVCFAndWrite(row, vcfFile)
     else:
-        IOutilities.logMessage(parentDirectoryPath, "Warning found legacy data : {0}".format(row.items()))
+        IOutilities.logMessage(logDir,fileName, "Warning found legacy data : {0}".format(row.items()))
     return isEOF_orError
 
 def formatRowToVCFAndWrite(row, vcfFile) :
@@ -103,13 +97,15 @@ def annotateVCF(vcfFile, file):
     alleleDB = "/nfs/nobackup/spot/mouseinformatics/pdx/vepDBs/homo_sapiens_vep_98_GRCh38"
 
     vepIn = vcfFile
+    vepWarningFile = logDir + "/vep_warnings"
     vepOut = file + ".ANN"
     annoFilename = file + ".ANN"
 
     open(annoFilename, "w+")
+    IOutilities.chmodFile(logDir)
     IOutilities.chmodFile(annoFilename)
 
-    vepCMD = """vep -e -q -check_existing  -symbol -polyphen -sift -merged --use_transcript_ref —hgvs —hgvsg —variant_class -canonical -fork 4 -format vcf -force -offline -no_stats -cache -dir_cache {0} -fasta {1} -i {2} -o {3}""".format(alleleDB,fastaDir,vepIn, vepOut)
+    vepCMD = """vep -e -q -check_existing  -symbol -polyphen -sift -merged --use_transcript_ref —hgvs —hgvsg —variant_class -canonical -fork 4 -format vcf -force -offline -no_stats --warning_file {0} -cache -dir_cache {1} -fasta {2} -i {3} -o {4}""".format(vepWarningFile,alleleDB,fastaDir,vepIn, vepOut)
 
     print("singularity exec ensembl-vep.simg {0}".format(vepCMD))
 

@@ -9,17 +9,26 @@ import time
 import re
 import pandas as pa
 
-import Annofilter
+import AnnoFilter
 import IOutilities
 
 mergedPointsMissed = 0
 
 if len(sys.argv) > 1:
-    TSVfilePath = sys.argv[1]
+    tsvFilePath = sys.argv[1]
+    tsvFileName = os.path.basename(tsvFilePath)
     parentDirectory = os.path.dirname(sys.argv[1])
+    provider = os.path.dirname(parentDirectory)
+    Updog = os.path.dirname(provider)
+
+    vcfFilePath = file + '.vcf'
+    masterLog = Updog + "/log"
+    logDir = parentDirectory + "/log".format(tsvFileName[:-4])
+    if not os.path.exists(logDir):
+        os.makedirs(logDir)
+
 else:
     sys.stderr.write("Warning: Merger is being ran without file input. This should only be used for testing")
-
 
 def run():
     mergeRowsAndWrite()
@@ -34,20 +43,20 @@ def isCanonical(line):
 
 
 def mergeRowsAndWrite():
-    with open(TSVfilePath + ".hmz", 'w') as finalTemplate, \
-            open(TSVfilePath + ".ANN", 'r') as annoFile, \
-            open(TSVfilePath, 'r') as tsvFile:
+    with open(tsvFilePath + ".hmz", 'w') as finalTemplate, \
+            open(tsvFilePath + ".ANN", 'r') as annoFile, \
+            open(tsvFilePath, 'r') as tsvFile:
 
         outFileWriter = csv.writer(finalTemplate, delimiter="\t")
-        if TSVfilePath.endswith(".tsv"):
+        if tsvFilePath.endswith(".tsv"):
             reader = csv.DictReader(tsvFile, delimiter="\t")
-        elif TSVfilePath.endswith(".csv"):
+        elif tsvFilePath.endswith(".csv"):
             reader = csv.DictReader(tsvFile, delimiter=",")
         annoReader = pa.read_csv(annoFile, delimiter='\t', error_bad_lines=False, header=97)
 
-        message = "Merging original data : {0} /n and annotated data : {1} at {2}".format(TSVfilePath, annoFile,
+        message = "Merging original data : {0} /n and annotated data : {1} at {2}".format(tsvFilePath, annoFile,
                                                                                           time.ctime())
-        IOutilities.logMessage(parentDirectory, message)
+        IOutilities.logMessage(logDir, tsvFileName, message)
 
         headers = buildHeaders()
         outFileWriter.writerow(headers)
@@ -57,6 +66,8 @@ def mergeRowsAndWrite():
 
         for row in reader:
             rowNum += 1
+
+            print(".")
 
             if rowIsValidForMerge(row):
                 mergedRow = mergeRows(row, annoReader)
@@ -68,14 +79,13 @@ def mergeRowsAndWrite():
                                                                                                              len(
                                                                                                                  mergedRow)))
                     print(row)
-                    IOutilities.logMessage(parentDirectory, message)
+                    IOutilities.logMessage(logDir,tsvFileName, message)
             else:
 
                 message2 = ("Info: row {0} is broken or legacy".format(rowNum))
                 print(row)
-                IOutilities.logMessage(parentDirectory, message2)
+                IOutilities.logMessage(logDir,tsvFileName, message2)
 
-        masterLog = "{0}/masterLog".format(os.path.dirname(os.path.dirname(parentDirectory)))
         message = "{0} The completed file file {1} has {2} data points (including header)".format(time.ctime(),
                                                                                                   finalTemplate,
                                                                                                   rowAdded)
@@ -96,7 +106,7 @@ def mergeRows(row, annoReader):
     if (len(annoRows) == 0):
         builtRow = pa.Series()
     else:
-        twoMatchingRows = Annofilter.run(annoRows, parentDirectory)
+        twoMatchingRows = AnnoFilter.run(annoRows, parentDirectory)
         builtRow = buildFinalTemplate(twoMatchingRows, row)
     return builtRow
 
@@ -238,7 +248,7 @@ def logMissedPosition(row, chrStartPosKey):
         chrStartPosKey,
         row["ref_allele"],
         row["alt_allele"], row['Sample_ID'])
-    IOutilities.logMessage(os.path.dirname(TSVfilePath), message)
+    IOutilities.logMessage(logDir,tsvFileName, message)
 
 
 if len(sys.argv) > 1:

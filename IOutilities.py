@@ -5,8 +5,8 @@ import os
 import re
 
 
-def logMessage (fileParentDir, logMessage) :
-    with open(fileParentDir + "/data.log", 'a+') as log:
+def logMessage (fileParentDir,filename, logMessage) :
+    with open(fileParentDir + "data/log_{0}".format(filename), 'a+') as log:
 
         print(logMessage)
         log.write(logMessage + "\n")
