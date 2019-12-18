@@ -19,7 +19,7 @@ Updog = os.path.dirname(provider)
 
 vcfFilePath = file + '.vcf'
 masterLog = Updog + "/log"
-logDir = parentDirectoryPath + "/log_{0}".format(fileName[:-4])
+logDir = parentDirectoryPath + "/log".format(fileName[:-4])
 if not os.path.exists(logDir):
     os.makedirs(logDir)
 
@@ -105,7 +105,7 @@ def annotateVCF(vcfFile, file):
     IOutilities.chmodFile(logDir)
     IOutilities.chmodFile(annoFilename)
 
-    vepCMD = """vep -e -q -check_existing  -symbol -polyphen -sift -merged --use_transcript_ref —hgvs —hgvsg —variant_class -canonical -fork 4 -format vcf -force -offline -no_stats --warning_file {0} -cache -dir_cache {1} -fasta {2} -i {3} -o {4}""".format(vepWarningFile,alleleDB,fastaDir,vepIn, vepOut)
+    vepCMD = """vep -e -q -check_existing  -symbol -polyphen -sift -merged --use_transcript_ref —hgvs —hgvsg —variant_class -canonical -fork 4 -format vcf -force -offline -no_stats --warning_file {0} -cache -dir_cache {1} -fasta {2} -i {3} -o {4} 2>> {5}""".format(vepWarningFile,alleleDB,fastaDir,vepIn, vepOut,logDir)
 
     print("singularity exec ensembl-vep.simg {0}".format(vepCMD))
 
