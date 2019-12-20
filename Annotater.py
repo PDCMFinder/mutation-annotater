@@ -10,19 +10,21 @@ import re
 import IOutilities
 import vcfSorter
 
-file = sys.argv[1]
-fileName = os.path.basename(file)
-parentDirectoryPath = os.path.dirname(file)
-provider = os.path.dirname(parentDirectoryPath)
-Updog = os.path.dirname(provider)
+if len(sys.argv) > 1:
+    file = sys.argv[1]
+    fileName = os.path.basename(file)
+    parentDirectoryPath = os.path.dirname(file)
+    provider = os.path.dirname(parentDirectoryPath)
+    Updog = os.path.dirname(provider)
 
 
-vcfFilePath = file + '.vcf'
-masterLog = Updog + "/log"
-logDir = parentDirectoryPath + "/log".format(fileName[:-4])
-if not os.path.exists(logDir):
-    os.makedirs(logDir)
-
+    vcfFilePath = file + '.vcf'
+    masterLog = Updog + "/log"
+    logDir = parentDirectoryPath + "/log".format(fileName[:-4])
+    if not os.path.exists(logDir):
+        os.makedirs(logDir)
+else :
+    print("Please pass the absolute path to the file to annotate")
 
 def run():
 
@@ -80,10 +82,23 @@ def attemptToWriteRowToVCFisNotSuccessful(row, vcfFile) :
 def formatRowToVCFAndWrite(row, vcfFile) :
 
     chromo = IOutilities.formatChromo(row["chromosome"])
+    alleles = formatImproperInserions(row["ref_allele"],row["alt_allele"])
 
     vcfRow = "{0}\t{1}\t.\t{2}\t{3}\t.\t.\t.\t\n".format(chromo, row["seq_start_position"],
-                                                         row["ref_allele"], row["alt_allele"])
+                                                         alleles[0], alleles[1])
     vcfFile.write(vcfRow)
+
+def formatImproperInserions(refAllele, altAllele) :
+    if not refAllele[0] == " " and refAllele[0] == "-":
+        formatedRefAllele = "A"
+        formatedAltAllele = "A{}".format(altAllele)
+    elif '-' in refAllele:
+        IOutilities.logMessage(logDir,fileName, "Ref allele {} not supported yet".format(refAllele))
+    else :
+        formatedRefAllele = refAllele
+        formatedAltAllele = altAllele
+    return [formatedRefAllele,formatedAltAllele]
+
 
 def genomeDataIsMissing (row) :
     return not row["chromosome"] or not row["seq_start_position"] or not row["ref_allele"] or not row["alt_allele"]
@@ -112,5 +127,5 @@ def annotateVCF(vcfFile, file):
     sp.call(
         "singularity exec ensembl-vep.simg {0}".format(vepCMD), shell=True)
 
-
-run()
+if len(sys.argv) > 1:
+    run()

@@ -47,6 +47,7 @@ def mergeRowsAndWrite():
             open(tsvFilePath + ".ANN", 'r') as annoFile, \
             open(tsvFilePath, 'r') as tsvFile:
 
+
         outFileWriter = csv.writer(finalTemplate, delimiter="\t")
         if tsvFilePath.endswith(".tsv"):
             reader = csv.DictReader(tsvFile, delimiter="\t")
@@ -136,6 +137,7 @@ def formatChrPosKey(row):
                 chrPosKey = "{0}:{1}".format(formatedchr, adjustedSeq)
         elif(ref[0] == '-'):
             chrPosKey = "{0}:{1}-{2}".format(formatedchr, seqStart, adjustedSeq)
+            IOutilities.logMessage(logDir, tsvFileName, "Attemping to adjust for improper insertion format {}".format(chrPosKey))
         else :
             chrPosKey = "{0}:{1}".format(formatedchr, seqStart)
     else:
