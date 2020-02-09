@@ -18,21 +18,21 @@ def main():
 
     if len(files) == 0 : print("No files found. Only TSV and CSV is currently supported. Bro, did you even LIFT?")
 
-    print(os.getuid()) 
+    print(os.getuid())
 
-    for file in files :
+    for aFile in files :
 
-        baseName = os.path.basename(file)
-        provider = os.path.basename(os.path.dirname(os.path.dirname(file)))
+        baseName = os.path.basename(aFile)
+        provider = os.path.basename(os.path.dirname(os.path.dirname(aFile)))
 
-	print(provider)
+    print(provider)
 	
-        jobName = "{0}-{1}".format(provider,baseName)
-        jobScript = '/nfs/nobackup/spot/mouseinformatics/pdx/omicAnno/annoJob.sh'
+    jobName = "{0}-{1}".format(provider,baseName)
+    jobScript = '/nfs/nobackup/spot/mouseinformatics/pdx/omicAnno/annoJob.sh'
 
-        cmd = "bash {0} {1} {2}".format(jobScript,jobName,file)
-        print(cmd) 
-        sp.call(cmd,shell=True)
+    cmd = "bash {0} {1} {2}".format(jobScript,jobName,aFile)
+    print(cmd)
+    sp.call(cmd,shell=True)
 
 
 def walkDirForMutData(dataDir):
