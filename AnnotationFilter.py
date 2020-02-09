@@ -5,8 +5,10 @@ import IOutilities
 import re
 
 
-def run(annoRows, parentDirectory):
-    
+def run(annoRows, fullFileName, parentDirectory):
+
+    fileBaseName = fullFileName[:-4]
+
     EMBLrows = filterRowsByDB(annoRows, "EMBL")
     NCBIrows = filterRowsByDB(annoRows, "NCBI")
 
@@ -20,7 +22,7 @@ def run(annoRows, parentDirectory):
         if len(EMBLrows) == 1 and len(NCBIrows) == 1:
             rowsReadyToBuild = annoRows
         else:
-            filteredRows = filterToCompleteData(annoRows,EMBLrows,NCBIrows,parentDirectory)
+            filteredRows = filterToCompleteData(annoRows,EMBLrows,NCBIrows,fileBaseName, parentDirectory)
             rowsReadyToBuild = selectColumnsByCriteria(filteredRows)
     elif EMBLcanonCount == 1 and NCBIcanonCount == 1:
         rowsReadyToBuild = pa.concat([EMBLcanon, NCBIcanon])
@@ -29,7 +31,7 @@ def run(annoRows, parentDirectory):
         rowsReadyToBuild = selectColumnsByCriteria(filteredRows).reset_index(drop=True)
     return rowsReadyToBuild
 
-def filterToCompleteData(annoRows,EMBLrows, NCBIrows, parentDirectory):
+def filterToCompleteData(annoRows,EMBLrows, NCBIrows, fileBaseName, parentDirectory):
 
     EMBLcanon = getCanon(EMBLrows)
     NCBIcanon = getCanon(NCBIrows)
@@ -49,7 +51,7 @@ def filterToCompleteData(annoRows,EMBLrows, NCBIrows, parentDirectory):
     elif rowsExistInEither(EMBLrows, NCBIrows):
         filteredRows = annoRows
     else:
-        logDroppedPoint(parentDirectory)
+        logDroppedPoint(fileBaseName, parentDirectory)
 
     return filteredRows
 
@@ -63,59 +65,64 @@ def selectColumnsByCriteria(filteredRows):
         else : selectedRow = NCBIrows
         selectedAnnoRows = selectAnnotationByCriteria(selectedRow)
     elif rowsExistForBoth(EMBLrows, NCBIrows):
-
-        selectedAnnoRows = selectAnnotationByMatch(EMBLrows,NCBIrows)
+        selectedAnnoRows = selectAnnotationHighestScoringMatch(EMBLrows, NCBIrows)
     else :
         selectedAnnoRows = pa.DataFrame()
 
     return selectedAnnoRows
 
-def selectAnnotationByMatch(EMBLrows,NCBIrows):
+def selectAnnotationHighestScoringMatch(EMBLrows, NCBIrows):
 
     fixedNCBIrows = NCBIrows.reset_index(drop=True)
     fixedEMBLrows = EMBLrows.reset_index(drop=True)
 
-    scoreSeries = returnTopMatchingScore(fixedEMBLrows, fixedNCBIrows)
+    scoreSeries = returnTopMatchingPairScore(fixedEMBLrows, fixedNCBIrows)
     droppedScore = scoreSeries.drop(['Score'],axis=1)
 
     return droppedScore.iloc[0:2]
 
 
-def returnTopMatchingScore(allRows, NCBIrows):
+def returnTopMatchingPairScore(EMBLrows, NCBIrows):
 
-    concatRows = pa.DataFrame()
+    allPairedScoredRows = pa.DataFrame()
 
-    for index, row in allRows.iterrows():
+    for index, singleEmblRow in EMBLrows.iterrows():
+        extraVariables = extractDataFromExtrasColumn(singleEmblRow)
+        transposedEmbleRow = pa.DataFrame(singleEmblRow).transpose().reset_index(drop=True)
+        pairedScoredRows = calculateScoreOfMatchesBetweenNcbiRowsAndOneEmblRow(NCBIrows, transposedEmbleRow, extraVariables)
+        allPairedScoredRows = pa.concat([pairedScoredRows,allPairedScoredRows])
 
-      extras = row.loc['Extra']
-
-      symbolRe = "SYMBOL=[A-Za-z0-9]{0,15}"
-      biotypeRe = "BIOTYPE=[A-Za-z_]{0,50}"
-      impactRe = "IMPACT=(HIGH|MODERATE|MODIFIER|LOW)"
-      canonicalRe = "CANONICAL=(YES|NO)"
-
-      symbol = "NOT-FOUND"
-      biotype = "NOT-FOUND"
-      impact = "NOT-FOUND"
-      isCanonical = "NOT-FOUND"
-
-      symbolMatch = re.search(symbolRe, extras)
-      biotypeMatch = re.search(biotypeRe, extras)
-      impactMatch = re.search(impactRe, extras)
-      isCanonicalMatch = re.search(canonicalRe, extras)
-
-      if symbolMatch: symbol = symbolMatch.group(0)
-      if biotypeMatch: biotype = biotypeMatch.group(0)
-      if impactMatch : impact = impactMatch.group(0)
-      if isCanonicalMatch: isCanonical = isCanonicalMatch.group(0)
-
-      scoredRows = calculateMatchingScore(NCBIrows, allRows, symbol, biotype, impact, isCanonical)
-      concatRows = pa.concat([scoredRows,concatRows])
-
-    highestScore = concatRows[concatRows['Score'] == concatRows['Score'].max()]
+    highestScore = allPairedScoredRows[(allPairedScoredRows['Score'] == allPairedScoredRows['Score'].max())]
     return highestScore
 
-def calculateMatchingScore(NCBIrows,row, symbol,biotype, impact, isCanonical):
+def extractDataFromExtrasColumn(singleEmblRow):
+
+    extras = singleEmblRow.loc['Extra']
+
+    symbolRe = "SYMBOL=[A-Za-z0-9]{0,15}"
+    biotypeRe = "BIOTYPE=[A-Za-z_]{0,50}"
+    impactRe = "IMPACT=(HIGH|MODERATE|MODIFIER|LOW)"
+    canonicalRe = "CANONICAL=(YES|NO)"
+
+    symbol = "NOT-FOUND"
+    biotype = "NOT-FOUND"
+    impact = "NOT-FOUND"
+    isCanonical = "NOT-FOUND"
+
+    symbolMatch = re.search(symbolRe, extras)
+    biotypeMatch = re.search(biotypeRe, extras)
+    impactMatch = re.search(impactRe, extras)
+    isCanonicalMatch = re.search(canonicalRe, extras)
+
+    if symbolMatch: symbol = symbolMatch.group(0)
+    if biotypeMatch: biotype = biotypeMatch.group(0)
+    if impactMatch: impact = impactMatch.group(0)
+    if isCanonicalMatch: isCanonical = isCanonicalMatch.group(0)
+
+    return [symbol,biotype,impact,isCanonical]
+
+
+def calculateScoreOfMatchesBetweenNcbiRowsAndOneEmblRow(NCBIrows, EmbleRow, extraVariables):
 
    concatEmbl = pa.DataFrame()
    concatNcbi = pa.DataFrame()
@@ -125,21 +132,24 @@ def calculateMatchingScore(NCBIrows,row, symbol,biotype, impact, isCanonical):
    for index,NCBIrow in NCBIrows.iterrows():
 
        transposedNcbiRow = pa.DataFrame(NCBIrow).transpose().reset_index(drop=True)
-
-       transposedNcbiRow['Score'] = 0
+       transposedNcbiRow.loc[:,'Score'] = 0
 
        if len(transposedNcbiRow) == 1:
-            extras = transposedNcbiRow['Extra'].get(0)
+            extras = transposedNcbiRow.at[0,'Extra']
 
-            if re.search(symbol,extras): transposedNcbiRow['Score'] += 1000
-            if re.search(isCanonical,extras): transposedNcbiRow['Score'] += 100
-            if re.search(biotype,extras): transposedNcbiRow['Score'] += 10
-            if re.search(impact,extras): transposedNcbiRow['Score'] += 1
+            if re.search(extraVariables[0],extras): transposedNcbiRow.at[0, 'Score'] += 1000
+            if re.search(extraVariables[1],extras): transposedNcbiRow.at[0,'Score'] += 100
+            if re.search(extraVariables[2],extras): transposedNcbiRow.at[0,'Score'] += 10
+            if re.search(extraVariables[3],extras): transposedNcbiRow.at[0,'Score'] += 1
 
-       row['Score'] = transposedNcbiRow['Score']
+       EmbleRow.at[0, 'Score'] = transposedNcbiRow.at[0, 'Score']
 
        concatNcbi=pa.concat([ncbi,pa.DataFrame(transposedNcbiRow)])
-       concatEmbl=pa.concat([embl,pa.DataFrame(row)])
+       concatEmbl=pa.concat([embl, EmbleRow])
+
+       ncbi = concatNcbi
+       embl = concatEmbl
+
 
    return pa.concat([concatEmbl,concatNcbi])
 
@@ -161,13 +171,15 @@ def selectAnnotationByCriteria(row):
 
 
 def filterRowsByDB(annoRows, emblOrNCBI):
-    dbRows = pa.DataFrame()
+    uniqDbRows = pa.DataFrame()
     if not (len(annoRows) == 0):
         if emblOrNCBI == "EMBL":
             dbRows = annoRows[annoRows['Gene'].str.contains("^ENS") & annoRows['Feature'].str.contains("ENS")]
+            uniqDbRows = dbRows.drop_duplicates()
         elif emblOrNCBI == "NCBI":
             dbRows = annoRows[~annoRows['Gene'].str.contains("^ENS") & ~annoRows['Feature'].str.contains("^ENS")]
-    return dbRows
+            uniqDbRows = dbRows.drop_duplicates()
+    return uniqDbRows
 
 def getCanon(annoRows):
     return annoRows[annoRows['Extra'].str.contains("CANONICAL=YES")] if len(annoRows) > 0 else pa.DataFrame()
@@ -191,6 +203,6 @@ def concatIfSecondDataFrameHasrows(row,rowToCheck):
         concatRows = row
     return concatRows
 
-def logDroppedPoint(parentDirectory):
+def logDroppedPoint(baseName,parentDirectory):
     message = "No matching annotations found. May be an error in genomic coordinates"
-    IOutilities.logMessage(parentDirectory, message)
+    IOutilities.logMessage(parentDirectory, baseName, message)

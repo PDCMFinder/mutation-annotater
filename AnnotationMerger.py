@@ -9,7 +9,7 @@ import time
 import re
 import pandas as pa
 
-import AnnoFilter
+import AnnotationFilter
 import IOutilities
 
 mergedPointsMissed = 0
@@ -23,7 +23,7 @@ if len(sys.argv) > 1:
 
     vcfFilePath = file + '.vcf'
     masterLog = Updog + "/log"
-    logDir = parentDirectory + "/log".format(tsvFileName[:-4])
+    logDir = parentDirectory + "/log_{}".format(tsvFileName[:-4])
     if not os.path.exists(logDir):
         os.makedirs(logDir)
 
@@ -107,7 +107,7 @@ def mergeRows(row, annoReader):
     if (len(annoRows) == 0):
         builtRow = pa.Series()
     else:
-        twoMatchingRows = AnnoFilter.run(annoRows, parentDirectory)
+        twoMatchingRows = AnnotationFilter.run(annoRows, tsvFileName, parentDirectory)
         builtRow = buildFinalTemplate(twoMatchingRows, row)
     return builtRow
 

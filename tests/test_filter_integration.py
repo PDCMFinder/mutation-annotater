@@ -1,17 +1,19 @@
 import unittest
-import AnnoFilter
+import AnnotationFilter
 import pandas as ps
 
 
 class TestFilter(unittest.TestCase):
 
     tmpLogLocation = "/tmp/"
+    tmpFileName = "filterTest"
 
     def test_GivenEmptyDF_Then_RowLensAreEqual(self):
+
         #Given
         expected = ps.DataFrame()
         #When
-        actualRow = AnnoFilter.run(expected, self.tmpLogLocation)
+        actualRow = AnnotationFilter.run(expected, self.tmpFileName, self.tmpLogLocation)
         #Then
         self.assertEqual(type(expected), type(actualRow))
         self.assertEqual(len(expected), len(actualRow))
@@ -28,7 +30,7 @@ class TestFilter(unittest.TestCase):
         expectedRow = ps.DataFrame([data], columns=colNames)
 
         #When
-        actualRow = AnnoFilter.run(expectedRow, self.tmpLogLocation)
+        actualRow = AnnotationFilter.run(expectedRow, self.tmpFileName, self.tmpLogLocation)
 
         #Then
 
@@ -49,7 +51,7 @@ class TestFilter(unittest.TestCase):
         expectedRow = ps.DataFrame([data], columns=colNames)
 
         # When
-        actualRow = AnnoFilter.run(expectedRow, self.tmpLogLocation)
+        actualRow = AnnotationFilter.run(expectedRow, self.tmpFileName, self.tmpLogLocation)
 
         # Then
 
@@ -67,7 +69,7 @@ class TestFilter(unittest.TestCase):
         expectedRow = ps.DataFrame([data], columns=colNames)
 
         # When
-        actualRow = AnnoFilter.run(expectedRow, self.tmpLogLocation)
+        actualRow = AnnotationFilter.run(expectedRow, self.tmpFileName, self.tmpLogLocation)
 
         # Then
         Row1EqualsRow0inActual = actualRow.equals(expectedRow[0:])
@@ -85,7 +87,7 @@ class TestFilter(unittest.TestCase):
                     "Extra"]
         expectedRow = ps.DataFrame([data], columns=colNames)
         # When
-        actualRow = AnnoFilter.run(expectedRow, self.tmpLogLocation)
+        actualRow = AnnotationFilter.run(expectedRow, self.tmpFileName, self.tmpLogLocation)
 
         # Then
         Row1EqualsRow0inActual = actualRow.equals(expectedRow[0:])
@@ -111,7 +113,7 @@ class TestFilter(unittest.TestCase):
         expectedRows = ps.concat([EMBLdf,NCBIdf])
 
         # When
-        actualRows = AnnoFilter.run(expectedRows, self.tmpLogLocation)
+        actualRows = AnnotationFilter.run(expectedRows, self.tmpFileName, self.tmpLogLocation)
 
         # Then
         Row1EqualsRow0inActual = actualRows.equals(expectedRows)
@@ -138,7 +140,7 @@ class TestFilter(unittest.TestCase):
         expectedRows = ps.concat([EMBLdf,NCBIdf])
 
         # When
-        actualRows = AnnoFilter.run(expectedRows, self.tmpLogLocation)
+        actualRows = AnnotationFilter.run(expectedRows, self.tmpFileName, self.tmpLogLocation)
 
         # Then
         Row1EqualsRow0inActual = actualRows.equals(expectedRows)
@@ -167,7 +169,7 @@ class TestFilter(unittest.TestCase):
         expectedRows = ps.concat([EMBLdf, NCBIdf])
 
         # When
-        actualRows = AnnoFilter.run(expectedRows, self.tmpLogLocation)
+        actualRows = AnnotationFilter.run(expectedRows, self.tmpFileName, self.tmpLogLocation)
 
         # Then
         Row1EqualsRow0inActual = actualRows.equals(expectedRows)
@@ -194,7 +196,7 @@ class TestFilter(unittest.TestCase):
         expectedRows = ps.concat([EMBLdf, ncNCBIdf])
 
         # When
-        actualRows = AnnoFilter.run(expectedRows, self.tmpLogLocation)
+        actualRows = AnnotationFilter.run(expectedRows, self.tmpFileName, self.tmpLogLocation)
 
         # Then
         Row1EqualsRow0inActual = actualRows.equals(expectedRows)
@@ -221,7 +223,7 @@ class TestFilter(unittest.TestCase):
         expectedRows = ps.concat([EMBLdf, ncNCBIdf])
 
         # When
-        actualRows = AnnoFilter.run(expectedRows, self.tmpLogLocation)
+        actualRows = AnnotationFilter.run(expectedRows, self.tmpFileName, self.tmpLogLocation)
 
         # Then
         Row1EqualsRow0inActual = actualRows.equals(expectedRows)
@@ -253,7 +255,9 @@ class TestFilter(unittest.TestCase):
         inputDF = ps.concat([protienCodingDF,miscDF,lncDF])
 
         # When
-        actualRow = AnnoFilter.run(inputDF, self.tmpLogLocation)
+
+
+        actualRow = AnnotationFilter.run(inputDF, self.tmpFileName, self.tmpLogLocation)
 
         actualRowEqualsExpected = protienCodingDF.equals(actualRow)
 
@@ -286,7 +290,9 @@ class TestFilter(unittest.TestCase):
         inputDF = ps.concat([protienCodingDF, miscDF, lncDF])
 
         # When
-        actualRow = AnnoFilter.run(inputDF, self.tmpLogLocation)
+
+
+        actualRow = AnnotationFilter.run(inputDF, self.tmpFileName, self.tmpLogLocation)
 
         actualRowEqualsExpected = protienCodingDF.equals(actualRow)
 
@@ -319,7 +325,9 @@ class TestFilter(unittest.TestCase):
         inputDF = ps.concat([protienCodingDF, miscDF, lncDF])
 
         # When
-        actualRow = AnnoFilter.run(inputDF, self.tmpLogLocation)
+
+
+        actualRow = AnnotationFilter.run(inputDF, self.tmpFileName, self.tmpLogLocation)
 
         actualRowEqualsExpected = protienCodingDF.equals(actualRow)
 
@@ -351,7 +359,8 @@ class TestFilter(unittest.TestCase):
         inputDF = ps.concat([lowImpact,expectedRow,modifierImpact])
 
         # When
-        actualRow = AnnoFilter.run(inputDF, self.tmpLogLocation)
+
+        actualRow = AnnotationFilter.run(inputDF, self.tmpFileName, self.tmpLogLocation)
 
         ps.testing.assert_frame_equal(actualRow,expectedRow)
 
@@ -382,7 +391,8 @@ class TestFilter(unittest.TestCase):
         inputDF = ps.concat([expectedRow, secondDF, thirdDF])
 
         # When
-        actualRow = AnnoFilter.run(inputDF, self.tmpLogLocation)
+
+        actualRow = AnnotationFilter.run(inputDF, self.tmpFileName, self.tmpLogLocation)
 
         ps.testing.assert_frame_equal(actualRow, expectedRow)
 
@@ -423,7 +433,8 @@ class TestFilter(unittest.TestCase):
         expectedDF = expectedDF.reset_index(drop=True)
 
         # When
-        actualDF = AnnoFilter.run(inputDF, self.tmpLogLocation)
+
+        actualDF = AnnotationFilter.run(inputDF, self.tmpFileName, self.tmpLogLocation)
 
         ps.testing.assert_frame_equal(actualDF, expectedDF)
 
@@ -468,7 +479,7 @@ class TestFilter(unittest.TestCase):
         expectedDF = ps.concat([expectedRow, secondExpectedRow]).reset_index(drop=True)
 
         # When
-        actualDF = AnnoFilter.run(inputDF, self.tmpLogLocation)
+        actualDF = AnnotationFilter.run(inputDF, self.tmpFileName, self.tmpLogLocation)
 
         ps.testing.assert_frame_equal(actualDF, expectedDF)
 
@@ -514,6 +525,41 @@ class TestFilter(unittest.TestCase):
         expectedDF = ps.concat([expectedRow, secondExpectedRow]).reset_index(drop=True)
 
         # When
-        actualDF = AnnoFilter.run(inputDF, self.tmpLogLocation)
+        actualDF = AnnotationFilter.run(inputDF, self.tmpFileName, self.tmpLogLocation)
 
         ps.testing.assert_frame_equal(actualDF, expectedDF)
+
+    def test_RealLifeError_When_givenToFilter_DoNotReturnCloneBasedSymbol(self):
+
+        actualFailingData = [ [ "X_83508838_C/T","X:83508838","T","ENSG00000279437","ENST00000625081","Transcript","non_coding_transcript_exon_variant","377","-","-","-","-","-","IMPACT=MODIFIER;STRAND=-1;VARIANT_CLASS=SNV;SYMBOL=Z82170.1;SYMBOL_SOURCE=Clone_based_ensembl_gene;BIOTYPE=TEC;CANONICAL=YES;SOURCE=Ensembl;GIVEN_REF=C;USED_REF=C;EXON=1/1;HGVSc=ENST00000625081.1:n.377G>A" ],
+[ "X_83508838_C/T","X:83508838","T","ENSG00000196767","ENST00000644024","Transcript","missense_variant","549","514","172","H/Y","Cac/Tac","-","IMPACT=MODERATE;STRAND=1;VARIANT_CLASS=SNV;SYMBOL=POU3F4;SYMBOL_SOURCE=HGNC;HGNC_ID=HGNC:9217;BIOTYPE=protein_coding;CANONICAL=YES;MANE=NM_000307.5;APPRIS=P1;CCDS=CCDS14450.1;ENSP=ENSP00000495996;TREMBL=A0A2R8Y739;UNIPARC=UPI0000131D8A;SOURCE=Ensembl;GIVEN_REF=C;USED_REF=C;GENE_PHENO=1;SIFT=tolerated(0.17);PolyPhen=benign(0.216);EXON=1/1;DOMAINS=PIRSF:PIRSF002629,PANTHER:PTHR11636,PANTHER:PTHR11636:SF83;HGVSc=ENST00000644024.2:c.514C>T;HGVSp=ENSP00000495996.1:p.His172Tyr" ],
+[ "X_83508838_C/T","X:83508838","T","5456","NM_000307.5","Transcript","missense_variant","549","514","172","H/Y","Cac/Tac","-","IMPACT=MODERATE;STRAND=1;VARIANT_CLASS=SNV;SYMBOL=POU3F4;SYMBOL_SOURCE=EntrezGene;HGNC_ID=HGNC:9217;BIOTYPE=protein_coding;CANONICAL=YES;ENSP=NP_000298.3;SOURCE=RefSeq;GIVEN_REF=C;USED_REF=C;SIFT=tolerated(0.17);PolyPhen=benign(0.216);EXON=1/1;HGVSc=NM_000307.5:c.514C>T;HGVSp=NP_000298.3:p.His172Tyr" ],
+[ "X_83508838_C/T","X:83508838","T","107985635","XR_001755986.1","Transcript","upstream_gene_variant","-","-","-","-","-","-","IMPACT=MODIFIER;DISTANCE=2022;STRAND=-1;VARIANT_CLASS=SNV;SYMBOL=LOC107985635;SYMBOL_SOURCE=EntrezGene;BIOTYPE=lncRNA;CANONICAL=YES;SOURCE=RefSeq;GIVEN_REF=C;USED_REF=C" ],
+[ "X_83508838_C/T","X:83508838","T","-","ENSR00000909988","RegulatoryFeature","regulatory_region_variant","-","-","-","-","-","-","IMPACT=MODIFIER;VARIANT_CLASS=SNV;BIOTYPE=promoter" ],
+[ "X_83508838_C/T","X:83508838","T","ENSG00000279437","ENST00000625081","Transcript","non_coding_transcript_exon_variant","377","-","-","-","-","-","IMPACT=MODIFIER;STRAND=-1;VARIANT_CLASS=SNV;SYMBOL=Z82170.1;SYMBOL_SOURCE=Clone_based_ensembl_gene;BIOTYPE=TEC;CANONICAL=YES;SOURCE=Ensembl;GIVEN_REF=C;USED_REF=C;EXON=1/1;HGVSc=ENST00000625081.1:n.377G>A" ],
+[ "X_83508838_C/T","X:83508838","T","ENSG00000196767","ENST00000644024","Transcript","missense_variant","549","514","172","H/Y","Cac/Tac","-","IMPACT=MODERATE;STRAND=1;VARIANT_CLASS=SNV;SYMBOL=POU3F4;SYMBOL_SOURCE=HGNC;HGNC_ID=HGNC:9217;BIOTYPE=protein_coding;CANONICAL=YES;MANE=NM_000307.5;APPRIS=P1;CCDS=CCDS14450.1;ENSP=ENSP00000495996;TREMBL=A0A2R8Y739;UNIPARC=UPI0000131D8A;SOURCE=Ensembl;GIVEN_REF=C;USED_REF=C;GENE_PHENO=1;SIFT=tolerated(0.17);PolyPhen=benign(0.216);EXON=1/1;DOMAINS=PIRSF:PIRSF002629,PANTHER:PTHR11636,PANTHER:PTHR11636:SF83;HGVSc=ENST00000644024.2:c.514C>T;HGVSp=ENSP00000495996.1:p.His172Tyr" ],
+[ "X_83508838_C/T","X:83508838","T","5456","NM_000307.5","Transcript","missense_variant","549","514","172","H/Y","Cac/Tac","-","IMPACT=MODERATE;STRAND=1;VARIANT_CLASS=SNV;SYMBOL=POU3F4;SYMBOL_SOURCE=EntrezGene;HGNC_ID=HGNC:9217;BIOTYPE=protein_coding;CANONICAL=YES;ENSP=NP_000298.3;SOURCE=RefSeq;GIVEN_REF=C;USED_REF=C;SIFT=tolerated(0.17);PolyPhen=benign(0.216);EXON=1/1;HGVSc=NM_000307.5:c.514C>T;HGVSp=NP_000298.3:p.His172Tyr" ],
+[ "X_83508838_C/T","X:83508838","T","107985635","XR_001755986.1","Transcript","upstream_gene_variant","-","-","-","-","-","-","IMPACT=MODIFIER;DISTANCE=2022;STRAND=-1;VARIANT_CLASS=SNV;SYMBOL=LOC107985635;SYMBOL_SOURCE=EntrezGene;BIOTYPE=lncRNA;CANONICAL=YES;SOURCE=RefSeq;GIVEN_REF=C;USED_REF=C" ],
+[ "X_83508838_C/T","X:83508838","T","-","ENSR00000909988","RegulatoryFeature","regulatory_region_variant","-","-","-","-","-","-","IMPACT=MODIFIER;VARIANT_CLASS=SNV;BIOTYPE=promoter" ],
+[ "X_83508838_C/T","X:83508838","T","ENSG00000279437","ENST00000625081","Transcript","non_coding_transcript_exon_variant","377","-","-","-","-","-","IMPACT=MODIFIER;STRAND=-1;VARIANT_CLASS=SNV;SYMBOL=Z82170.1;SYMBOL_SOURCE=Clone_based_ensembl_gene;BIOTYPE=TEC;CANONICAL=YES;SOURCE=Ensembl;GIVEN_REF=C;USED_REF=C;EXON=1/1;HGVSc=ENST00000625081.1:n.377G>A" ],
+[ "X_83508838_C/T","X:83508838","T","ENSG00000196767","ENST00000644024","Transcript","missense_variant","549","514","172","H/Y","Cac/Tac","-","IMPACT=MODERATE;STRAND=1;VARIANT_CLASS=SNV;SYMBOL=POU3F4;SYMBOL_SOURCE=HGNC;HGNC_ID=HGNC:9217;BIOTYPE=protein_coding;CANONICAL=YES;MANE=NM_000307.5;APPRIS=P1;CCDS=CCDS14450.1;ENSP=ENSP00000495996;TREMBL=A0A2R8Y739;UNIPARC=UPI0000131D8A;SOURCE=Ensembl;GIVEN_REF=C;USED_REF=C;GENE_PHENO=1;SIFT=tolerated(0.17);PolyPhen=benign(0.216);EXON=1/1;DOMAINS=PIRSF:PIRSF002629,PANTHER:PTHR11636,PANTHER:PTHR11636:SF83;HGVSc=ENST00000644024.2:c.514C>T;HGVSp=ENSP00000495996.1:p.His172Tyr" ],
+[ "X_83508838_C/T","X:83508838","T","5456","NM_000307.5","Transcript","missense_variant","549","514","172","H/Y","Cac/Tac","-","IMPACT=MODERATE;STRAND=1;VARIANT_CLASS=SNV;SYMBOL=POU3F4;SYMBOL_SOURCE=EntrezGene;HGNC_ID=HGNC:9217;BIOTYPE=protein_coding;CANONICAL=YES;ENSP=NP_000298.3;SOURCE=RefSeq;GIVEN_REF=C;USED_REF=C;SIFT=tolerated(0.17);PolyPhen=benign(0.216);EXON=1/1;HGVSc=NM_000307.5:c.514C>T;HGVSp=NP_000298.3:p.His172Tyr" ],
+[ "X_83508838_C/T","X:83508838","T","107985635","XR_001755986.1","Transcript","upstream_gene_variant","-","-","-","-","-","-","IMPACT=MODIFIER;DISTANCE=2022;STRAND=-1;VARIANT_CLASS=SNV;SYMBOL=LOC107985635;SYMBOL_SOURCE=EntrezGene;BIOTYPE=lncRNA;CANONICAL=YES;SOURCE=RefSeq;GIVEN_REF=C;USED_REF=C" ],
+[ "X_83508838_C/T","X:83508838","T","-","ENSR00000909988","RegulatoryFeature","regulatory_region_variant","-","-","-","-","-","-","IMPACT=MODIFIER;VARIANT_CLASS=SNV;BIOTYPE=promoter" ],
+[ "X_83508838_C/T","X:83508838","T","ENSG00000279437","ENST00000625081","Transcript","non_coding_transcript_exon_variant","377","-","-","-","-","-","IMPACT=MODIFIER;STRAND=-1;VARIANT_CLASS=SNV;SYMBOL=Z82170.1;SYMBOL_SOURCE=Clone_based_ensembl_gene;BIOTYPE=TEC;CANONICAL=YES;SOURCE=Ensembl;GIVEN_REF=C;USED_REF=C;EXON=1/1;HGVSc=ENST00000625081.1:n.377G>A" ],
+[ "X_83508838_C/T","X:83508838","T","ENSG00000196767","ENST00000644024","Transcript","missense_variant","549","514","172","H/Y","Cac/Tac","-","IMPACT=MODERATE;STRAND=1;VARIANT_CLASS=SNV;SYMBOL=POU3F4;SYMBOL_SOURCE=HGNC;HGNC_ID=HGNC:9217;BIOTYPE=protein_coding;CANONICAL=YES;MANE=NM_000307.5;APPRIS=P1;CCDS=CCDS14450.1;ENSP=ENSP00000495996;TREMBL=A0A2R8Y739;UNIPARC=UPI0000131D8A;SOURCE=Ensembl;GIVEN_REF=C;USED_REF=C;GENE_PHENO=1;SIFT=tolerated(0.17);PolyPhen=benign(0.216);EXON=1/1;DOMAINS=PIRSF:PIRSF002629,PANTHER:PTHR11636,PANTHER:PTHR11636:SF83;HGVSc=ENST00000644024.2:c.514C>T;HGVSp=ENSP00000495996.1:p.His172Tyr" ],
+[ "X_83508838_C/T","X:83508838","T","5456","NM_000307.5","Transcript","missense_variant","549","514","172","H/Y","Cac/Tac","-","IMPACT=MODERATE;STRAND=1;VARIANT_CLASS=SNV;SYMBOL=POU3F4;SYMBOL_SOURCE=EntrezGene;HGNC_ID=HGNC:9217;BIOTYPE=protein_coding;CANONICAL=YES;ENSP=NP_000298.3;SOURCE=RefSeq;GIVEN_REF=C;USED_REF=C;SIFT=tolerated(0.17);PolyPhen=benign(0.216);EXON=1/1;HGVSc=NM_000307.5:c.514C>T;HGVSp=NP_000298.3:p.His172Tyr" ],
+[ "X_83508838_C/T","X:83508838","T","107985635","XR_001755986.1","Transcript","upstream_gene_variant","-","-","-","-","-","-","IMPACT=MODIFIER;DISTANCE=2022;STRAND=-1;VARIANT_CLASS=SNV;SYMBOL=LOC107985635;SYMBOL_SOURCE=EntrezGene;BIOTYPE=lncRNA;CANONICAL=YES;SOURCE=RefSeq;GIVEN_REF=C;USED_REF=C" ],
+[ "X_83508838_C/T","X:83508838","T","-","ENSR00000909988","RegulatoryFeature","regulatory_region_variant","-","-","-","-","-","-","IMPACT=MODIFIER;VARIANT_CLASS=SNV;BIOTYPE=promoter" ] ]
+
+
+        colNames = ["#Uploaded_variation", "Location", "Allele", "Gene", "Feature", "Feature_type", "Consequence",
+                    "cDNA_position", "CDS_position", "Protein_position", "Amino_acids", "Codons",
+                    "Existing_variation",
+                    "Extra"]
+
+        testDF = ps.DataFrame(actualFailingData,columns=colNames)
+
+        actualResults = AnnotationFilter.run(testDF, self.tmpFileName, self.tmpLogLocation)
+
+        self.assertFalse("SOURCE=Clone_based_ensembl_gene" in actualResults.at[0,'Extra'])
