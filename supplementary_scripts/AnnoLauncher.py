@@ -25,14 +25,12 @@ def main():
         baseName = os.path.basename(aFile)
         provider = os.path.basename(os.path.dirname(os.path.dirname(aFile)))
 
-    print(provider)
-	
-    jobName = "{0}-{1}".format(provider,baseName)
-    jobScript = '/nfs/nobackup/spot/mouseinformatics/pdx/omicAnno/annoJob.sh'
+    	print(provider)
+    	jobName = "{0}-{1}".format(provider,baseName)
 
-    cmd = "bash {0} {1} {2}".format(jobScript,jobName,aFile)
-    print(cmd)
-    sp.call(cmd,shell=True)
+    	cmd = 'bsub -J {0} -n 4 -M 10000 -R "rusage[mem=10000]" -e /homes/afollette/$i.err.%j -o /homes/afolllette/$i.out.%j python2.7 Annotater.py {1}'.format(jobName,aFile) 
+    	print(cmd)
+    	sp.call(cmd,shell=True)
 
 
 def walkDirForMutData(dataDir):

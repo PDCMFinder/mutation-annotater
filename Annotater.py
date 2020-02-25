@@ -20,9 +20,8 @@ if len(sys.argv) > 1:
 
     vcfFilePath = file + '.vcf'
     masterLog = Updog + "/log"
-    logDir = parentDirectoryPath + "/log{}".format(fileName[:-4])
-    if not os.path.exists(logDir):
-        os.makedirs(logDir)
+    if not os.path.exists(masterLog):
+        os.makedirs(masterLog)
 else :
     print("Please pass the absolute path to the file to annotate")
 
@@ -70,13 +69,13 @@ def attemptToWriteRowToVCFisNotSuccessful(row, vcfFile) :
 
     if bool(re.match(hg38RE, row["genome_assembly"])):
         if genomeDataIsMissing(row):
-            IOutilities.logMessage(logDir,fileName, "Row has incomplete data : {0} in file {1} caused by missing chro,seq start, ref or alt allele data".format(row.items(), vcfFilePath))
+            IOutilities.logMessage(masterLog,fileName, "Row has incomplete data : {0} in file {1} caused by missing chro,seq start, ref or alt allele data".format(row.items(), vcfFilePath))
         elif allGenomicDataIsMissing(row):
             isEOF_orError = True
         else:
             formatRowToVCFAndWrite(row, vcfFile)
     else:
-        IOutilities.logMessage(logDir,fileName, "Warning found legacy data : {0}".format(row.items()))
+        IOutilities.logMessage(masterLog,fileName, "Warning found legacy data : {0}".format(row.items()))
     return isEOF_orError
 
 def formatRowToVCFAndWrite(row, vcfFile) :
@@ -93,7 +92,7 @@ def formatImproperInserions(refAllele, altAllele) :
         formatedRefAllele = "A"
         formatedAltAllele = "A{}".format(altAllele)
     elif '-' in refAllele:
-        IOutilities.logMessage(logDir,fileName, "Ref allele {} not supported yet".format(refAllele))
+        IOutilities.logMessage(masterLog,fileName, "Ref allele {} not supported yet".format(refAllele))
     else :
         formatedRefAllele = refAllele
         formatedAltAllele = altAllele
@@ -109,23 +108,23 @@ def allGenomicDataIsMissing (row) :
 def annotateVCF(vcfFile, file):
 
     fastaDir = "/nfs/nobackup/spot/mouseinformatics/pdx/vepDBs/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
-    alleleDB = "/nfs/nobackup/spot/mouseinformatics/pdx/vepDBs/homo_sapiens_vep_98_GRCh38"
+    alleleDB = "/nfs/nobackup/spot/mouseinformatics/pdx/vepDBs/homo_sapiens_vep_99_GRCh38"
 
     vepIn = vcfFile
-    vepWarningFile = logDir + "/vep_warnings"
+    vepWarningFile = masterLog + "/vep_warnings_{}".format(vcfFile[:-4})
     vepOut = file + ".ANN"
     annoFilename = file + ".ANN"
 
     open(annoFilename, "w+")
-    IOutilities.chmodFile(logDir)
+    IOutilities.chmodFile(masterLog)
     IOutilities.chmodFile(annoFilename)
 
-    vepCMD = """vep -e -q --pick --pick_order biotype,canonical,rank,length -check_existing  -symbol -polyphen -sift -merged --use_transcript_ref —hgvs —hgvsg —variant_class -canonical -fork 4 -format vcf -force -offline -no_stats --warning_file {0} -cache -dir_cache {1} -fasta {2} -i {3} -o {4} 2>> {5}""".format(vepWarningFile,alleleDB,fastaDir,vepIn, vepOut,logDir)
+    vepCMD = """vep -e -q --pick --pick_order biotype,canonical,rank,length -check_existing  -symbol -polyphen -sift -merged --use_transcript_ref —hgvs —hgvsg —variant_class -canonical -fork 4 -format vcf -force -offline -no_stats --warning_file {0} -cache -dir_cache {1} -fasta {2} -i {3} -o {4} 2>> {5}""".format(vepWarningFile,alleleDB,fastaDir,vepIn, vepOut,masterLog)
 
-    print("singularity exec ensembl-vep.simg {0}".format(vepCMD))
+    print("singularity exec ensembl-vep-latest.simg {0}".format(vepCMD))
 
     sp.call(
-        "singularity exec ensembl-vep.simg {0}".format(vepCMD), shell=True)
+        "singularity exec ensembl-vep-latest.simg {0}".format(vepCMD), shell=True)
 
 if len(sys.argv) > 1:
     run()

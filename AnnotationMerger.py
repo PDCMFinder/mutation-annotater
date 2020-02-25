@@ -21,11 +21,10 @@ if len(sys.argv) > 1:
     provider = os.path.dirname(parentDirectory)
     Updog = os.path.dirname(provider)
 
-    vcfFilePath = file + '.vcf'
+    vcfFilePath = tsvFilePath + '.vcf'
     masterLog = Updog + "/log"
-    logDir = parentDirectory + "/log_{}".format(tsvFileName[:-4])
-    if not os.path.exists(logDir):
-        os.makedirs(logDir)
+    if not os.path.exists(masterLog):
+        os.makedirs(masterLog)
 
 else:
     sys.stderr.write("Warning: Merger is being ran without file input. This should only be used for testing")
@@ -53,11 +52,12 @@ def mergeRowsAndWrite():
             reader = csv.DictReader(tsvFile, delimiter="\t")
         elif tsvFilePath.endswith(".csv"):
             reader = csv.DictReader(tsvFile, delimiter=",")
-        annoReader = pa.read_csv(annoFile, delimiter='\t', error_bad_lines=False, header=97)
+        print("Reading Annotation file: {}".format(annoFile)
+	annoReader = pa.read_csv(annoFile, delimiter='\t', error_bad_lines=False, header=97)
 
         message = "Merging original data : {0} /n and annotated data : {1} at {2}".format(tsvFilePath, annoFile,
                                                                                           time.ctime())
-        IOutilities.logMessage(logDir, tsvFileName, message)
+        IOutilities.logMessage(masterLog, tsvFileName, message)
 
         headers = buildHeaders()
         outFileWriter.writerow(headers)
@@ -80,12 +80,12 @@ def mergeRowsAndWrite():
                                                                                                              len(
                                                                                                                  mergedRow)))
                     print(row)
-                    IOutilities.logMessage(logDir,tsvFileName, message)
+                    IOutilities.logMessage(masterLog,tsvFileName, message)
             else:
 
                 message2 = ("Info: row {0} is broken or legacy".format(rowNum))
                 print(row)
-                IOutilities.logMessage(logDir,tsvFileName, message2)
+                IOutilities.logMessage(masterLog,tsvFileName, message2)
 
         message = "{0} The completed file file {1} has {2} data points (including header)".format(time.ctime(),
                                                                                                   finalTemplate,
@@ -137,7 +137,7 @@ def formatChrPosKey(row):
                 chrPosKey = "{0}:{1}".format(formatedchr, adjustedSeq)
         elif(ref[0] == '-'):
             chrPosKey = "{0}:{1}-{2}".format(formatedchr, seqStart, adjustedSeq)
-            IOutilities.logMessage(logDir, tsvFileName, "Attemping to adjust for improper insertion format {}".format(chrPosKey))
+            IOutilities.logMessage(masterLog, tsvFileName, "Attemping to adjust for improper insertion format {}".format(chrPosKey))
         else :
             chrPosKey = "{0}:{1}".format(formatedchr, seqStart)
     else:
@@ -250,7 +250,7 @@ def logMissedPosition(row, chrStartPosKey):
         chrStartPosKey,
         row["ref_allele"],
         row["alt_allele"], row['Sample_ID'])
-    IOutilities.logMessage(logDir,tsvFileName, message)
+    IOutilities.logMessage(masterLog,tsvFileName, message)
 
 
 if len(sys.argv) > 1:
