@@ -5,6 +5,8 @@ import json
 import os
 import sys
 import time
+import logging
+import datetime
 
 import re
 import pandas as pa
@@ -21,18 +23,14 @@ if len(sys.argv) > 1:
     provider = os.path.dirname(parentDirectory)
     Updog = os.path.dirname(provider)
 
-    vcfFilePath = file + '.vcf'
-    masterLog = Updog + "/log"
-    logDir = parentDirectory + "/log_{}".format(tsvFileName[:-4])
-    if not os.path.exists(logDir):
-        os.makedirs(logDir)
-
+    logging.basicConfig(filename='{}.log'.format(tsvFilePath), filemode='a+', level=logging.DEBUG)
+    logging.info(" Beginning to compile annotation with provider data ")
 else:
-    sys.stderr.write("Warning: Merger is being ran without file input. This should only be used for testing")
+    sys.stderr.write(" Warning: Merger is being ran without file input. This should only be used for testing ")
 
 def run():
     mergeRowsAndWrite()
-    print("File Saved")
+    logging.info("Merge complete")
 
 def isColumnHeader(line):
     return ((line[0] == '#') and (line[1] != '#'))
@@ -57,7 +55,7 @@ def mergeRowsAndWrite():
 
         message = "Merging original data : {0} /n and annotated data : {1} at {2}".format(tsvFilePath, annoFile,
                                                                                           time.ctime())
-        IOutilities.logMessage(logDir, tsvFileName, message)
+        logging.info(message)
 
         headers = buildHeaders()
         outFileWriter.writerow(headers)
@@ -80,17 +78,17 @@ def mergeRowsAndWrite():
                                                                                                              len(
                                                                                                                  mergedRow)))
                     print(row)
-                    IOutilities.logMessage(logDir,tsvFileName, message)
+                    logging.warn(message)
             else:
 
                 message2 = ("Info: row {0} is broken or legacy".format(rowNum))
                 print(row)
-                IOutilities.logMessage(logDir,tsvFileName, message2)
+                logging.warn(message2)
 
-        message = "{0} The completed file file {1} has {2} data points (including header)".format(time.ctime(),
+        message3 = "{0} The completed file file {1} has {2} data points (including header)".format(time.ctime(),
                                                                                                   finalTemplate,
                                                                                                   rowAdded)
-        IOutilities.masterlogMessage(masterLog, message)
+        logging.info(message3)
 
 
 def rowIsValidForMerge(row):
@@ -137,7 +135,7 @@ def formatChrPosKey(row):
                 chrPosKey = "{0}:{1}".format(formatedchr, adjustedSeq)
         elif(ref[0] == '-'):
             chrPosKey = "{0}:{1}-{2}".format(formatedchr, seqStart, adjustedSeq)
-            IOutilities.logMessage(logDir, tsvFileName, "Attemping to adjust for improper insertion format {}".format(chrPosKey))
+            logging.warn( "Attemping to adjust for improper insertion format {}".format(chrPosKey))
         else :
             chrPosKey = "{0}:{1}".format(formatedchr, seqStart)
     else:
@@ -191,9 +189,9 @@ def buildFinalTemplate(twoMatchingRows, row):
         extra = getFromRow(annoRow, 'Extra')
         extraAnno = extraColumnToJSON(extra)
 
-        builtRow = [getFromRow(row, 'Model_ID'), getFromRow(row, 'Sample_ID'), getFromRow(row, 'sample_origin'),
-                    getFromRow(row, 'host strain nomenclature'),
-                    getFromRow(row, 'Passage'), getFromRow(extraAnno, 'SYMBOL'), getFromRow(extraAnno, 'BIOTYPE'),
+        builtRow = [getFromRow(row, 'model_id'), getFromRow(row, 'sample_id'), getFromRow(row, 'sample_origin'),
+                    getFromRow(row, 'host_strain_nomenclature'),
+                    getFromRow(row, 'passage'), getFromRow(extraAnno, 'SYMBOL'), getFromRow(extraAnno, 'BIOTYPE'),
                     parseHGSVc(getFromRow(extraAnno, 'HGVSc')), getFromRow(extraAnno, 'VARIANT_CLASS'),
                     getFromRow(annoRow, 'Codons'),
                     buildAminoAcidChange(getFromRow(annoRow, 'Amino_acids'), getFromRow(annoRow, 'Protein_position')),
@@ -206,7 +204,7 @@ def buildFinalTemplate(twoMatchingRows, row):
                     getFromRow(NCBIrow, 'Feature'), getFromRow(annoRow, emblGeneColumnName),
                     getFromRow(annoRow, emblFeatureColumnName),
                     getFromRow(annoRow, 'Existing_variation'),
-                    getFromRow(row, 'genome_assembly'), getFromRow(row, 'Platform')]
+                    getFromRow(row, 'genome_assembly'), getFromRow(row, 'platform')]
 
     else:
         builtRow = list()
@@ -250,7 +248,7 @@ def logMissedPosition(row, chrStartPosKey):
         chrStartPosKey,
         row["ref_allele"],
         row["alt_allele"], row['Sample_ID'])
-    IOutilities.logMessage(logDir,tsvFileName, message)
+    logging.warn(message)
 
 
 if len(sys.argv) > 1:

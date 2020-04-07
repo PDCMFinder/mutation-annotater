@@ -6,6 +6,7 @@ import csv
 import subprocess as sp
 import sys
 import re
+import logging
 
 import IOutilities
 import vcfSorter
@@ -16,30 +17,25 @@ if len(sys.argv) > 1:
     parentDirectoryPath = os.path.dirname(file)
     provider = os.path.dirname(parentDirectoryPath)
     Updog = os.path.dirname(provider)
-
-
     vcfFilePath = file + '.vcf'
-    masterLog = Updog + "/log"
-    logDir = parentDirectoryPath + "/log{}".format(fileName[:-4])
-    if not os.path.exists(logDir):
-        os.makedirs(logDir)
+    logging.basicConfig(filename='{}.log'.format(file), filemode='a+', level=logging.DEBUG)
+    logging.info(" Starting annotation pipleline ")
+
 else :
-    print("Please pass the absolute path to the file to annotate")
+    logging.info("Please pass the absolute path of the file to annotate")
 
 def run():
-
     formatToVCFAndSave(file)
     annotateVCF(vcfFilePath,file)
-    print("Annotating is complete")
-    sp.call(("bash mergeWrapper.sh {0}".format(file)), shell=True)
-
+    logging.info("Annotating is complete")
+    #sp.call(("bash mergeWrapper.sh {0}".format(file)), shell=True)
 
 def formatToVCFAndSave(filePath):
-
     tsvOrCsvFile = open(filePath)
     vcfFile = open(vcfFilePath, "w+")
     IOutilities.chmodFile(vcfFilePath)
 
+    reader = None
     if filePath.endswith(".tsv"):
         reader = csv.DictReader(tsvOrCsvFile, delimiter="\t")
     elif filePath.endswith(".csv"):
@@ -52,7 +48,7 @@ def formatToVCFAndSave(filePath):
 
     for row in reader:
         rowCount += 1
-        if attemptToWriteRowToVCFisNotSuccessful(row,vcfFile) :
+        if attemptToWriteRowToVCFisNotSuccessful(row,vcfFile):
             break
 
     IOutilities.flushCloseFile(tsvOrCsvFile)
@@ -60,30 +56,26 @@ def formatToVCFAndSave(filePath):
     vcfSorter.sort(vcfFilePath, vcfFilePath)
 
     message = "The file {0} has {1} data points (including header)".format(filePath, rowCount)
-    IOutilities.masterlogMessage(masterLog,message)
-
+    logging.info(message)
 
 def attemptToWriteRowToVCFisNotSuccessful(row, vcfFile) :
-
     isEOF_orError = False
     hg38RE = "(?i)(hg38|grch38|38)"
 
     if bool(re.match(hg38RE, row["genome_assembly"])):
         if genomeDataIsMissing(row):
-            IOutilities.logMessage(logDir,fileName, "Row has incomplete data : {0} in file {1} caused by missing chro,seq start, ref or alt allele data".format(row.items(), vcfFilePath))
+            logging.info("Row has incomplete data : {0} in file {1} caused by missing chro,seq start, ref or alt allele data".format(row.items(), vcfFilePath))
         elif allGenomicDataIsMissing(row):
             isEOF_orError = True
         else:
             formatRowToVCFAndWrite(row, vcfFile)
     else:
-        IOutilities.logMessage(logDir,fileName, "Warning found legacy data : {0}".format(row.items()))
+        logging.warning("Warning found legacy data : {0}".format(row.items()))
     return isEOF_orError
 
 def formatRowToVCFAndWrite(row, vcfFile) :
-
     chromo = IOutilities.formatChromo(row["chromosome"])
     alleles = formatImproperInserions(row["ref_allele"],row["alt_allele"])
-
     vcfRow = "{0}\t{1}\t.\t{2}\t{3}\t.\t.\t.\t\n".format(chromo, row["seq_start_position"],
                                                          alleles[0], alleles[1])
     vcfFile.write(vcfRow)
@@ -93,12 +85,11 @@ def formatImproperInserions(refAllele, altAllele) :
         formatedRefAllele = "A"
         formatedAltAllele = "A{}".format(altAllele)
     elif '-' in refAllele:
-        IOutilities.logMessage(logDir,fileName, "Ref allele {} not supported yet".format(refAllele))
-    else :
+        logging.info("Ref allele {} not supported".format(refAllele))
+    else:
         formatedRefAllele = refAllele
         formatedAltAllele = altAllele
     return [formatedRefAllele,formatedAltAllele]
-
 
 def genomeDataIsMissing (row) :
     return not row["chromosome"] or not row["seq_start_position"] or not row["ref_allele"] or not row["alt_allele"]
@@ -106,26 +97,31 @@ def genomeDataIsMissing (row) :
 def allGenomicDataIsMissing (row) :
     return not row["chromosome"] and not row["seq_start_position"] and not row["ref_allele"] and not row["alt_allele"]
 
-def annotateVCF(vcfFile, file):
-
+def annotateVCF(vcfFile, targetFile):
     fastaDir = "/nfs/nobackup/spot/mouseinformatics/pdx/vepDBs/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
     alleleDB = "/nfs/nobackup/spot/mouseinformatics/pdx/vepDBs/homo_sapiens_vep_98_GRCh38"
+    singularityVepImage = "./ensembl-vep.simg"
+
+    if not os.path.isfile(fastaDir) and not os.path.isfile(alleleDB):
+        fastaDir = "/home/afollette/vepWD/db/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
+        alleleDB = "/home/afollette/vepWD/db/homo_sapiens_vep_98_GRCh38"
+
+    if not os.path.isfile(singularityVepImage):
+        singularityVepImage = "/home/afollette/ensembl-vep.simg"
 
     vepIn = vcfFile
-    vepWarningFile = logDir + "/vep_warnings"
-    vepOut = file + ".ANN"
-    annoFilename = file + ".ANN"
+    vepWarningFile = targetFile + ".vepWarnings"
+    vepOut = targetFile + ".ANN"
 
-    open(annoFilename, "w+")
-    IOutilities.chmodFile(logDir)
-    IOutilities.chmodFile(annoFilename)
+    vepCMD = """vep -e -q --pick --pick_order biotype,canonical,rank,length -check_existing  -symbol -polyphen -sift -merged -use_transcript_ref —hgvs —hgvsg —variant_class \
+    -canonical -fork 4 -format vcf -force -offline -no_stats --warning_file {0} \
+     -cache -dir_cache {1} -fasta {2} -i {3} -o {4} 2>> {5}.log""".format(vepWarningFile,alleleDB,fastaDir,vepIn, vepOut,fileName)
+    logging.debug("singularity exec {0} {1}".format(singularityVepImage, vepCMD))
+    returnSignal = sp.call(
+        "singularity exec {0} {1}".format(singularityVepImage, vepCMD), shell=True)
+    if(returnSignal != 0):
+        raise Exception("Vep returned a non-zero exit code {}".format(returnSignal))
 
-    vepCMD = """vep -e -q --pick --pick_order biotype,canonical,rank,length -check_existing  -symbol -polyphen -sift -merged --use_transcript_ref —hgvs —hgvsg —variant_class -canonical -fork 4 -format vcf -force -offline -no_stats --warning_file {0} -cache -dir_cache {1} -fasta {2} -i {3} -o {4} 2>> {5}""".format(vepWarningFile,alleleDB,fastaDir,vepIn, vepOut,logDir)
-
-    print("singularity exec ensembl-vep.simg {0}".format(vepCMD))
-
-    sp.call(
-        "singularity exec ensembl-vep.simg {0}".format(vepCMD), shell=True)
 
 if len(sys.argv) > 1:
     run()

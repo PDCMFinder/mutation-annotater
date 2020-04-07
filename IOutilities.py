@@ -4,26 +4,12 @@
 import os
 import re
 
-
-def logMessage (fileParentDir,filename, logMessage) :
-    with open(fileParentDir + "/log_{0}".format(filename), 'a+') as log:
-
-        print(logMessage)
-        log.write(logMessage + "\n")
-
 def chmodFile(annoFilename):
         os.chmod(annoFilename, 0o666)
 
 def flushCloseFile(fileToClose):
     fileToClose.flush()
     fileToClose.close()
-
-
-def masterlogMessage(masterLog, logMessage):
-    with open(masterLog, 'a+') as log:
-
-       print(logMessage)
-       log.write(logMessage + "\n")
 
 def formatChromo(givenChromo):
 
