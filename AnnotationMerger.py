@@ -163,28 +163,32 @@ def buildHeaders():
             "ensemble_transcript_id", "variation_id", "genome_assembly", "platform"]
 
 
-def buildFinalTemplate(twoMatchingRows, row):
-    inputLen = len(twoMatchingRows)
+def parseFilteredRows(twoMatchingRows):
     annoRow = pa.DataFrame()
-    emblGeneColumnName = 'Gene'
-    emblFeatureColumnName = 'Feature'
+    NCBIrow = pa.DataFrame()
+    if len(twoMatchingRows) > 1:
+        annoRow = twoMatchingRows.iloc[0]
+        NCBIrow = twoMatchingRows.iloc[1]
+    elif len(twoMatchingRows) == 1:
+        annoRow = twoMatchingRows.iloc[0]
+    return [annoRow, NCBIrow]
 
-    if inputLen > 0:
 
-        if inputLen > 1:
-            annoRow = twoMatchingRows.iloc[0]
-            NCBIrow = twoMatchingRows.iloc[1]
-        elif inputLen == 1:
-            annoRow = twoMatchingRows.iloc[0]
-            reGene = str(getFromRow(twoMatchingRows, 'Gene'))
-            reFeature = str(getFromRow(twoMatchingRows, 'Feature'))
+def isEnsemblData(row):
+    geneId = getFromRow(row, 'Gene')
+    transcriptId = getFromRow(row, 'Feature')
+    return re.match("ENS", geneId) and re.match("ENS", transcriptId)
 
-            if (re.search("^ENS",reGene)) and bool((re.search("^ENS",reFeature))):
-                NCBIrow = pa.DataFrame()
-            else:
-                NCBIrow = twoMatchingRows.iloc[0]
-                emblGeneColumnName = ''
-                emblFeatureColumnName = ''
+def buildFinalTemplate(twoMatchingRows, row):
+    annoRow = pa.DataFrame()
+    NCBIrow = pa.DataFrame()
+
+    if len(twoMatchingRows) > 0:
+        parsedRows = parseFilteredRows(twoMatchingRows)
+        if parsedRows[0].size > 0 and isEnsemblData(parsedRows[0]):
+            annoRow = parsedRows[0]
+        if parsedRows[1].size > 0 and not isEnsemblData(parsedRows[1]):
+            NCBIrow = parsedRows[1]
 
         extra = getFromRow(annoRow, 'Extra')
         extraAnno = extraColumnToJSON(extra)
@@ -201,12 +205,13 @@ def buildFinalTemplate(twoMatchingRows, row):
                     getFromRow(row, 'seq_start_position'),
                     getFromRow(row, 'ref_allele'), getFromRow(row, 'alt_allele'), getFromRow(row, 'ucsc_gene_id'),
                     getFromRow(NCBIrow, 'Gene'),
-                    getFromRow(NCBIrow, 'Feature'), getFromRow(annoRow, emblGeneColumnName),
-                    getFromRow(annoRow, emblFeatureColumnName),
+                    getFromRow(NCBIrow, 'Feature'), getFromRow(annoRow, 'Gene'),
+                    getFromRow(annoRow, 'Feature'),
                     getFromRow(annoRow, 'Existing_variation'),
                     getFromRow(row, 'genome_assembly'), getFromRow(row, 'platform')]
 
     else:
+        logging.info("No annotations found for row with values : {}".format(row.values()))
         builtRow = list()
 
     return builtRow

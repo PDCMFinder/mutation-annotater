@@ -17,10 +17,9 @@ class TestFilter(unittest.TestCase):
         #Then
         self.assertEqual(type(expected), type(actualRow))
         self.assertEqual(len(expected), len(actualRow))
-        self.assertEqual(expected.get(0),actualRow.get(0))
+        self.assertEqual(expected.get(0), actualRow.get(0))
 
     def test_GivenOneEMBLRowWithHeader_Then_ReturnRow(self):
-        #Given
         data = ["4_1804915_A/G","4:1804915","G","ENSG00000068078","ENST00000260795","Transcript","3_prime_UTR_variant", \
                "1509","-","-","-","-","rs1466726466", \
                "IMPACT=MODIFIER;STRAND=1;VARIANT_CLASS=SNV;SYMBOL=FGFR3;SYMBOL_SOURCE=HGNC;HGNC_ID=HGNC "]
@@ -28,12 +27,7 @@ class TestFilter(unittest.TestCase):
                     "cDNA_position","CDS_position","Protein_position","Amino_acids","Codons","Existing_variation","Extra"]
 
         expectedRow = ps.DataFrame([data], columns=colNames)
-
-        #When
         actualRow = AnnotationFilter.run(expectedRow, self.tmpFileName, self.tmpLogLocation)
-
-        #Then
-
         Row1EqualsRow0inActual = actualRow.equals(expectedRow[0:])
 
         self.assertTrue(Row1EqualsRow0inActual)
@@ -563,3 +557,37 @@ class TestFilter(unittest.TestCase):
         actualResults = AnnotationFilter.run(testDF, self.tmpFileName, self.tmpLogLocation)
 
         self.assertFalse("SOURCE=Clone_based_ensembl_gene" in actualResults.at[0,'Extra'])
+
+    def test_ifMultipleEMmblArePassedWithoutNcbiRows_when_givenToFilter_returnOnlyOneEnsembleMaybe(self):
+        actualFailingData = [["X_83508838_C/T", "X:83508838", "T", "ENSG00000279437", "ENST00000625081", "Transcript",
+                              "non_coding_transcript_exon_variant", "377", "-", "-", "-", "-", "-",
+                              "IMPACT=MODIFIER;STRAND=-1;VARIANT_CLASS=SNV;SYMBOL=Z82170.1;SYMBOL_SOURCE=Clone_based_ensembl_gene;BIOTYPE=TEC;CANONICAL=YES;SOURCE=Ensembl;GIVEN_REF=C;USED_REF=C;EXON=1/1;HGVSc=ENST00000625081.1:n.377G>A"],
+                             ["X_83508838_C/T", "X:83508838", "T", "ENSG00000196767", "ENST00000644024", "Transcript",
+                              "missense_variant", "549", "514", "172", "H/Y", "Cac/Tac", "-",
+                              "IMPACT=MODERATE;STRAND=1;VARIANT_CLASS=SNV;SYMBOL=POU3F4;SYMBOL_SOURCE=HGNC;HGNC_ID=HGNC:9217;BIOTYPE=protein_coding;CANONICAL=YES;MANE=NM_000307.5;APPRIS=P1;CCDS=CCDS14450.1;ENSP=ENSP00000495996;TREMBL=A0A2R8Y739;UNIPARC=UPI0000131D8A;SOURCE=Ensembl;GIVEN_REF=C;USED_REF=C;GENE_PHENO=1;SIFT=tolerated(0.17);PolyPhen=benign(0.216);EXON=1/1;DOMAINS=PIRSF:PIRSF002629,PANTHER:PTHR11636,PANTHER:PTHR11636:SF83;HGVSc=ENST00000644024.2:c.514C>T;HGVSp=ENSP00000495996.1:p.His172Tyr"],
+                             ["X_83508838_C/T", "X:83508838", "T", "-", "ENSR00000909988", "RegulatoryFeature",
+                              "regulatory_region_variant", "-", "-", "-", "-", "-", "-",
+                              "IMPACT=MODIFIER;VARIANT_CLASS=SNV;BIOTYPE=promoter"],
+                             ["X_83508838_C/T", "X:83508838", "T", "ENSG00000279437", "ENST00000625081", "Transcript",
+                              "non_coding_transcript_exon_variant", "377", "-", "-", "-", "-", "-",
+                              "IMPACT=MODIFIER;STRAND=-1;VARIANT_CLASS=SNV;SYMBOL=Z82170.1;SYMBOL_SOURCE=Clone_based_ensembl_gene;BIOTYPE=TEC;CANONICAL=YES;SOURCE=Ensembl;GIVEN_REF=C;USED_REF=C;EXON=1/1;HGVSc=ENST00000625081.1:n.377G>A"],
+                             ["X_83508838_C/T", "X:83508838", "T", "ENSG00000196767", "ENST00000644024", "Transcript",
+                              "missense_variant", "549", "514", "172", "H/Y", "Cac/Tac", "-",
+                              "IMPACT=MODERATE;STRAND=1;VARIANT_CLASS=SNV;SYMBOL=POU3F4;SYMBOL_SOURCE=HGNC;HGNC_ID=HGNC:9217;BIOTYPE=protein_coding;CANONICAL=YES;MANE=NM_000307.5;APPRIS=P1;CCDS=CCDS14450.1;ENSP=ENSP00000495996;TREMBL=A0A2R8Y739;UNIPARC=UPI0000131D8A;SOURCE=Ensembl;GIVEN_REF=C;USED_REF=C;GENE_PHENO=1;SIFT=tolerated(0.17);PolyPhen=benign(0.216);EXON=1/1;DOMAINS=PIRSF:PIRSF002629,PANTHER:PTHR11636,PANTHER:PTHR11636:SF83;HGVSc=ENST00000644024.2:c.514C>T;HGVSp=ENSP00000495996.1:p.His172Tyr"],
+                             ["X_83508838_C/T", "X:83508838", "T", "-", "ENSR00000909988", "RegulatoryFeature",
+                              "regulatory_region_variant", "-", "-", "-", "-", "-", "-",
+                              "IMPACT=MODIFIER;VARIANT_CLASS=SNV;BIOTYPE=promoter"],
+                             ["X_83508838_C/T", "X:83508838", "T", "ENSG00000279437", "ENST00000625081", "Transcript",
+                              "non_coding_transcript_exon_variant", "377", "-", "-", "-", "-", "-",
+                              "IMPACT=MODIFIER;STRAND=-1;VARIANT_CLASS=SNV;SYMBOL=Z82170.1;SYMBOL_SOURCE=Clone_based_ensembl_gene;BIOTYPE=TEC;CANONICAL=YES;SOURCE=Ensembl;GIVEN_REF=C;USED_REF=C;EXON=1/1;HGVSc=ENST00000625081.1:n.377G>A"]]
+
+        colNames = ["#Uploaded_variation", "Location", "Allele", "Gene", "Feature", "Feature_type", "Consequence",
+                    "cDNA_position", "CDS_position", "Protein_position", "Amino_acids", "Codons",
+                    "Existing_variation",
+                    "Extra"]
+
+        testDF = ps.DataFrame(actualFailingData,columns=colNames)
+
+        actualResults = AnnotationFilter.run(testDF, self.tmpFileName, self.tmpLogLocation)
+
+        self.assertEquals(len(actualResults), 1)

@@ -135,21 +135,18 @@ def calculateScoreOfMatchesBetweenNcbiRowsAndOneEmblRow(NCBIrows, EmbleRow, extr
        transposedNcbiRow.loc[:,'Score'] = 0
 
        if len(transposedNcbiRow) == 1:
-            extras = transposedNcbiRow.at[0,'Extra']
+            extras = transposedNcbiRow.at[0,'Extra'].strip() + ";"
 
-            if re.search(extraVariables[0],extras): transposedNcbiRow.at[0, 'Score'] += 1000
-            if re.search(extraVariables[1],extras): transposedNcbiRow.at[0,'Score'] += 100
-            if re.search(extraVariables[2],extras): transposedNcbiRow.at[0,'Score'] += 10
-            if re.search(extraVariables[3],extras): transposedNcbiRow.at[0,'Score'] += 1
+            if re.search(extraVariables[0] + ";", extras): transposedNcbiRow.at[0, 'Score'] += 1000
+            if re.search(extraVariables[1] + ";", extras): transposedNcbiRow.at[0, 'Score'] += 100
+            if re.search(extraVariables[2] + ";", extras): transposedNcbiRow.at[0, 'Score'] += 10
+            if re.search(extraVariables[3] + ";", extras): transposedNcbiRow.at[0, 'Score'] += 1
 
        EmbleRow.at[0, 'Score'] = transposedNcbiRow.at[0, 'Score']
-
-       concatNcbi=pa.concat([ncbi,pa.DataFrame(transposedNcbiRow)])
+       concatNcbi=pa.concat([ncbi, pa.DataFrame(transposedNcbiRow)])
        concatEmbl=pa.concat([embl, EmbleRow])
-
        ncbi = concatNcbi
        embl = concatEmbl
-
 
    return pa.concat([concatEmbl,concatNcbi])
 

@@ -113,7 +113,7 @@ def annotateVCF(vcfFile, targetFile):
     vepWarningFile = targetFile + ".vepWarnings"
     vepOut = targetFile + ".ANN"
 
-    vepCMD = """vep -e -q --pick --pick_order biotype,canonical,rank,length -check_existing  -symbol -polyphen -sift -merged -use_transcript_ref —hgvs —hgvsg —variant_class \
+    vepCMD = """vep -e -q -check_existing  -symbol -polyphen -sift -merged -use_transcript_ref —hgvs —hgvsg —variant_class \
     -canonical -fork 4 -format vcf -force -offline -no_stats --warning_file {0} \
      -cache -dir_cache {1} -fasta {2} -i {3} -o {4} 2>> {5}.log""".format(vepWarningFile,alleleDB,fastaDir,vepIn, vepOut,fileName)
     logging.debug("singularity exec {0} {1}".format(singularityVepImage, vepCMD))
