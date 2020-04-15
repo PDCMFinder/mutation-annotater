@@ -502,7 +502,7 @@ class TestFilter(unittest.TestCase):
         NCBIrow2 = ["6_156779126_-/G", "6:156779125-156779126", "G", "2261", "NR_148971.1", "Transcript",
                     "3_prime_UTR_variant", \
                     "1509", "-", "-", "-", "-", "rs1466726466", \
-                    "IMPACT=MODIFIER;CANONICAL=YES;STRAND=1;VARIANT_CLASS=SNV;SYMBOL=TEST5;SYMBOL_SOURCE=HGNC;HGNC_ID=HGNC;BIOTYPE=protein_coding"]
+                    "IMPACT=MODIFIER;CANONICAL=YES;STRAND=1;VARIANT_CLASS=SNV;SYMBOL=TEST5;SYMBOL_SOURCE=HGNC;HGNC_ID=HGNC;BIOTYPE=MISSENSE"]
 
         colNames = ["#Uploaded_variation", "Location", "Allele", "Gene", "Feature", "Feature_type", "Consequence",
                     "cDNA_position", "CDS_position", "Protein_position", "Amino_acids", "Codons",
@@ -515,12 +515,9 @@ class TestFilter(unittest.TestCase):
         secondExpectedRow = ps.DataFrame([NCBIrow], columns=colNames)
         fourthRow = ps.DataFrame([NCBIrow2], columns=colNames)
         inputDF = ps.concat([expectedRow, secondDF, thirdDF, fourthRow, secondExpectedRow])
-
         expectedDF = ps.concat([expectedRow, secondExpectedRow]).reset_index(drop=True)
 
-        # When
         actualDF = AnnotationFilter.run(inputDF, self.tmpFileName, self.tmpLogLocation)
-
         ps.testing.assert_frame_equal(actualDF, expectedDF)
 
     def test_RealLifeError_When_givenToFilter_DoNotReturnCloneBasedSymbol(self):

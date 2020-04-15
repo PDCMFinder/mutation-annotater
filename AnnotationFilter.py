@@ -1,7 +1,6 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
 import pandas as pa
-import IOutilities
 import re
 
 
@@ -11,10 +10,8 @@ def run(annoRows, fullFileName, parentDirectory):
 
     EMBLrows = filterRowsByDB(annoRows, "EMBL")
     NCBIrows = filterRowsByDB(annoRows, "NCBI")
-
     EMBLcanon = getCanon(EMBLrows)
     NCBIcanon = getCanon(NCBIrows)
-
     EMBLcanonCount = len(EMBLrows)
     NCBIcanonCount = len(NCBIrows)
 
@@ -63,7 +60,7 @@ def selectColumnsByCriteria(filteredRows):
     if rowsExistInExclusiveOr(EMBLrows,NCBIrows):
         if len(EMBLrows) > 0: selectedRow = EMBLrows
         else : selectedRow = NCBIrows
-        selectedAnnoRows = selectAnnotationByCriteria(selectedRow)
+        selectedAnnoRows = selectAnnotationContentScore(selectedRow)
     elif rowsExistForBoth(EMBLrows, NCBIrows):
         selectedAnnoRows = selectAnnotationHighestScoringMatch(EMBLrows, NCBIrows)
     else :
@@ -76,6 +73,8 @@ def selectAnnotationHighestScoringMatch(EMBLrows, NCBIrows):
     fixedNCBIrows = NCBIrows.reset_index(drop=True)
     fixedEMBLrows = EMBLrows.reset_index(drop=True)
 
+    scoreRowByContent(fixedNCBIrows)
+    scoreRowByContent(fixedEMBLrows)
     scoreSeries = returnTopMatchingPairScore(fixedEMBLrows, fixedNCBIrows)
     droppedScore = scoreSeries.drop(['Score'],axis=1)
 
@@ -96,9 +95,7 @@ def returnTopMatchingPairScore(EMBLrows, NCBIrows):
     return highestScore
 
 def extractDataFromExtrasColumn(singleEmblRow):
-
     extras = singleEmblRow.loc['Extra']
-
     symbolRe = "SYMBOL=[A-Za-z0-9]{0,15}"
     biotypeRe = "BIOTYPE=[A-Za-z_]{0,50}"
     impactRe = "IMPACT=(HIGH|MODERATE|MODIFIER|LOW)"
@@ -123,22 +120,19 @@ def extractDataFromExtrasColumn(singleEmblRow):
 
 
 def calculateScoreOfMatchesBetweenNcbiRowsAndOneEmblRow(NCBIrows, EmbleRow, extraVariables):
-
    concatEmbl = pa.DataFrame()
    concatNcbi = pa.DataFrame()
    ncbi = pa.DataFrame()
    embl = pa.DataFrame()
 
    for index,NCBIrow in NCBIrows.iterrows():
-
        transposedNcbiRow = pa.DataFrame(NCBIrow).transpose().reset_index(drop=True)
-       transposedNcbiRow.loc[:,'Score'] = 0
 
        if len(transposedNcbiRow) == 1:
             extras = transposedNcbiRow.at[0,'Extra'].strip() + ";"
 
-            if re.search(extraVariables[0] + ";", extras): transposedNcbiRow.at[0, 'Score'] += 1000
-            if re.search(extraVariables[1] + ";", extras): transposedNcbiRow.at[0, 'Score'] += 100
+            if re.search(extraVariables[0] + ";", extras): transposedNcbiRow.at[0, 'Score'] += 100000
+            if re.search(extraVariables[1] + ";", extras): transposedNcbiRow.at[0, 'Score'] += 10000
             if re.search(extraVariables[2] + ";", extras): transposedNcbiRow.at[0, 'Score'] += 10
             if re.search(extraVariables[3] + ";", extras): transposedNcbiRow.at[0, 'Score'] += 1
 
@@ -147,25 +141,22 @@ def calculateScoreOfMatchesBetweenNcbiRowsAndOneEmblRow(NCBIrows, EmbleRow, extr
        concatEmbl=pa.concat([embl, EmbleRow])
        ncbi = concatNcbi
        embl = concatEmbl
-
    return pa.concat([concatEmbl,concatNcbi])
 
-def selectAnnotationByCriteria(row):
+def selectAnnotationContentScore(row):
+    scoreRowByContent(row)
+    return row.loc[row['Score'] == row['Score'].max()].drop('Score',axis=1).iloc[[0]]
 
+def scoreRowByContent(row):
     biotypePC = "BIOTYPE=protein_coding"
     highImpact = "IMPACT=HIGH"
     modifier = "IMPACT=MODIFIER"
     moderateImpact = "IMPACT=MODERATE"
-
     row['Score'] = 0
-
-    row.loc[row['Extra'].str.contains(biotypePC), 'Score'] += 100
-    row.loc[row['Extra'].str.contains(highImpact), 'Score'] += 10
+    row.loc[row['Extra'].str.contains(biotypePC), 'Score'] += 1000
+    row.loc[row['Extra'].str.contains(highImpact), 'Score'] += 100
     row.loc[row['Extra'].str.contains(moderateImpact), 'Score'] += 2
     row.loc[row['Extra'].str.contains(modifier), 'Score'] += 1
-
-    return row.loc[row['Score'] == row['Score'].max()].drop('Score',axis=1).iloc[[0]]
-
 
 def filterRowsByDB(annoRows, emblOrNCBI):
     uniqDbRows = pa.DataFrame()
@@ -202,4 +193,4 @@ def concatIfSecondDataFrameHasrows(row,rowToCheck):
 
 def logDroppedPoint(baseName,parentDirectory):
     message = "No matching annotations found. May be an error in genomic coordinates"
-    IOutilities.logMessage(parentDirectory, baseName, message)
+    print(message)
