@@ -6,7 +6,6 @@ import os
 import sys
 import time
 import logging
-import datetime
 
 import re
 import pandas as pa
@@ -51,6 +50,7 @@ def mergeRowsAndWrite():
             reader = csv.DictReader(tsvFile, delimiter="\t")
         elif tsvFilePath.endswith(".csv"):
             reader = csv.DictReader(tsvFile, delimiter=",")
+
         annoReader = pa.read_csv(annoFile, delimiter='\t', error_bad_lines=False, header=97)
 
         message = "Merging original data : {0} /n and annotated data : {1} at {2}".format(tsvFilePath, annoFile,
