@@ -6,7 +6,6 @@ import os
 import sys
 import time
 import logging
-import datetime
 
 import re
 import pandas as pa
@@ -51,7 +50,8 @@ def mergeRowsAndWrite():
             reader = csv.DictReader(tsvFile, delimiter="\t")
         elif tsvFilePath.endswith(".csv"):
             reader = csv.DictReader(tsvFile, delimiter=",")
-        print("Reading Annotation file: {}".format(annoFile)
+        
+	print("Reading Annotation file: {}".format(annoFile)
 	annoReader = pa.read_csv(annoFile, delimiter='\t', error_bad_lines=False, header=97)
 
         message = "Merging original data : {0} /n and annotated data : {1} at {2}".format(tsvFilePath, annoFile,
@@ -146,13 +146,15 @@ def formatChrPosKey(row):
 
 
 def extraColumnToJSON(extra):
-    semiToComma = re.sub(';', '","', extra)
-    equalsToColon = re.sub("=", '":"', semiToComma)
-    addCurlyToStart = re.sub('(?m)^', '{"', equalsToColon)
-    JSONstr = re.sub('(?m)$', '"}', addCurlyToStart)
-
-    return json.loads(JSONstr) if extra != "" else pa.Series()
-
+    if extra:
+        semiToComma = re.sub(';', '","', extra)
+        equalsToColon = re.sub("=", '":"', semiToComma)
+        addCurlyToStart = re.sub('(?m)^', '{"', equalsToColon)
+        JSONstr = re.sub('(?m)$', '"}', addCurlyToStart)
+        extraJson = json.loads(JSONstr) if extra != "" else pa.Series()
+    else :
+        extraJson = pa.Series()
+    return extraJson
 
 def buildHeaders():
     return ["model_id", "sample_id", "sample_origin", "host_strain_nomenclature", "passage", "symbol", "biotype",
@@ -181,35 +183,36 @@ def isEnsemblData(row):
     return re.match("ENS", geneId) and re.match("ENS", transcriptId)
 
 def buildFinalTemplate(twoMatchingRows, row):
-    annoRow = pa.DataFrame()
     NCBIrow = pa.DataFrame()
-
+    builtRow = []
     if len(twoMatchingRows) > 0:
         parsedRows = parseFilteredRows(twoMatchingRows)
         if parsedRows[0].size > 0 and isEnsemblData(parsedRows[0]):
             annoRow = parsedRows[0]
-        if parsedRows[1].size > 0 and not isEnsemblData(parsedRows[1]):
-            NCBIrow = parsedRows[1]
+            if parsedRows[1].size > 0 and not isEnsemblData(parsedRows[1]):
+                NCBIrow = parsedRows[1]
 
-        extra = getFromRow(annoRow, 'Extra')
-        extraAnno = extraColumnToJSON(extra)
+            extra = getFromRow(annoRow, 'Extra')
+            if extra == None:
+                extra = ""
+            extraAnno = extraColumnToJSON(extra)
 
-        builtRow = [getFromRow(row, 'model_id'), getFromRow(row, 'sample_id'), getFromRow(row, 'sample_origin'),
-                    getFromRow(row, 'host_strain_nomenclature'),
-                    getFromRow(row, 'passage'), getFromRow(extraAnno, 'SYMBOL'), getFromRow(extraAnno, 'BIOTYPE'),
-                    parseHGSVc(getFromRow(extraAnno, 'HGVSc')), getFromRow(extraAnno, 'VARIANT_CLASS'),
-                    getFromRow(annoRow, 'Codons'),
-                    buildAminoAcidChange(getFromRow(annoRow, 'Amino_acids'), getFromRow(annoRow, 'Protein_position')),
-                    getFromRow(annoRow, 'Consequence'),
-                    parseFunctionalPredictions(getFromRow(extraAnno, 'PolyPhen'), getFromRow(extraAnno, 'SIFT')),
-                    getFromRow(row, 'read_depth'), getFromRow(row, 'Allele_frequency'), getFromRow(row, 'chromosome'),
-                    getFromRow(row, 'seq_start_position'),
-                    getFromRow(row, 'ref_allele'), getFromRow(row, 'alt_allele'), getFromRow(row, 'ucsc_gene_id'),
-                    getFromRow(NCBIrow, 'Gene'),
-                    getFromRow(NCBIrow, 'Feature'), getFromRow(annoRow, 'Gene'),
-                    getFromRow(annoRow, 'Feature'),
-                    getFromRow(annoRow, 'Existing_variation'),
-                    getFromRow(row, 'genome_assembly'), getFromRow(row, 'platform')]
+            builtRow = [getFromRow(row, 'model_id'), getFromRow(row, 'sample_id'), getFromRow(row, 'sample_origin'),
+                        getFromRow(row, 'host_strain_nomenclature'),
+                        getFromRow(row, 'passage'), getFromRow(extraAnno, 'SYMBOL'), getFromRow(extraAnno, 'BIOTYPE'),
+                        parseHGSVc(getFromRow(extraAnno, 'HGVSc')), getFromRow(extraAnno, 'VARIANT_CLASS'),
+                        getFromRow(annoRow, 'Codons'),
+                        buildAminoAcidChange(getFromRow(annoRow, 'Amino_acids'), getFromRow(annoRow, 'Protein_position')),
+                        getFromRow(annoRow, 'Consequence'),
+                        parseFunctionalPredictions(getFromRow(extraAnno, 'PolyPhen'), getFromRow(extraAnno, 'SIFT')),
+                        getFromRow(row, 'read_depth'), getFromRow(row, 'Allele_frequency'), getFromRow(row, 'chromosome'),
+                        getFromRow(row, 'seq_start_position'),
+                        getFromRow(row, 'ref_allele'), getFromRow(row, 'alt_allele'), getFromRow(row, 'ucsc_gene_id'),
+                        getFromRow(NCBIrow, 'Gene'),
+                        getFromRow(NCBIrow, 'Feature'), getFromRow(annoRow, 'Gene'),
+                        getFromRow(annoRow, 'Feature'),
+                        getFromRow(annoRow, 'Existing_variation'),
+                        getFromRow(row, 'genome_assembly'), getFromRow(row, 'platform')]
 
     else:
         logging.info("No annotations found for row with values : {}".format(row.values()))
@@ -237,7 +240,7 @@ def parseHGSVc(HGSV):
 
 
 def buildAminoAcidChange(aminoAcids, protienPosition):
-    return aminoAcids[0] + protienPosition + aminoAcids[2] if (
+    return aminoAcids[0] + protienPosition + aminoAcids[2] if (aminoAcids and protienPosition and
             len(aminoAcids) == 3 and protienPosition.isdigit()) else ""
 
 

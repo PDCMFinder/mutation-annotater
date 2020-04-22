@@ -107,7 +107,7 @@ def annotateVCF(vcfFile, targetFile):
         alleleDB = "/home/afollette/vepWD/db/homo_sapiens_vep_98_GRCh38"
 
     if not os.path.isfile(singularityVepImage):
-        singularityVepImage = "/home/afollette/ensembl-vep.simg"
+        singularityVepImage = "/homes/afollette/ensembl-vep.simg"
 
     vepIn = vcfFile
     vepWarningFile = targetFile + ".vepWarnings"
