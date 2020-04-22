@@ -153,7 +153,7 @@ def extraColumnToJSON(extra):
         extraJson = json.loads(JSONstr) if extra != "" else pa.Series()
     else :
         extraJson = pa.Series()
-    return extraJson 
+    return extraJson
 
 def buildHeaders():
     return ["model_id", "sample_id", "sample_origin", "host_strain_nomenclature", "passage", "symbol", "biotype",
@@ -192,7 +192,8 @@ def buildFinalTemplate(twoMatchingRows, row):
                 NCBIrow = parsedRows[1]
 
             extra = getFromRow(annoRow, 'Extra')
-            print("Extra type is : {}".format(type(extra)))
+            if extra == None:
+                extra = ""
             extraAnno = extraColumnToJSON(extra)
 
             builtRow = [getFromRow(row, 'model_id'), getFromRow(row, 'sample_id'), getFromRow(row, 'sample_origin'),
