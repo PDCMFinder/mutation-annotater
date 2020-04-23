@@ -74,16 +74,13 @@ def mergeRowsAndWrite():
                     outFileWriter.writerow(mergedRow)
                     rowAdded += 1
                 else:
-                    message = ("Info: Dropping row for being invalid (size or column headers) or missing match in annotations (Chromosome position error). RowNum {0} - Len {1}".format(rowNum,
-                                                                                                             len(
-                                                                                                                 mergedRow)))
-                    print(row)
-                    logging.warn(message)
+                    message = ("Info: Dropping row for being invalid (size or column headers) or missing match in annotations (Chromosome position error). RowNum {0} - Len {1}".format(rowNum,len(mergedRow)))
+                    logging.warning(message)
             else:
 
                 message2 = ("Info: row {0} is broken or legacy".format(rowNum))
-                print(row)
-                logging.warn(message2)
+                print(message2)
+                logging.warning(message2)
 
         message3 = "{0} The completed file file {1} has {2} data points (including header)".format(time.ctime(),
                                                                                                   finalTemplate,
@@ -256,7 +253,7 @@ def logMissedPosition(row, chrStartPosKey):
         chrStartPosKey,
         row["ref_allele"],
         row["alt_allele"], row['Sample_ID'])
-    logging.warn(message)
+    logging.warning(message)
 
 
 if len(sys.argv) > 1:
