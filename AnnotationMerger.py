@@ -57,7 +57,6 @@ def mergeRowsAndWrite():
         message = "Merging original data : {0} /n and annotated data : {1} at {2}".format(tsvFilePath, annoFile,
                                                                                           time.ctime())
         logging.info(message)
-
         headers = buildHeaders()
         outFileWriter.writerow(headers)
 
@@ -66,25 +65,21 @@ def mergeRowsAndWrite():
 
         for row in reader:
             rowNum += 1
-
             print(".")
-
             if rowIsValidForMerge(row):
                 mergedRow = mergeRows(row, annoReader)
                 if not len(mergedRow) < 26:
                     outFileWriter.writerow(mergedRow)
                     rowAdded += 1
                 else:
-                    message = ("Info: Dropping row for being invalid (size or column headers) or missing match in annotations (Chromosome position error). RowNum {0} - Len {1}".format(rowNum,
-                                                                                                             len(
-                                                                                                                 mergedRow)))
-                    print(row)
-                    logging.warn(message)
+                    print(mergedRow)
+                    message = ("Info: Dropping row for being invalid (size or column headers) or missing match in annotations (Chromosome position error). RowNum {0} - Len {1}".format(rowNum,len(mergedRow)))
+                    logging.warning(message)
             else:
 
                 message2 = ("Info: row {0} is broken or legacy".format(rowNum))
-                print(row)
-                logging.warn(message2)
+                print(message2)
+                logging.warning(message2)
 
         message3 = "{0} The completed file file {1} has {2} data points (including header)".format(time.ctime(),
                                                                                                   finalTemplate,
@@ -136,7 +131,7 @@ def formatChrPosKey(row):
                 chrPosKey = "{0}:{1}".format(formatedchr, adjustedSeq)
         elif(ref[0] == '-'):
             chrPosKey = "{0}:{1}-{2}".format(formatedchr, seqStart, adjustedSeq)
-            logging.warn( "Attemping to adjust for improper insertion format {}".format(chrPosKey))
+            logging.warning( "Attemping to adjust for improper insertion format {}".format(chrPosKey))
         else :
             chrPosKey = "{0}:{1}".format(formatedchr, seqStart)
     else:
@@ -185,16 +180,23 @@ def isEnsemblData(row):
 def buildFinalTemplate(twoMatchingRows, row):
     NCBIrow = pa.DataFrame()
     builtRow = []
+
+    logging.debug("row length is {}".format(len(twoMatchingRows)))
     if len(twoMatchingRows) > 0:
         parsedRows = parseFilteredRows(twoMatchingRows)
+
+        logging.debug("Size of first parsed rows {} and if the rows are ensembl {}".format(parsedRows[0].size, isEnsemblData(parsedRows[0])))
         if parsedRows[0].size > 0 and isEnsemblData(parsedRows[0]):
             annoRow = parsedRows[0]
+
+            logging.debug("Size of second parsed rows {} and if the row is ensembl {}".format(parsedRows[1].size, isEnsemblData(parsedRows[1])))
             if parsedRows[1].size > 0 and not isEnsemblData(parsedRows[1]):
                 NCBIrow = parsedRows[1]
 
             extra = getFromRow(annoRow, 'Extra')
-            if extra == None:
+            if extra is None:
                 extra = ""
+                logging.info("Extra Column not found for row")
             extraAnno = extraColumnToJSON(extra)
 
             builtRow = [getFromRow(row, 'model_id'), getFromRow(row, 'sample_id'), getFromRow(row, 'sample_origin'),
@@ -257,7 +259,7 @@ def logMissedPosition(row, chrStartPosKey):
         chrStartPosKey,
         row["ref_allele"],
         row["alt_allele"], row['Sample_ID'])
-    	logging.warn(message)
+    logging.warning(message)
 
 
 if len(sys.argv) > 1:
