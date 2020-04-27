@@ -122,6 +122,5 @@ def annotateVCF(vcfFile, targetFile):
     if(returnSignal != 0):
         raise Exception("Vep returned a non-zero exit code {}".format(returnSignal))
 
-
 if len(sys.argv) > 1:
     run()
