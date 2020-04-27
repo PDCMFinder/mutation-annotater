@@ -51,11 +51,10 @@ def mergeRowsAndWrite():
         elif tsvFilePath.endswith(".csv"):
             reader = csv.DictReader(tsvFile, delimiter=",")
 
-        print("Reading Annotation file: {}".format(annoFile)
+        print("Reading Annotation file: {}".format(annoFile))
         annoReader = pa.read_csv(annoFile, delimiter='\t', error_bad_lines=False, header=97)
 
-        message = "Merging original data : {0} /n and annotated data : {1} at {2}".format(tsvFilePath, annoFile,
-                                                                                          time.ctime())
+        message = "Merging original data : {0} /n and annotated data : {1} at {2}".format(tsvFilePath, annoFile, time.ctime())
         logging.info(message)
         headers = buildHeaders()
         outFileWriter.writerow(headers)
