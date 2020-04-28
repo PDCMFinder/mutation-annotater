@@ -174,7 +174,7 @@ def parseFilteredRows(twoMatchingRows):
 def isEnsemblData(row):
     geneId = getFromRow(row, 'Gene')
     transcriptId = getFromRow(row, 'Feature')
-    return re.match("ENS", geneId) and re.match("ENS", transcriptId) if (geneId and transcriptId) else ""
+    return re.match("ENS", geneId) and re.match("ENS", transcriptId) if (geneId and transcriptId) else False
 
 def buildFinalTemplate(twoMatchingRows, row):
     NCBIrow = pa.DataFrame()
