@@ -39,7 +39,8 @@ def formatToVCFAndSave(filePath):
         reader = csv.DictReader(tsvOrCsvFile, delimiter=",")
     else :
         reader = csv.DictReader(tsvOrCsvFile, delimiter="\t")
-
+        if not filePath.endswith(".tsv"):
+            logging.info("File {}  is not suffixed as tsv... procceding anyways".format(filePath))
     print("Writing {0} to VCF".format(filePath))
     vcfFile.write("#chrom\tpos\tid\tref\talt\tqual\tfilter\tinfo\n")
     rowCount = 0
