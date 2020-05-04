@@ -214,7 +214,7 @@ def buildFinalTemplate(twoMatchingRows, row):
 
         else:
             logging.info("Row one is an invalid size or is not ensemble.")
-            logging.debug("Gene {] Transcript {}".format(getFromRow(row, 'Gene'),getFromRow(row, 'Feature')))
+            logging.debug("Gene {} Transcript {}".format(getFromRow(row, 'Gene'),getFromRow(row, 'Feature')))
 
     if len(builtRow) == 0:
         logging.info("No annotations found for row with values : {}".format(row.values()))
