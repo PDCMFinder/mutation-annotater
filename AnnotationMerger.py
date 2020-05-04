@@ -232,7 +232,7 @@ def buildFinalTemplate(twoMatchingRows, row):
         builtRow = list()
 
     return builtRow
-parsedRows[0]
+
 
 def getFromRow(row, attributeID):
     returnStr = ""
