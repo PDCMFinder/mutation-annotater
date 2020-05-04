@@ -44,7 +44,6 @@ def mergeRowsAndWrite():
             open(tsvFilePath + ".ANN", 'r') as annoFile, \
             open(tsvFilePath, 'r') as tsvFile:
 
-
         outFileWriter = csv.writer(finalTemplate, delimiter="\t")
         if tsvFilePath.endswith(".tsv"):
             reader = csv.DictReader(tsvFile, delimiter="\t")
@@ -54,7 +53,8 @@ def mergeRowsAndWrite():
         print("Reading Annotation file: {}".format(annoFile))
         annoReader = pa.read_csv(annoFile, delimiter='\t', error_bad_lines=False, header=97)
 
-        message = "Merging original data : {0} /n and annotated data : {1} at {2}".format(tsvFilePath, annoFile, time.ctime())
+        message = ("Merging original data :"
+                   " {0} /n and annotated data : {1} at {2}".format(tsvFilePath, annoFile, time.ctime()))
         logging.info(message)
         headers = buildHeaders()
         outFileWriter.writerow(headers)
@@ -67,24 +67,21 @@ def mergeRowsAndWrite():
             print(".")
             if rowIsValidForMerge(row):
                 mergedRow = mergeRows(row, annoReader)
-                if not len(mergedRow) < 26:
+                if len(mergedRow) >= 26:
                     outFileWriter.writerow(mergedRow)
                     rowAdded += 1
                 else:
-                    print(mergedRow)
-                    message = ("Info: Dropping row for being invalid (size or column headers) or missing match in annotations (Chromosome position error). RowNum {0} - Len {1}".format(rowNum,len(mergedRow)))
+                    message = ("Info: Dropping row for being invalid (size or column headers) "
+                               "or missing match in annotations (Chromosome position error)."
+                               " RowNum {0} - Len {1} - data {2}".format(rowNum,len(mergedRow), mergedRow))
                     logging.warning(message)
             else:
-
                 message2 = ("Info: row {0} is broken or legacy".format(rowNum))
                 print(message2)
                 logging.warning(message2)
-
-        message3 = "{0} The completed file file {1} has {2} data points (including header)".format(time.ctime(),
-                                                                                                  finalTemplate,
-                                                                                                  rowAdded)
+        message3 = ("{0} The completed file file {1} has {2}"
+                    " data points (including header)".format(time.ctime(),finalTemplate,rowAdded))
         logging.info(message3)
-
 
 def rowIsValidForMerge(row):
     return rowIsHg38(row) and getFromRow(row, "chromosome") and getFromRow(row, "seq_start_position")
@@ -215,7 +212,11 @@ def buildFinalTemplate(twoMatchingRows, row):
                         getFromRow(annoRow, 'Existing_variation'),
                         getFromRow(row, 'genome_assembly'), getFromRow(row, 'platform')]
 
-    else:
+        else:
+            logging.info("Row one is an invalid size or is not ensemble.")
+            logging.debug("Gene {] Transcript {}".format(getFromRow(row, 'Gene'),getFromRow(row, 'Feature')))
+
+    if len(builtRow) == 0:
         logging.info("No annotations found for row with values : {}".format(row.values()))
         builtRow = list()
 
