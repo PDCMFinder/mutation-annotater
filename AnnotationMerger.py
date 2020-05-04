@@ -27,9 +27,11 @@ if len(sys.argv) > 1:
 else:
     sys.stderr.write(" Warning: Merger is being ran without file input. This should only be used for testing ")
 
+
 def run():
     mergeRowsAndWrite()
     logging.info("Merge complete")
+
 
 def isColumnHeader(line):
     return ((line[0] == '#') and (line[1] != '#'))
@@ -47,7 +49,7 @@ def mergeRowsAndWrite():
         outFileWriter = csv.writer(finalTemplate, delimiter="\t")
         if tsvFilePath.endswith(".csv"):
             reader = csv.DictReader(tsvFile, delimiter=",")
-        else :
+        else:
             reader = csv.DictReader(tsvFile, delimiter="\t")
 
         print("Reading Annotation file: {}".format(annoFile))
@@ -73,15 +75,16 @@ def mergeRowsAndWrite():
                 else:
                     message = ("Info: Dropping row for being invalid (size or column headers) "
                                "or missing match in annotations (Chromosome position error)."
-                               " RowNum {0} - Len {1} - data {2}".format(rowNum,len(mergedRow), mergedRow))
+                               " RowNum {0} - Len {1} - data {2}".format(rowNum, len(mergedRow), mergedRow))
                     logging.warning(message)
             else:
                 message2 = ("Info: row {0} is broken or legacy".format(rowNum))
                 print(message2)
                 logging.warning(message2)
         message3 = ("{0} The completed file file {1} has {2}"
-                    " data points (including header)".format(time.ctime(),finalTemplate,rowAdded))
+                    " data points (including header)".format(time.ctime(), finalTemplate, rowAdded))
         logging.info(message3)
+
 
 def rowIsValidForMerge(row):
     return rowIsHg38(row) and getFromRow(row, "chromosome") and getFromRow(row, "seq_start_position")
@@ -118,17 +121,17 @@ def formatChrPosKey(row):
     ref = getFromRow(row, "ref_allele")
     alt = getFromRow(row, "alt_allele")
 
-    if len(ref) > 0 and len(alt) > 0 :
+    if len(ref) > 0 and len(alt) > 0:
         adjustedSeq = (str)((int)(seqStart) + 1)
-        if(ref[0] == alt[0]):
+        if (ref[0] == alt[0]):
             if len(ref) == 1:
                 chrPosKey = "{0}:{1}-{2}".format(formatedchr, seqStart, adjustedSeq)
             else:
                 chrPosKey = "{0}:{1}".format(formatedchr, adjustedSeq)
-        elif(ref[0] == '-'):
+        elif (ref[0] == '-'):
             chrPosKey = "{0}:{1}-{2}".format(formatedchr, seqStart, adjustedSeq)
-            logging.warning( "Attemping to adjust for improper insertion format {}".format(chrPosKey))
-        else :
+            logging.warning("Attemping to adjust for improper insertion format {}".format(chrPosKey))
+        else:
             chrPosKey = "{0}:{1}".format(formatedchr, seqStart)
     else:
         chrPosKey = "{0}:{1}".format(formatedchr, seqStart)
@@ -143,9 +146,10 @@ def extraColumnToJSON(extra):
         addCurlyToStart = re.sub('(?m)^', '{"', equalsToColon)
         JSONstr = re.sub('(?m)$', '"}', addCurlyToStart)
         extraJson = json.loads(JSONstr) if extra != "" else pa.Series()
-    else :
+    else:
         extraJson = pa.Series()
     return extraJson
+
 
 def buildHeaders():
     return ["model_id", "sample_id", "sample_origin", "host_strain_nomenclature", "passage", "symbol", "biotype",
@@ -173,6 +177,7 @@ def isEnsemblData(row):
     transcriptId = getFromRow(row, 'Feature')
     return re.match("ENS", geneId) and re.match("ENS", transcriptId) if (geneId and transcriptId) else False
 
+
 def buildFinalTemplate(twoMatchingRows, row):
     NCBIrow = pa.DataFrame()
     builtRow = []
@@ -181,11 +186,15 @@ def buildFinalTemplate(twoMatchingRows, row):
     if len(twoMatchingRows) > 0:
         parsedRows = parseFilteredRows(twoMatchingRows)
 
-        logging.debug("Size of first parsed rows {} and if the rows are ensembl {}".format(parsedRows[0].size, isEnsemblData(parsedRows[0])))
+        logging.debug("Size of first parsed rows {} and if the rows are ensembl {}".format(parsedRows[0].size,
+                                                                                           isEnsemblData(
+                                                                                               parsedRows[0])))
         if parsedRows[0].size > 0 and isEnsemblData(parsedRows[0]):
             annoRow = parsedRows[0]
 
-            logging.debug("Size of second parsed rows {} and if the row is ensembl {}".format(parsedRows[1].size, isEnsemblData(parsedRows[1])))
+            logging.debug("Size of second parsed rows {} and if the row is ensembl {}".format(parsedRows[1].size,
+                                                                                              isEnsemblData(
+                                                                                                  parsedRows[1])))
             if parsedRows[1].size > 0 and not isEnsemblData(parsedRows[1]):
                 NCBIrow = parsedRows[1]
 
@@ -200,10 +209,12 @@ def buildFinalTemplate(twoMatchingRows, row):
                         getFromRow(row, 'passage'), getFromRow(extraAnno, 'SYMBOL'), getFromRow(extraAnno, 'BIOTYPE'),
                         parseHGSVc(getFromRow(extraAnno, 'HGVSc')), getFromRow(extraAnno, 'VARIANT_CLASS'),
                         getFromRow(annoRow, 'Codons'),
-                        buildAminoAcidChange(getFromRow(annoRow, 'Amino_acids'), getFromRow(annoRow, 'Protein_position')),
+                        buildAminoAcidChange(getFromRow(annoRow, 'Amino_acids'),
+                                             getFromRow(annoRow, 'Protein_position')),
                         getFromRow(annoRow, 'Consequence'),
                         parseFunctionalPredictions(getFromRow(extraAnno, 'PolyPhen'), getFromRow(extraAnno, 'SIFT')),
-                        getFromRow(row, 'read_depth'), getFromRow(row, 'Allele_frequency'), getFromRow(row, 'chromosome'),
+                        getFromRow(row, 'read_depth'), getFromRow(row, 'Allele_frequency'),
+                        getFromRow(row, 'chromosome'),
                         getFromRow(row, 'seq_start_position'),
                         getFromRow(row, 'ref_allele'), getFromRow(row, 'alt_allele'), getFromRow(row, 'ucsc_gene_id'),
                         getFromRow(NCBIrow, 'Gene'),
@@ -214,14 +225,14 @@ def buildFinalTemplate(twoMatchingRows, row):
 
         else:
             logging.info("Row one is an invalid size or is not ensemble.")
-            logging.debug("Gene {] Transcript {}".format(getFromRow(row, 'Gene'),getFromRow(row, 'Feature')))
+            logging.debug("Annotations {0} \n {1}".format(parsedRows[0], parsedRows[1]))
 
     if len(builtRow) == 0:
         logging.info("No annotations found for row with values : {}".format(row.values()))
         builtRow = list()
 
     return builtRow
-
+parsedRows[0]
 
 def getFromRow(row, attributeID):
     returnStr = ""
@@ -243,7 +254,8 @@ def parseHGSVc(HGSV):
 
 def buildAminoAcidChange(aminoAcids, protienPosition):
     return aminoAcids[0] + protienPosition + aminoAcids[2] if (aminoAcids and protienPosition and
-            len(aminoAcids) == 3 and protienPosition.isdigit()) else ""
+                                                               len(
+                                                                   aminoAcids) == 3 and protienPosition.isdigit()) else ""
 
 
 def parseFunctionalPredictions(polyphen, sift):
