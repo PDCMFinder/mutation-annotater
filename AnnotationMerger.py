@@ -47,7 +47,7 @@ def mergeRowsAndWrite():
         outFileWriter = csv.writer(finalTemplate, delimiter="\t")
         if tsvFilePath.endswith(".csv"):
             reader = csv.DictReader(tsvFile, delimiter=",")
-        else tsvFilePath.endswith(".tsv"):
+        else :
             reader = csv.DictReader(tsvFile, delimiter="\t")
 
         print("Reading Annotation file: {}".format(annoFile))
