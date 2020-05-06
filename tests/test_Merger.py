@@ -157,3 +157,29 @@ class TestFilter(TestCase):
         inputRows = ps.DataFrame([blankrow1, blankrow2])
         actualRow = AnnotationMerger.buildFinalTemplate(inputRows, tsvInputRow)
         self.assertEquals(len(actualRow), 0)
+
+    def test_WhenDepracatedHeadersAreUse_Return_correspondingValue(self):
+        deprecatedTsvInputRow = {'alt_allele': '-', 'read_depth': '11572', 'ensembl_gene_id': '', 'rs_id_Variant': '',
+                       'Platform': 'Targeted NGS', 'ucsc_gene_id': '',
+                       'ref_allele': 'T', 'chromosome': '19', 'ncbi_gene_id': '', 'nucleotide_change': '1225delA',
+                       'hgnc_symbol': 'KEAP1', 'consequence': 'stop gain', 'Allele_frequency': '96,47', 'Passage': '27',
+                       'amino_acid_change': 'M409X', 'Model_ID': 'LCF16',
+                       'datasource': 'CURIE-LC', 'ensembl_transcript_id': '', 'Sample_ID': 'LCF16p27:26/08/2016',
+                       'seq_start_position': '10491677', 'genome_assembly': 'GRCh38', 'sample_origin': 'xenograft'}
+        tsvInputRow = {'alt_allele': '-', 'read_depth': '11572', 'ensembl_gene_id': '', 'rs_id_Variant': '',
+                                 'platform': 'Targeted NGS', 'ucsc_gene_id': '',
+                                 'ref_allele': 'T', 'chromosome': '19', 'ncbi_gene_id': '',
+                                 'nucleotide_change': '1225delA',
+                                 'symbol': 'KEAP1', 'consequence': 'stop gain', 'allele_frequency': '96,47',
+                                 'passage': '27',
+                                 'amino_acid_change': 'M409X', 'model_id': 'LCF16',
+                                 'datasource': 'CURIE-LC', 'ensembl_transcript_id': '',
+                                 'sample_ID': 'LCF16p27:26/08/2016',
+                                 'seq_start_position': '10491677', 'genome_assembly': 'GRCh38',
+                                 'sample_origin': 'xenograft'}
+
+        actualDeprecatedHeader = AnnotationMerger.getEitherFromRow(deprecatedTsvInputRow, "Model_ID", "model_id")
+        actualUpdatedHeader = AnnotationMerger.getEitherFromRow(tsvInputRow, "Model_ID", "model_id")
+
+        self.assertEquals(actualDeprecatedHeader, 'LCF16')
+        self.assertEquals(actualUpdatedHeader, 'LCF16')
