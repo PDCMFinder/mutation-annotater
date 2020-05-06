@@ -182,19 +182,11 @@ def buildFinalTemplate(twoMatchingRows, row):
     NCBIrow = pa.DataFrame()
     builtRow = []
 
-    logging.debug("row length is {}".format(len(twoMatchingRows)))
+
     if len(twoMatchingRows) > 0:
         parsedRows = parseFilteredRows(twoMatchingRows)
-
-        logging.debug("Size of first parsed rows {} and if the rows are ensembl {}".format(parsedRows[0].size,
-                                                                                           isEnsemblData(
-                                                                                               parsedRows[0])))
         if parsedRows[0].size > 0 and isEnsemblData(parsedRows[0]):
             annoRow = parsedRows[0]
-
-            logging.debug("Size of second parsed rows {} and if the row is ensembl {}".format(parsedRows[1].size,
-                                                                                              isEnsemblData(
-                                                                                                  parsedRows[1])))
             if parsedRows[1].size > 0 and not isEnsemblData(parsedRows[1]):
                 NCBIrow = parsedRows[1]
 
@@ -204,11 +196,11 @@ def buildFinalTemplate(twoMatchingRows, row):
                 logging.info("Extra Column not found for row")
             extraAnno = extraColumnToJSON(extra)
 
-            builtRow = [getFromRow(row, 'model_id'), getFromRow(row, 'sample_id'), getFromRow(row, 'sample_origin'),
-                        getFromRow(row, 'host_strain_nomenclature'),
-                        getFromRow(row, 'passage'), getFromRow(extraAnno, 'SYMBOL'), getFromRow(extraAnno, 'BIOTYPE'),
-                        parseHGSVc(getFromRow(extraAnno, 'HGVSc')), getFromRow(extraAnno, 'VARIANT_CLASS'),
-                        getFromRow(annoRow, 'Codons'),
+            builtRow = [getEitherFromRow(row, 'model_id', 'Model_ID'), getEitherFromRow(row, 'sample_id', 'Sample_ID'),
+                        getFromRow(row, 'sample_origin'), getFromRow(row, 'host_strain_nomenclature'),
+                        getEitherFromRow(row, 'passage', 'Passage'), getFromRow(extraAnno, 'SYMBOL', ),
+                        getFromRow(extraAnno, 'BIOTYPE'), parseHGSVc(getFromRow(extraAnno, 'HGVSc')),
+                        getFromRow(extraAnno, 'VARIANT_CLASS'), getFromRow(annoRow, 'Codons'),
                         buildAminoAcidChange(getFromRow(annoRow, 'Amino_acids'),
                                              getFromRow(annoRow, 'Protein_position')),
                         getFromRow(annoRow, 'Consequence'),
@@ -233,6 +225,11 @@ def buildFinalTemplate(twoMatchingRows, row):
 
     return builtRow
 
+def getEitherFromRow(row, attributeId, alternativeId):
+    returnStr = getFromRow(row, attributeId)
+    if returnStr == "":
+        returnStr = getFromRow(row, alternativeId)
+    return returnStr
 
 def getFromRow(row, attributeID):
     returnStr = ""
