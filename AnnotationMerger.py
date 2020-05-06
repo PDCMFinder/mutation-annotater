@@ -66,7 +66,6 @@ def mergeRowsAndWrite():
 
         for row in reader:
             rowNum += 1
-            print(".")
             if rowIsValidForMerge(row):
                 mergedRow = mergeRows(row, annoReader)
                 if len(mergedRow) >= 26:
