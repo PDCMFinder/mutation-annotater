@@ -226,7 +226,7 @@ def buildFinalTemplate(twoMatchingRows, row):
 
 def getEitherFromRow(row, attributeId, alternativeId):
     returnStr = getFromRow(row, attributeId)
-    if returnStr == "":
+    if not returnStr or returnStr == "":
         returnStr = getFromRow(row, alternativeId)
     return returnStr
 
