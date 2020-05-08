@@ -196,7 +196,8 @@ def buildFinalTemplate(twoMatchingRows, row):
             extraAnno = extraColumnToJSON(extra)
 
             builtRow = [getEitherFromRow(row, 'model_id', 'Model_ID'), getEitherFromRow(row, 'sample_id', 'Sample_ID'),
-                        getFromRow(row, 'sample_origin'), getFromRow(row, 'host_strain_nomenclature'),
+                        getFromRow(row, 'sample_origin'),
+                        getEitherFromRow(row, 'host_strain_nomenclature', 'host strain nomenclature'),
                         getEitherFromRow(row, 'passage', 'Passage'), getFromRow(extraAnno, 'SYMBOL', ),
                         getFromRow(extraAnno, 'BIOTYPE'), parseHGSVc(getFromRow(extraAnno, 'HGVSc')),
                         getFromRow(extraAnno, 'VARIANT_CLASS'), getFromRow(annoRow, 'Codons'),
@@ -204,7 +205,7 @@ def buildFinalTemplate(twoMatchingRows, row):
                                              getFromRow(annoRow, 'Protein_position')),
                         getFromRow(annoRow, 'Consequence'),
                         parseFunctionalPredictions(getFromRow(extraAnno, 'PolyPhen'), getFromRow(extraAnno, 'SIFT')),
-                        getFromRow(row, 'read_depth'), getFromRow(row, 'Allele_frequency'),
+                        getFromRow(row, 'read_depth'), getEitherFromRow(row, 'Allele_frequency', 'allele_frequency'),
                         getFromRow(row, 'chromosome'),
                         getFromRow(row, 'seq_start_position'),
                         getFromRow(row, 'ref_allele'), getFromRow(row, 'alt_allele'), getFromRow(row, 'ucsc_gene_id'),
@@ -212,7 +213,7 @@ def buildFinalTemplate(twoMatchingRows, row):
                         getFromRow(NCBIrow, 'Feature'), getFromRow(annoRow, 'Gene'),
                         getFromRow(annoRow, 'Feature'),
                         getFromRow(annoRow, 'Existing_variation'),
-                        getFromRow(row, 'genome_assembly'), getFromRow(row, 'platform')]
+                        getFromRow(row, 'genome_assembly'), getEitherFromRow(row, 'platform', 'Platform')]
 
         else:
             logging.info("Row one is an invalid size or is not ensemble.")
