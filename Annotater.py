@@ -7,6 +7,7 @@ import subprocess as sp
 import sys
 import re
 import logging
+import pandas as pa
 
 import IOutilities
 import vcfSorter
@@ -53,9 +54,16 @@ def formatToVCFAndSave(filePath):
     IOutilities.flushCloseFile(tsvOrCsvFile)
     IOutilities.flushCloseFile(vcfFile)
     vcfSorter.sort(vcfFilePath, vcfFilePath)
+    dropDuplicates(vcfFilePath)
 
     message = "The file {0} has {1} data points (including header)".format(filePath, rowCount)
     logging.info(message)
+
+def dropDuplicates(vcfFile):
+    with open(vcfFile, 'r') as vcf:
+        vcfDf = pa.read_csv(vcf, sep='\t')
+        vcfDf.drop_duplicates(inplace=True)
+        vcfDf.to_csv(vcfFile, sep='\t', index=False)
 
 def attemptToWriteRowToVCFisNotSuccessful(row, vcfFile) :
     isEOF_orError = False
