@@ -29,7 +29,6 @@ def run():
     formatToVCFAndSave(file)
     annotateVCF(vcfFilePath,file)
     logging.info("Annotating is complete")
-    #sp.call(("bash mergeWrapper.sh {0}".format(file)), shell=True)
 
 def formatToVCFAndSave(filePath):
     tsvOrCsvFile = open(filePath)
@@ -42,14 +41,16 @@ def formatToVCFAndSave(filePath):
         reader = csv.DictReader(tsvOrCsvFile, delimiter="\t")
         if not filePath.endswith(".tsv"):
             logging.info("File {}  is not suffixed as tsv... procceding anyways".format(filePath))
+
     print("Writing {0} to VCF".format(filePath))
     vcfFile.write("#chrom\tpos\tid\tref\talt\tqual\tfilter\tinfo\n")
     rowCount = 0
-
-    for row in reader:
-        rowCount += 1
-        if attemptToWriteRowToVCFisNotSuccessful(row,vcfFile):
-            break
+    try:
+        for row in reader:
+            rowCount += 1
+            proccessRowToVCF(row, vcfFile)
+    except EOFError:
+        logging.info("End of file at {}".format(rowCount))
 
     IOutilities.flushCloseFile(tsvOrCsvFile)
     IOutilities.flushCloseFile(vcfFile)
@@ -65,25 +66,25 @@ def dropDuplicates(vcfFile):
         vcfDf.drop_duplicates(inplace=True)
         vcfDf.to_csv(vcfFile, sep='\t', index=False)
 
-def attemptToWriteRowToVCFisNotSuccessful(row, vcfFile) :
-    isEOF_orError = False
+def proccessRowToVCF(row, vcfFile) :
     hg38RE = "(?i)(hg38|grch38|38)"
-
-    if bool(re.match(hg38RE, row["genome_assembly"])):
-        if genomeDataIsMissing(row):
-            logging.info("Row has incomplete data : {0} in file {1} caused by missing chro,seq start, ref or alt allele data".format(row.items(), vcfFilePath))
-        elif allGenomicDataIsMissing(row):
-            isEOF_orError = True
-        else:
-            formatRowToVCFAndWrite(row, vcfFile)
-    else:
+    if not bool(re.match(hg38RE, row["genome_assembly"])):
         logging.warning("Warning found legacy data : {0}".format(row.items()))
-    return isEOF_orError
+    elif (anyGenomicCoordinateAreMissing(row)) :
+        logging.info(
+            "Row has incomplete data : {0} in file {1} caused by missing chro,seq start, ref or alt allele data"
+                .format(row.items(), vcfFilePath))
+    elif allGenomicDataIsMissing(row):
+        raise EOFError
+    else:
+        formatRowToVCFAndWrite(row, vcfFile)
+
 
 def formatRowToVCFAndWrite(row, vcfFile) :
     chromo = IOutilities.formatChromo(row["chromosome"])
     alleles = formatImproperInserions(row["ref_allele"],row["alt_allele"])
-    vcfRow = "{0}\t{1}\t.\t{2}\t{3}\t.\t.\t.\t\n".format(chromo, row["seq_start_position"],
+    posId =  createPosId(row)
+    vcfRow = "{0}\t{1}\t{2}\t{3}\t{4}\t.\t.\t.\t\n".format(chromo, posId, row["seq_start_position"],
                                                          alleles[0], alleles[1])
     vcfFile.write(vcfRow)
 
@@ -98,7 +99,10 @@ def formatImproperInserions(refAllele, altAllele) :
         formatedAltAllele = altAllele
     return [formatedRefAllele,formatedAltAllele]
 
-def genomeDataIsMissing (row) :
+def createPosId(row):
+    return "{}_{}_{}_{}".format(row["chromosome"], row["seq_start_position"],row["ref_allele"],row["alt_allele"])
+
+def anyGenomicCoordinateAreMissing (row) :
     return not row["chromosome"] or not row["seq_start_position"] or not row["ref_allele"] or not row["alt_allele"]
 
 def allGenomicDataIsMissing (row) :
@@ -121,7 +125,7 @@ def annotateVCF(vcfFile, targetFile):
     vepOut = targetFile + ".ANN"
 
     vepCMD = """vep -e -q -check_existing  -symbol -polyphen -sift -merged -use_transcript_ref —hgvs —hgvsg —variant_class \
-    -canonical -fork 4 -format vcf -force -offline -no_stats --warning_file {0} \
+    -canonical -fork 4 -format vcf -force -offline -no_stats --warning_file {0} -vcf\
      -cache -dir_cache {1} -fasta {2} -i {3} -o {4} 2>> {5}.log""".format(vepWarningFile,alleleDB,fastaDir,vepIn, vepOut,fileName)
     logging.debug("singularity exec {0} {1}".format(singularityVepImage, vepCMD))
     returnSignal = sp.call(

@@ -18,7 +18,7 @@ class TestFilter(TestCase):
                   'alt_allele': altAllele}
         row = ps.Series(rowDic)
 
-        actualChrPos = AnnotationMerger.formatChrPosKey(row)
+        actualChrPos = AnnotationMerger.formatChrPosKeyAndAllele(row)
 
         self.assertEqual(expectedChrPosAndAllele, actualChrPos)
 
@@ -37,7 +37,7 @@ class TestFilter(TestCase):
                   'alt_allele': altAllele}
         row = ps.Series(rowDic)
 
-        actualChrPos = AnnotationMerger.formatChrPosKey(row)
+        actualChrPos, actualAllele = AnnotationMerger.formatChrPosKeyAndAllele(row)
         expectedChrPosAndAllele = expectedChrPosKey,expectedAllele
 
         self.assertEqual(expectedChrPosAndAllele, actualChrPos)

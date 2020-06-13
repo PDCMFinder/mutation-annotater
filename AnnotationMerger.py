@@ -105,19 +105,19 @@ def mergeRows(row, annoReader):
 
 
 def compareKeysOfFileAndReturnMatchingRows(row, annoReader):
-    chrStartPosKey, altAllele = formatChrPosKey(row)
+    chrStartPosKey, altAllele = formatChrPosKeyAndAllele(row)
     resultdf = annoReader[annoReader['Location'].str.contains(chrStartPosKey) & annoReader['Allele'].str.contains(altAllele)]
     if len(resultdf) == 0:
         logMissedPosition(row, chrStartPosKey)
     return resultdf
 
 
-def formatChrPosKey(row):
+def formatChrPosKeyAndAllele(row):
     formattedChr = IOutilities.formatChromo(getFromRow(row, "chromosome"))
     seqStart = getFromRow(row, "seq_start_position")
     ref = getFromRow(row, "ref_allele")
     alt = getFromRow(row, "alt_allele")
-    chrPosKey = specialCoordinateRules(ref,alt,seqStart,formattedChr)
+    chrPosKey, formattedAlt = specialCoordinateRules(ref,alt,seqStart,formattedChr)
     return chrPosKey, alt
 
 def specialCoordinateRules(ref, alt, seqStart, formattedChr):
