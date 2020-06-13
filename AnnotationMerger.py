@@ -105,38 +105,46 @@ def mergeRows(row, annoReader):
 
 
 def compareKeysOfFileAndReturnMatchingRows(row, annoReader):
-    chrStartPosKey = formatChrPosKey(row)
-
-    resultdf = annoReader[annoReader['Location'].str.contains(chrStartPosKey)].drop_duplicates()
-
+    chrStartPosKey, altAllele = formatChrPosKey(row)
+    resultdf = annoReader[annoReader['Location'].str.contains(chrStartPosKey) & annoReader['Allele'].str.contains(altAllele)]
     if len(resultdf) == 0:
         logMissedPosition(row, chrStartPosKey)
     return resultdf
 
 
 def formatChrPosKey(row):
-    formatedchr = IOutilities.formatChromo(getFromRow(row, "chromosome"))
+    formattedChr = IOutilities.formatChromo(getFromRow(row, "chromosome"))
     seqStart = getFromRow(row, "seq_start_position")
     ref = getFromRow(row, "ref_allele")
     alt = getFromRow(row, "alt_allele")
+    chrPosKey = specialCoordinateRules(ref,alt,seqStart,formattedChr)
+    return chrPosKey, alt
 
+def specialCoordinateRules(ref, alt, seqStart, formattedChr):
     if len(ref) > 0 and len(alt) > 0:
-        adjustedSeq = (str)((int)(seqStart) + 1)
-        if (ref[0] == alt[0]):
-            if len(ref) == 1:
-                chrPosKey = "{0}:{1}-{2}".format(formatedchr, seqStart, adjustedSeq)
-            else:
-                chrPosKey = "{0}:{1}".format(formatedchr, adjustedSeq)
-        elif (ref[0] == '-'):
-            chrPosKey = "{0}:{1}-{2}".format(formatedchr, seqStart, adjustedSeq)
-            logging.warning("Attemping to adjust for improper insertion format {}".format(chrPosKey))
-        else:
-            chrPosKey = "{0}:{1}".format(formatedchr, seqStart)
-    else:
-        chrPosKey = "{0}:{1}".format(formatedchr, seqStart)
-
+        chrPosKey = proccessSpecialCoordinateCases(ref, alt, seqStart, formattedChr)
     return chrPosKey
 
+def proccessSpecialCoordinateCases(ref, alt, seqStart, formattedChr):
+    chrPosKey = "{0}:{1}".format(formattedChr, seqStart)
+    adjustedSeq = (str)((int)(seqStart) + 1)
+    if (ref[0] == alt[0]):
+        chrPosKey = ifSingleNucleotideAdjustElseIncrementPositionDroppingMatchingNucleotides(ref, formattedChr,
+                                                                                             seqStart, adjustedSeq)
+    elif (ref[0] == '-'):
+        chrPosKey = translateGenomicPositionToBetweenInegers(formattedChr, seqStart, adjustedSeq)
+        logging.warning("Attemping to adjust for improper insertion format {}".format(chrPosKey))
+    return chrPosKey
+
+def ifSingleNucleotideAdjustElseIncrementPositionDroppingMatchingNucleotides(ref, formattedChr, seqStart,adjustedSeq):
+    if len(ref) == 1:
+        chrPosKey = translateGenomicPositionToBetweenInegers(formattedChr,seqStart,adjustedSeq)
+    else:
+        chrPosKey = "{0}:{1}".format(formattedChr, adjustedSeq)
+    return chrPosKey
+
+def translateGenomicPositionToBetweenInegers(formattedChr,seqStart,adjustedSeq):
+    return "{0}:{1}-{2}".format(formattedChr, seqStart, adjustedSeq)
 
 def extraColumnToJSON(extra):
     if extra:
