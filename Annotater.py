@@ -7,10 +7,9 @@ import subprocess as sp
 import sys
 import re
 import logging
-import pandas as pa
 
 import IOutilities
-import vcfSorter
+import vcfUtilities
 
 if len(sys.argv) > 1:
     file = sys.argv[1]
@@ -28,9 +27,10 @@ else:
 
 def run():
     formatToVCFAndSave(file)
-    proccesVCF(file)
+    proccesVCF()
     annotateVCF(vcfFilePath, file)
     logging.info("Annotating is complete")
+
 
 
 def formatToVCFAndSave(filePath):
@@ -60,13 +60,6 @@ def getDelimitedFileReader(delimitedFile, filePath):
             logging.info("File {}  is not suffixed as tsv... procceding anyways".format(filePath))
     return reader
 
-def dropDuplicates(vcfFile):
-    with open(vcfFile, 'r') as vcf:
-        vcfDf = pa.read_csv(vcf, sep='\t')
-        vcfDf.drop_duplicates(inplace=True)
-        vcfDf.to_csv(vcfFile, sep='\t', index=False)
-
-
 def proccessRowToVCF(row, vcfFile):
     hg38RE = "(?i)(hg38|grch38|38)"
     if not bool(re.match(hg38RE, row["genome_assembly"])):
@@ -80,25 +73,23 @@ def proccessRowToVCF(row, vcfFile):
     else:
         formatRowToVCFAndWrite(row, vcfFile)
 
-def proccesVCF(file):
-    with open(vcfFilePath, "w+") as vcfFile:
+def proccesVCF():
         logging.info("Sorting and removing duplicates in VCF")
-        vcfSorter.sort(vcfFile, vcfFile)
-        dropDuplicates(vcfFile)
+        vcfUtilities.sortInPlace(vcfFilePath)
+        vcfUtilities.dropDuplicates(vcfFilePath)
 
 def formatRowToVCFAndWrite(row, vcfFile):
     chromo = IOutilities.formatChromo(row["chromosome"])
     alleles = formatImproperInserions(row["ref_allele"], row["alt_allele"])
     posId = createPosId(row)
-    vcfRow = "{0}\t{1}\t{2}\t{3}\t{4}\t.\t.\t.\t\n".format(chromo, posId, row["seq_start_position"],
+    vcfRow = "{0}\t{1}\t{2}\t{3}\t{4}\t.\t.\t.\n".format(chromo, row["seq_start_position"], posId,
                                                            alleles[0], alleles[1])
     vcfFile.write(vcfRow)
 
-
 def formatImproperInserions(refAllele, altAllele):
-    if not refAllele[0] == " " and refAllele[0] == "-":
-        formatedRefAllele = "A"
-        formatedAltAllele = "A{}".format(altAllele)
+    if not refAllele[0] == "" and refAllele[0] == "-":
+        formatedRefAllele = "N"
+        formatedAltAllele = "N{}".format(altAllele)
     elif '-' in refAllele:
         logging.info("Ref allele {} not supported".format(refAllele))
     else:
@@ -122,7 +113,7 @@ def allGenomicDataIsMissing(row):
 def annotateVCF(vcfFile, targetFile):
     fastaDir = "/nfs/nobackup/spot/mouseinformatics/pdx/vepDBs/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
     alleleDB = "/nfs/nobackup/spot/mouseinformatics/pdx/vepDBs/homo_sapiens_vep_98_GRCh38"
-    singularityVepImage = "./ensembl-vep.simg"
+    singularityVepImage = "/home/afollette/ensembl-vep.simg"
 
     if not os.path.isfile(fastaDir) and not os.path.isfile(alleleDB):
         fastaDir = "/home/afollette/vepWD/db/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
@@ -136,9 +127,10 @@ def annotateVCF(vcfFile, targetFile):
     vepOut = targetFile + ".ANN"
 
     vepCMD = """vep -e -q -check_existing  -symbol -polyphen -sift -merged -use_transcript_ref —hgvs —hgvsg —variant_class \
-    -canonical -fork 4 -format vcf -force -offline -no_stats --warning_file {0} -vcf\
+    -canonical -fork 4 -format vcf -force -offline -no_stats --warning_file {0}  \
      -cache -dir_cache {1} -fasta {2} -i {3} -o {4} 2>> {5}.log""".format(vepWarningFile, alleleDB, fastaDir, vepIn,
                                                                           vepOut, fileName)
+
     logging.debug("singularity exec {0} {1}".format(singularityVepImage, vepCMD))
     returnSignal = sp.call(
         "singularity exec {0} {1}".format(singularityVepImage, vepCMD), shell=True)
