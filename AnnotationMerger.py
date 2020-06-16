@@ -232,7 +232,7 @@ def parseHGSVc(HGSV):
 def buildAminoAcidChange(aminoAcids, protienPosition):
     return aminoAcids[0] + protienPosition + aminoAcids[2] if (aminoAcids and protienPosition and
                                                                len(
-                                                                   aminoAcids) == 3 and protienPosition.isdigit()) else ""
+                                                                   aminoAcids) == 3) else ""
 
 
 def parseFunctionalPredictions(polyphen, sift):
@@ -246,8 +246,8 @@ def logMissedPosition(row, chrStartPosKey):
     message = "Total dropped: {0} could not find {1} in annotations. Ref: {2} Alt {3} for sample {4}".format(
         mergedPointsMissed,
         chrStartPosKey,
-        row["ref_allele"],
-        row["alt_allele"], row['Sample_ID'])
+        getFromRow(row, "ref_allele"),
+        getFromRow(row, 'alt_allele'), getEitherFromRow(row, 'sample_id', 'Sample_ID'))
     logging.warning(message)
 
 
