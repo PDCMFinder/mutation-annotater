@@ -6,12 +6,11 @@ import os
 import sys
 import time
 import logging
-
 import re
 import pandas as pa
 
 import AnnotationFilter
-import IOutilities
+import vcfUtilities
 
 mergedPointsMissed = 0
 
@@ -32,36 +31,29 @@ def run():
     mergeRowsAndWrite()
     logging.info("Merge complete")
 
-
-def isColumnHeader(line):
-    return ((line[0] == '#') and (line[1] != '#'))
-
-
-def isCanonical(line):
-    return (line.find("CANONICAL=YES") != -1)
-
-
 def mergeRowsAndWrite():
     with open(tsvFilePath + ".hmz", 'w') as finalTemplate, \
             open(tsvFilePath + ".ANN", 'r') as annoFile, \
             open(tsvFilePath, 'r') as tsvFile:
-
         outFileWriter = csv.writer(finalTemplate, delimiter="\t")
-        if tsvFilePath.endswith(".csv"):
-            reader = csv.DictReader(tsvFile, delimiter=",")
-        else:
-            reader = csv.DictReader(tsvFile, delimiter="\t")
-
-        print("Reading Annotation file: {}".format(annoFile))
+        tsvReader = getTsvReader(tsvFile)
         annoReader = pa.read_csv(annoFile, delimiter='\t', error_bad_lines=False, header=97)
-
-        message = ("Merging original data :"
-                   " {0} /n and annotated data : {1} at {2}".format(tsvFilePath, annoFile, time.ctime()))
-        logging.info(message)
         headers = buildHeaders()
         outFileWriter.writerow(headers)
+        logBeginningOfMerge(tsvFilePath)
+        iterateThroughRowsAndMerge(tsvReader,annoReader, outFileWriter)
 
-        iterateThroughRowsAndMerge(reader,annoReader, outFileWriter)
+def getTsvReader(tsvFile):
+    if tsvFilePath.endswith(".csv"):
+        tsvReader = csv.DictReader(tsvFile, delimiter=",")
+    else:
+        tsvReader = csv.DictReader(tsvFile, delimiter="\t")
+    return tsvReader
+
+def logBeginningOfMerge(tsvFilePath):
+    message = ("Merging original data :"
+               " {0} /n and annotated data : {1} at {2}".format(tsvFilePath, tsvFilePath + "ANN", time.ctime()))
+    logging.info(message)
 
 def iterateThroughRowsAndMerge(reader, annoReader, outFileWriter):
     rowNum = 0
@@ -75,8 +67,8 @@ def iterateThroughRowsAndMerge(reader, annoReader, outFileWriter):
                 rowAdded += 1
             else:
                 message = ("Info: Dropping row for being invalid (size or column headers) "
-                           "or missing match in annotations (Chromosome position error)."
-                           " RowNum {0} - Len {1} - data {2}".format(rowNum, len(mergedRow), mergedRow))
+                           "or missing match in annotations (Chromosome position error). "
+                           "RowNum {0} - Len {1} - data {2}".format(rowNum, len(mergedRow), mergedRow))
                 logging.warning(message)
         else:
             message2 = ("Info: row {0} is broken or legacy".format(rowNum))
@@ -96,7 +88,7 @@ def rowIsHg38(row):
 
 def mergeRows(row, annoReader):
     annoRows = compareKeysOfFileAndReturnMatchingRows(row, annoReader)
-    if (len(annoRows) == 0):
+    if len(annoRows) == 0:
         builtRow = pa.Series()
     else:
         twoMatchingRows = AnnotationFilter.run(annoRows, tsvFileName, parentDirectory)
@@ -112,7 +104,8 @@ def compareKeysOfFileAndReturnMatchingRows(row, annoReader):
     return resultdf
 
 def createAnnotationKey(row):
-    return "{}_{}_{}_{}".format(row["chromosome"], row["seq_start_position"], row["ref_allele"], row["alt_allele"])
+    return "{}_{}_{}_{}".format(vcfUtilities.formatChromo(row["chromosome"]),
+                                row["seq_start_position"], row["ref_allele"], row["alt_allele"])
 
 def extraColumnToJSON(extra):
     if extra:
@@ -234,9 +227,16 @@ def buildAminoAcidChange(aminoAcids, protienPosition):
                                                                len(
                                                                    aminoAcids) == 3) else ""
 
-
 def parseFunctionalPredictions(polyphen, sift):
     return "PolyPhen: {0} | SIFT: {1}".format(polyphen, sift) if (polyphen and sift) else ""
+
+
+def isColumnHeader(line):
+    return ((line[0] == '#') and (line[1] != '#'))
+
+
+def isCanonical(line):
+    return (line.find("CANONICAL=YES") != -1)
 
 
 def logMissedPosition(row, chrStartPosKey):

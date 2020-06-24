@@ -2,6 +2,15 @@ import csv
 import re
 import pandas as pa
 
+def formatChromo(givenChromo):
+    incorrectChrFormat = "(?i)^([0-9]{1,2}|[xym]{1}|mt|un)$"
+    isMatch = re.match(incorrectChrFormat, givenChromo)
+    if isMatch:
+        chromo = "chr" + isMatch.group(1)
+    else:
+        chromo = givenChromo
+    return chromo
+
 def sortInPlace(aVCFfile):
     with open(aVCFfile, 'r') as infile:
         reader = csv.reader(infile, delimiter='\t')

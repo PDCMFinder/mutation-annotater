@@ -279,3 +279,8 @@ def test_givenMatchingFirstNucleotideAlleles_WhenformatAlleles_ThenReturnFirstDr
     self.assertEquals(actualRef2, expectedRefAllele2)
     self.assertEquals(actualAlt1, expectedAltAllele1)
     self.assertEquals(actualAlt2, expectedAltAllele2)
+
+def test_buildFinalAnnotation_realDroppedAnnotations_Debug(self):
+
+
+    AnnotationMerger.buildFinalTemplate()

@@ -8,7 +8,6 @@ import sys
 import re
 import logging
 
-import IOutilities
 import vcfUtilities
 
 if len(sys.argv) > 1:
@@ -36,7 +35,7 @@ def run():
 def formatToVCFAndSave(filePath):
     with open(filePath) as delimitedFile, \
             open(vcfFilePath, "w+") as vcfFile:
-        IOutilities.chmodFile(vcfFilePath)
+        chmodFile(vcfFilePath)
         reader = getDelimitedFileReader(delimitedFile, filePath)
         logging.info("Writing {0} to VCF".format(filePath))
         vcfFile.write("#chrom\tpos\tid\tref\talt\tqual\tfilter\tinfo\n")
@@ -79,10 +78,10 @@ def proccesVCF():
         vcfUtilities.dropDuplicates(vcfFilePath)
 
 def formatRowToVCFAndWrite(row, vcfFile):
-    chromo = IOutilities.formatChromo(row["chromosome"])
+    formattedChromo =  vcfUtilities.formatChromo(row["chromosome"])
     alleles = formatImproperInserions(row["ref_allele"], row["alt_allele"])
     posId = createPosId(row)
-    vcfRow = "{0}\t{1}\t{2}\t{3}\t{4}\t.\t.\t.\n".format(chromo, row["seq_start_position"], posId,
+    vcfRow = "{0}\t{1}\t{2}\t{3}\t{4}\t.\t.\t.\n".format(formattedChromo, row["seq_start_position"], posId,
                                                            alleles[0], alleles[1])
     vcfFile.write(vcfRow)
 
@@ -97,9 +96,11 @@ def formatImproperInserions(refAllele, altAllele):
         formatedAltAllele = altAllele
     return [formatedRefAllele, formatedAltAllele]
 
+def chmodFile(annoFilename):
+        os.chmod(annoFilename, 0o666)
 
 def createPosId(row):
-    return "{}_{}_{}_{}".format(row["chromosome"], row["seq_start_position"], row["ref_allele"], row["alt_allele"])
+    return "{}_{}_{}_{}".format(vcfUtilities.formatChromo(vcfUtilities.formatChromo(row["chromosome"])), row["seq_start_position"], row["ref_allele"], row["alt_allele"])
 
 
 def anyGenomicCoordinateAreMissing(row):
@@ -129,7 +130,7 @@ def annotateVCF(vcfFile, targetFile):
     vepCMD = """vep -e -q -check_existing  -symbol -polyphen -sift -merged -use_transcript_ref —hgvs —hgvsg —variant_class \
     -canonical -fork 4 -format vcf -force -offline -no_stats --warning_file {0}  \
      -cache -dir_cache {1} -fasta {2} -i {3} -o {4} 2>> {5}.log""".format(vepWarningFile, alleleDB, fastaDir, vepIn,
-                                                                          vepOut, fileName)
+                                                                          vepOut, file)
 
     logging.debug("singularity exec {0} {1}".format(singularityVepImage, vepCMD))
     returnSignal = sp.call(

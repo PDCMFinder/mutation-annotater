@@ -1,9 +1,11 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
 from unittest import TestCase
-import IOutilities
 import Annotater
 import pandas as ps
+
+import vcfUtilities
+
 
 class TestFilter(TestCase):
 
@@ -20,29 +22,23 @@ class TestFilter(TestCase):
         })
         tmpFile = "/tmp/vcf.tsv"
         vcfWithDuplicates.to_csv(tmpFile, sep='\t', index=False)
-        Annotater.dropDuplicates(tmpFile)
+        vcfUtilities.dropDuplicates(tmpFile)
         actualDf = ps.read_csv(open(tmpFile, 'r'), sep='\t')
-
         self.assertEquals(len(actualDf.index), 1)
 
     def test_givenIncorrectchroFormat_ReturnCorrectFormat(self):
 
-        givenChr = "chr1"
-        expectedChr = "1"
-
-        actualChr = IOutilities.formatChromo(givenChr)
-
+        givenChr = "1"
+        expectedChr = "chr1"
+        actualChr = vcfUtilities.formatChromo(givenChr)
         self.assertEquals(expectedChr, actualChr)
 
     def test_GivenImproperInsertionFormat_When_formatImproperInsertionIsCalled_Return_NsuffixedAlleles(self):
 
         givenRef = '-'
         givenAlt = 'A'
-
-        expectedRef = 'A'
-        expectedAl = 'AA'
-
+        expectedRef = 'N'
+        expectedAl = 'NA'
         actualAlleles = Annotater.formatImproperInserions(givenRef,givenAlt)
-
         self.assertEquals(expectedRef,actualAlleles[0])
         self.assertEquals(expectedAl, actualAlleles[1])
