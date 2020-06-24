@@ -38,6 +38,6 @@ def sortLocation(x):
     return int(loc.group(0)) if x != 'pos' and loc != None else 0
 
 def dropDuplicates(vcfFile):
-    vcfDf = pa.read_csv(vcfFile, sep='\t', keep_default_na=False, na_values=[''])
+    vcfDf = pa.read_csv(vcfFile, sep='\t', keep_default_na=False, na_values=[''], dtype=str)
     vcfDf.drop_duplicates(inplace=True)
     vcfDf.to_csv(vcfFile, sep='\t', index=False, na_rep='')
