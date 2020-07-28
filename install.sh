@@ -5,9 +5,9 @@ singularity pull docker://"$dockerURI"
 singularity build "$dockerURI"
 
 printf "Installing database. Download is approximately 14G\n"
-mkdir ./vepDB
+mkdir -p ./vepDB
 cd ./vepDB || exit 1
-mkdir homo_sapiens
+mkdir -p homo_sapiens
 cd ./homo_sapiens|| exit 1
 curl -O ftp://ftp.ensembl.org/pub/release-98/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz
 gzip -d Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz
