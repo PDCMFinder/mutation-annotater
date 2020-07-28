@@ -112,16 +112,9 @@ def allGenomicDataIsMissing(row):
 
 
 def annotateVCF(vcfFile, targetFile):
-    fastaDir = "/nfs/nobackup/spot/mouseinformatics/pdx/vepDBs/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
-    alleleDB = "/nfs/nobackup/spot/mouseinformatics/pdx/vepDBs/homo_sapiens_vep_98_GRCh38"
-    singularityVepImage = "/home/afollette/ensembl-vep.simg"
-
-    if not os.path.isfile(fastaDir) and not os.path.isfile(alleleDB):
-        fastaDir = "/home/afollette/vepWD/db/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
-        alleleDB = "/home/afollette/vepWD/db/homo_sapiens_vep_98_GRCh38"
-
-    if not os.path.isfile(singularityVepImage):
-        singularityVepImage = "/homes/afollette/ensembl-vep.simg"
+    fastaDir = "./vepDBs/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
+    alleleDB = ".//vepDBs/homo_sapiens_vep_98_GRCh38"
+    singularityVepImage = "./ensembl-vep.simg"
 
     vepIn = vcfFile
     vepWarningFile = targetFile + ".vepWarnings"
