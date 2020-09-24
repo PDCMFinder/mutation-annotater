@@ -112,9 +112,20 @@ def allGenomicDataIsMissing(row):
 
 
 def annotateVCF(vcfFile, targetFile):
-    fastaDir = "./vepDBs/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
-    alleleDB = ".//vepDBs/homo_sapiens_vep_98_GRCh38"
-    singularityVepImage = "./ensembl-vep.simg"
+
+    workingDir = os.getcwd()
+    fastaDir = workingDir + "/vepDBs/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
+    alleleDB = workingDir + "/vepDBs/homo_sapiens_vep_98_GRCh38"
+    singularityVepImage = workingDir + "/pdx-liftover-vep_release98.3.simg"
+
+    if not os.path.exists(fastaDir):
+        raise IOError("Fasta database does not exist at {}".format(fastaDir))
+    if not os.path.exists(alleleDB):
+        raise IOError("vep data base does not exist at {}".format(alleleDB))
+    if not os.path.exists(singularityVepImage):
+        raise IOError("singularity vep image does not exist at {}".format(singularityVepImage))
+
+    print(os.getcwd())
 
     vepIn = vcfFile
     vepWarningFile = targetFile + ".vepWarnings"
@@ -125,7 +136,7 @@ def annotateVCF(vcfFile, targetFile):
      -cache -dir_cache {1} -fasta {2} -i {3} -o {4} 2>> {5}.log""".format(vepWarningFile, alleleDB, fastaDir, vepIn,
                                                                           vepOut, file)
 
-    logging.debug("singularity exec {0} {1}".format(singularityVepImage, vepCMD))
+    logging.info("singularity exec {0} {1}".format(singularityVepImage, vepCMD))
     returnSignal = sp.call(
         "singularity exec {0} {1}".format(singularityVepImage, vepCMD), shell=True)
     if (returnSignal != 0):

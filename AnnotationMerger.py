@@ -61,17 +61,18 @@ def iterateThroughRowsAndMerge(reader, annoReader, outFileWriter):
     for row in reader:
         rowNum += 1
         if rowIsValidForMerge(row):
-            mergedRow = mergeRows(row, annoReader)
+            mergedRow = mergeRows(row, annoReader, rowNum)
             if len(mergedRow) >= 26:
                 outFileWriter.writerow(mergedRow)
                 rowAdded += 1
             else:
-                message = ("Info: Dropping row for being invalid (size or column headers) "
+                message = ("Info: Row Number {0}: "
+                           "Dropping row for being invalid (size or column headers) "
                            "or missing match in annotations (Chromosome position error). "
-                           "RowNum {0} - Len {1} - data {2}".format(rowNum, len(mergedRow), mergedRow))
+                           "Row: {0} - Length {1} - data {2}".format(rowNum, len(mergedRow), mergedRow))
                 logging.warning(message)
         else:
-            message2 = ("Info: row {0} is broken or legacy".format(rowNum))
+            message2 = ("Info: Row Number {0}: is broken or legacy".format(rowNum))
             logging.warning(message2)
     message3 = ("{0} The completed file file {1} has {2}"
                 " data points (including header)".format(time.ctime(), tsvFileName + ".ANN", rowAdded))
@@ -86,13 +87,13 @@ def rowIsHg38(row):
     return re.match(hg38Regex, getFromRow(row, "genome_assembly"))
 
 
-def mergeRows(row, annoReader):
+def mergeRows(row, annoReader, rowNum):
     annoRows = compareKeysOfFileAndReturnMatchingRows(row, annoReader)
     if len(annoRows) == 0:
         builtRow = pa.Series()
     else:
         twoMatchingRows = AnnotationFilter.run(annoRows, tsvFileName, parentDirectory)
-        builtRow = buildFinalTemplate(twoMatchingRows, row)
+        builtRow = buildFinalTemplate(twoMatchingRows, row, rowNum)
     return builtRow
 
 
@@ -100,7 +101,7 @@ def compareKeysOfFileAndReturnMatchingRows(row, annoReader):
     annotationKey = createAnnotationKey(row)
     resultdf = annoReader[annoReader['#Uploaded_variation'] == annotationKey]
     if len(resultdf) == 0:
-        logMissedPosition(row, annotationKey)
+        logMissedPosition(row, annotationKey, rowNum)
     return resultdf
 
 def createAnnotationKey(row):
@@ -146,7 +147,7 @@ def isEnsemblData(row):
     return re.match("ENS", geneId) and re.match("ENS", transcriptId) if (geneId and transcriptId) else False
 
 
-def buildFinalTemplate(twoMatchingRows, row):
+def buildFinalTemplate(twoMatchingRows, row, rowNum):
     ncbiRow = pa.DataFrame()
     builtRow = []
 
@@ -163,10 +164,10 @@ def buildFinalTemplate(twoMatchingRows, row):
             annotationExtras = extraColumnToJSON(extra)
             builtRow = buildRow(row, annoRow, annotationExtras, ncbiRow)
         else:
-            logging.info("Row one is an invalid size or is not ensemble.")
-            logging.debug("Annotations {0} \n {1}".format(parsedRows[0], parsedRows[1]))
+            logging.debug("Info: Row Number {2}: Annotations not valid. Possibly no ENSEMBL accession. Queried annotations:  {0} \n {1}"
+                          .format(parsedRows[0], parsedRows[1], rowNum))
     if len(builtRow) == 0:
-        logging.info("No annotations found for row with values : {}".format(row.values()))
+        logging.info("Info: Row Number {0}: No annotations found for row with values : {1}".format(rowNum, row.values()))
         builtRow = list()
 
     return builtRow
