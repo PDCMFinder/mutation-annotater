@@ -7,8 +7,7 @@ import subprocess as sp
 import sys
 import re
 import logging
-
-import vcfUtilities
+from utilities import vcfUtilities
 
 if len(sys.argv) > 1:
     file = sys.argv[1]
@@ -16,26 +15,25 @@ if len(sys.argv) > 1:
     parentDirectoryPath = os.path.dirname(file)
     provider = os.path.dirname(parentDirectoryPath)
     Updog = os.path.dirname(provider)
-    vcfFilePath = file + '.vcf'
+    ensemblFilePath = file + '.vcf'
     logging.basicConfig(filename='{}.log'.format(file), filemode='a+', level=logging.DEBUG)
     logging.info(" Starting annotation pipleline ")
 
 else:
     logging.info("Please pass the absolute path of the file to annotate")
 
-
 def run():
-    formatToVCFAndSave(file)
+    #formatToVCFAndSave(file)
+    formatToEnsemblAndSave(file)
     proccesVCF()
-    annotateVCF(vcfFilePath, file)
+    annotateVCF(ensemblFilePath, file)
     logging.info("Annotating is complete")
-
 
 
 def formatToVCFAndSave(filePath):
     with open(filePath) as delimitedFile, \
-            open(vcfFilePath, "w+") as vcfFile:
-        chmodFile(vcfFilePath)
+            open(ensemblFilePath, "w+") as vcfFile:
+        chmodFile(ensemblFilePath)
         reader = getDelimitedFileReader(delimitedFile, filePath)
         logging.info("Writing {0} to VCF".format(filePath))
         vcfFile.write("#chrom\tpos\tid\tref\talt\tqual\tfilter\tinfo\n")
@@ -46,9 +44,33 @@ def formatToVCFAndSave(filePath):
                 proccessRowToVCF(row, vcfFile)
         except EOFError:
             logging.info("End of file at {}".format(rowCount))
-
         message = "The file {0} has {1} data points (including header)".format(filePath, rowCount)
         logging.info(message)
+
+def formatToEnsemblAndSave(filePath):
+    hg38RE = "(?i)(hg38|grch38|38)"
+    with open(filePath) as delimitedFile, \
+            open(ensemblFilePath, "w+") as ensemblFile:
+        chmodFile(ensemblFilePath)
+        reader = getDelimitedFileReader(delimitedFile, filePath)
+        logging.info("Writing {0} to Ensembl format".format(filePath))
+        rowCount = 0
+        try:
+            for row in reader:
+                rowCount += 1
+                if not bool(re.match(hg38RE, row["genome_assembly"])):
+                    logging.warning("Warning found legacy data : {0}".format(row.items()))
+                else:
+                    formattedChromo = vcfUtilities.formatChromo(row["chromosome"])
+                    posId = createPosId(row)
+                    vcfRow = "{0}\t{1}\t{2}\t{3}/{4}\t+\t{5}\n"\
+                        .format(formattedChromo, row["seq_start_position"],row["seq_start_position"],row["ref_allele"], row["alt_allele"], posId)
+                    ensemblFile.write(vcfRow)
+        except EOFError:
+            logging.info("End of file at {}".format(rowCount))
+        message = "The file {0} has {1} data points (including header)".format(filePath, rowCount)
+        logging.info(message)
+
 
 def getDelimitedFileReader(delimitedFile, filePath):
     if filePath.endswith(".csv"):
@@ -66,7 +88,7 @@ def proccessRowToVCF(row, vcfFile):
     elif (anyGenomicCoordinateAreMissing(row)):
         logging.info(
             "Row has incomplete data : {0} in file {1} caused by missing chro,seq start, ref or alt allele data"
-                .format(row.items(), vcfFilePath))
+                .format(row.items(), ensemblFilePath))
     elif allGenomicDataIsMissing(row):
         raise EOFError
     else:
@@ -74,22 +96,22 @@ def proccessRowToVCF(row, vcfFile):
 
 def proccesVCF():
         logging.info("Sorting and removing duplicates in VCF")
-        vcfUtilities.sortInPlace(vcfFilePath)
-        vcfUtilities.dropDuplicates(vcfFilePath)
+        vcfUtilities.sortInPlace(ensemblFilePath)
+        vcfUtilities.dropDuplicates(ensemblFilePath)
 
 def formatRowToVCFAndWrite(row, vcfFile):
     formattedChromo =  vcfUtilities.formatChromo(row["chromosome"])
-    alleles = formatImproperInserions(row["ref_allele"], row["alt_allele"])
+    alleles = formatImproperInsertionsAndDeletions(row["ref_allele"], row["alt_allele"])
     posId = createPosId(row)
     vcfRow = "{0}\t{1}\t{2}\t{3}\t{4}\t.\t.\t.\n".format(formattedChromo, row["seq_start_position"], posId,
                                                            alleles[0], alleles[1])
     vcfFile.write(vcfRow)
 
-def formatImproperInserions(refAllele, altAllele):
-    if not refAllele[0] == "" and refAllele[0] == "-":
+def formatImproperInsertionsAndDeletions(refAllele, altAllele):
+    if refAllele[0] == "-":
         formatedRefAllele = "N"
         formatedAltAllele = "N{}".format(altAllele)
-    elif '-' in refAllele:
+    elif '-' in altAllele:
         logging.info("Ref allele {} not supported".format(refAllele))
     else:
         formatedRefAllele = refAllele
@@ -112,7 +134,6 @@ def allGenomicDataIsMissing(row):
 
 
 def annotateVCF(vcfFile, targetFile):
-
     workingDir = os.getcwd()
     fastaDir = workingDir + "/vepDBs/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
     alleleDB = workingDir + "/vepDBs/homo_sapiens_vep_98_GRCh38"
@@ -131,8 +152,8 @@ def annotateVCF(vcfFile, targetFile):
     vepWarningFile = targetFile + ".vepWarnings"
     vepOut = targetFile + ".ANN"
 
-    vepCMD = """vep -e -q -check_existing  -symbol -polyphen -sift -merged -use_transcript_ref —hgvs —hgvsg —variant_class \
-    -canonical -fork 4 -format vcf -force -offline -no_stats --warning_file {0}  \
+    vepCMD = """vep -e -q -check_existing --check_ref -symbol -polyphen -sift -merged -use_transcript_ref —hgvs —hgvsg —variant_class \
+    -canonical -fork 4 -format ensembl -force -offline -no_stats --warning_file {0}  \
      -cache -dir_cache {1} -fasta {2} -i {3} -o {4} 2>> {5}.log""".format(vepWarningFile, alleleDB, fastaDir, vepIn,
                                                                           vepOut, file)
 

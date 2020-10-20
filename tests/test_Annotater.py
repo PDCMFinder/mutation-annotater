@@ -4,7 +4,7 @@ from unittest import TestCase
 import Annotater
 import pandas as ps
 
-import vcfUtilities
+from utilities import vcfUtilities
 
 
 class TestFilter(TestCase):
@@ -39,6 +39,6 @@ class TestFilter(TestCase):
         givenAlt = 'A'
         expectedRef = 'N'
         expectedAl = 'NA'
-        actualAlleles = Annotater.formatImproperInserions(givenRef,givenAlt)
+        actualAlleles = Annotater.formatImproperInsertionsAndDeletions(givenRef, givenAlt)
         self.assertEquals(expectedRef,actualAlleles[0])
         self.assertEquals(expectedAl, actualAlleles[1])

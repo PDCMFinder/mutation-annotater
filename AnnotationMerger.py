@@ -9,8 +9,7 @@ import logging
 import re
 import pandas as pa
 
-import AnnotationFilter
-import vcfUtilities
+from utilities import vcfUtilities, AnnotationFilter
 
 mergedPointsMissed = 0
 
@@ -88,7 +87,7 @@ def rowIsHg38(row):
 
 
 def mergeRows(row, annoReader, rowNum):
-    annoRows = compareKeysOfFileAndReturnMatchingRows(row, annoReader)
+    annoRows = compareKeysOfFileAndReturnMatchingRows(row, annoReader, rowNum)
     if len(annoRows) == 0:
         builtRow = pa.Series()
     else:
@@ -97,11 +96,11 @@ def mergeRows(row, annoReader, rowNum):
     return builtRow
 
 
-def compareKeysOfFileAndReturnMatchingRows(row, annoReader):
+def compareKeysOfFileAndReturnMatchingRows(row, annoReader, rowNum):
     annotationKey = createAnnotationKey(row)
     resultdf = annoReader[annoReader['#Uploaded_variation'] == annotationKey]
     if len(resultdf) == 0:
-        logMissedPosition(row, annotationKey, rowNum)
+        logMissedPosition(row, annotationKey)
     return resultdf
 
 def createAnnotationKey(row):
@@ -153,7 +152,7 @@ def buildFinalTemplate(twoMatchingRows, row, rowNum):
 
     if len(twoMatchingRows) > 0:
         parsedRows = parseFilteredRows(twoMatchingRows)
-        if parsedRows[0].size > 0 and isEnsemblData(parsedRows[0]):
+        if parsedRows[0].size > 0 :
             annoRow = parsedRows[0]
             if parsedRows[1].size > 0 and not isEnsemblData(parsedRows[1]):
                 ncbiRow = parsedRows[1]
