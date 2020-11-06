@@ -1,5 +1,5 @@
 import unittest
-from utilities import AnnotationFilter
+from src.utilities import AnnotationFilter
 import pandas as ps
 
 

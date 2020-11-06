@@ -1,5 +1,5 @@
 from unittest import TestCase
-import AnnotationMerger
+from src import AnnotationMerger
 import pandas as ps
 
 
@@ -220,7 +220,7 @@ class TestFilter(TestCase):
         testAnnotations = ps.DataFrame(annoFile, columns=annoFileHeaders)
         row = ps.DataFrame([data], columns=headers).to_dict("index").pop(0)
 
-        actualMatches = AnnotationMerger.compareKeysOfFileAndReturnMatchingRows(row,testAnnotations)
+        actualMatches = AnnotationMerger.compareKeysOfFileAndReturnMatchingRows(row, testAnnotations)
         actualAllele = actualMatches['Allele'].unique()
         self.assertEquals(len(actualAllele), 1)
 

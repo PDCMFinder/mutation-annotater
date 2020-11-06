@@ -1,10 +1,10 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
 from unittest import TestCase
-import Annotater
+from src import Annotater
 import pandas as ps
 
-from utilities import vcfUtilities
+from src.utilities import vcfUtilities
 
 
 class TestFilter(TestCase):

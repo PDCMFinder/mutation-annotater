@@ -8,7 +8,7 @@ import logging
 import glob
 import random
 
-logging.basicConfig(filename="log_results.tsv",level=logging.INFO)
+logging.basicConfig(filename="../../log_results.tsv", level=logging.INFO)
 logging.info("Starting data integration checks {}".format(datetime.datetime.now()))
 logging.info("filename\trsid\tvariant_class\tchro\tpos\tapi_pos\tpos_results\tref_allele\tref_alt\tapi_ref_allele\tallele_result")
 
@@ -17,7 +17,6 @@ ensemblApiRsRoot = 'http://rest.ensembl.org/variation/human/rs'
 seqApi = 'http://rest.ensembl.org/sequence/region/human/'
 
 updogFolders = glob.glob("/home/afollette/Finder_Data_Repositories/pdxfinder-data/data/UPDOG/*")
-variationFilter = 'deletion'
 
 def parseDBsnpJson(responseJson):
     dbsnpJson = json.load(responseJson)
@@ -104,38 +103,57 @@ def checkRsid(row, database):
             print(logMessage)
             logging.info(logMessage)
 
-sampleDf = ps.DataFrame()
-for i in updogFolders:
-    mutFilesGlob = "{}/mut/*_mut*tsv".format(i)
-    mutFiles = glob.glob(mutFilesGlob)
-    if mutFiles:
-        print(mutFiles)
-        dataFile = random.sample(mutFiles,1)
-        df = ps.read_csv(dataFile[0], sep='\t', )\
-            .fillna("")
+def analyzeMutFileVariants(mutFile, sampleSize):
+    if mutFile:
+        df = ps.read_csv(mutFile, sep='\t', ) \
+            .fillna(" ")
         rsDf = df[df.variation_id.str.contains("rs[0-9]{0,10}")]
-        sampleSize = 10
         database = "ensembl"
         snvDf = rsDf[rsDf.variant_class == "SNV"]
         if len(snvDf) >= sampleSize:
             (snvDf
              .sample(sampleSize)
-             .assign(file=i)
-             .apply(lambda x: checkRsid(x,database), axis=1)
+             .assign(file=mutFile)
+             .apply(lambda x: checkRsid(x, database), axis=1)
              )
         insertionDf = rsDf[rsDf.variant_class == "insertion"]
         if len(insertionDf) >= sampleSize:
             (insertionDf
              .sample(sampleSize)
-             .assign(file=i)
+             .assign(file=mutFile)
              .apply(lambda x: checkRsid(x, database), axis=1)
              )
         deletionDf = rsDf[rsDf.variant_class == "deletion"]
         if len(deletionDf) >= sampleSize:
             (deletionDf
              .sample(sampleSize)
-             .assign(file=i)
+             .assign(file=mutFile)
              .apply(lambda x: checkRsid(x, database), axis=1)
              )
     else:
         print("No mut files found for {}".format(i))
+
+def parseAllSamples():
+    updogFolders = glob.glob("/home/afollette/Finder_Data_Repositories/pdxfinder-data/data/UPDOG/*")
+    for i in updogFolders:
+        mutFilesGlob = "{}/mut/*_mut*tsv".format(i)
+        mutFiles = glob.glob(mutFilesGlob)
+        randomMutFile = random.sample(mutFiles, 1)
+        analyzeMutFileVariants(randomMutFile,2)
+
+
+def parseParticularSamples():
+    curieLc = glob.glob("/home/afollette/Finder_Data_Repositories/pdxfinder-data/data/UPDOG/Curie-LC/mut/Curie-LC_mut.tsv")[0]
+    lih = glob.glob("/home/afollette/Finder_Data_Repositories/pdxfinder-data/data/UPDOG/LIH/mut/LIH_mut.tsv")[0]
+    crl_rnaseq = glob.glob("/home/afollette/Finder_Data_Repositories/pdxfinder-data/data/UPDOG/CRL/mut/rnaseq/*_mut*.tsv")
+    crl_wes = glob.glob("/home/afollette/Finder_Data_Repositories/pdxfinder-data/data/UPDOG/CRL/mut/wes/*_mut*tsv")
+    randomCRL_rnaseq = random.sample(crl_rnaseq, 1)[0]
+    randomCRL_Wes = random.sample(crl_wes, 1)[0]
+
+    analyzeMutFileVariants(curieLc, 1)
+    analyzeMutFileVariants(lih, 1)
+    #analyzeMutFileVariants(randomCRL_rnaseq, 5)
+    #analyzeMutFileVariants(randomCRL_Wes, 5)
+
+
+parseParticularSamples()

@@ -9,7 +9,7 @@ import logging
 import re
 import pandas as pa
 
-from utilities import vcfUtilities, AnnotationFilter
+import AnnotationFilter
 
 mergedPointsMissed = 0
 
@@ -168,11 +168,9 @@ def buildFinalTemplate(twoMatchingRows, row, rowNum):
     if len(builtRow) == 0:
         logging.info("Info: Row Number {0}: No annotations found for row with values : {1}".format(rowNum, row.values()))
         builtRow = list()
-
     return builtRow
 
 def buildRow(row, annoRow, extraAnno, ncbiRow):
-    reflAllele,altAllele = formatAlleles(row)
     return [getEitherFromRow(row, 'model_id', 'Model_ID'), getEitherFromRow(row, 'sample_id', 'Sample_ID'),
                         getFromRow(row, 'sample_origin'),
                         getEitherFromRow(row, 'host_strain_nomenclature', 'host strain nomenclature'),
@@ -186,21 +184,12 @@ def buildRow(row, annoRow, extraAnno, ncbiRow):
                         getFromRow(row, 'read_depth'), getEitherFromRow(row, 'Allele_frequency', 'allele_frequency'),
                         getFromRow(row, 'chromosome'),
                         getFromRow(row, 'seq_start_position'),
-                        reflAllele, altAllele, getFromRow(row, 'ucsc_gene_id'),
+                        getFromRow(row, 'ref_allele'), getFromRow(row, 'alt_allele'), getFromRow(row, 'ucsc_gene_id'),
                         getFromRow(ncbiRow, 'Gene'),
                         getFromRow(ncbiRow, 'Feature'), getFromRow(annoRow, 'Gene'),
                         getFromRow(annoRow, 'Feature'),
                         getFromRow(annoRow, 'Existing_variation'),
                         getFromRow(row, 'genome_assembly'), getEitherFromRow(row, 'platform', 'Platform')]
-
-def formatAlleles(row):
-    refAllele = getFromRow(row, 'ref_allele')
-    altAllele = getFromRow(row, 'alt_allele')
-    if refAllele and altAllele:
-        if refAllele[0] == altAllele[0]:
-            refAllele = refAllele[1:]
-            altAllele = altAllele[1:]
-    return refAllele, altAllele
 
 def getEitherFromRow(row, attributeId, alternativeId):
     returnStr = getFromRow(row, attributeId)
