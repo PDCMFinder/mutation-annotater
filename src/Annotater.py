@@ -22,25 +22,19 @@ if len(sys.argv) > 1:
 else:
     logging.info("Please pass the absolute path of the file to annotate")
 
-
 def run():
     formatToVcfOrEnsemblAndSave()
-    removeDuplicatesInFiles()
-    # annotateFile(vcfFilePath)
-    annotateFile(ensemblFilePath)
-    # mergeResultsFiles(vcfFilePath, ensemblFilePath)
+    processFiles()
+    annotateFile(vcfFilePath, "vcf")
+    annotateFile(ensemblFilePath, "ensembl")
+    mergeResultAnnos(vcfFilePath, ensemblFilePath)
     logging.info("Annotating is complete")
 
 
 def formatToVcfOrEnsemblAndSave():
     with open(vcfFilePath, "w") as vcfFile, \
             open(ensemblFilePath, "w") as ensembl:
-        reader = (
-            ps.read_csv(mutFile, sep='\t', dtypes)
-                .sort_values(by=['chromosome', 'seq_start_position'])
-                .groupby()
-                .reset_index(drop=True)
-        )
+        reader = ps.read_csv(mutFile, sep='\t', dtype=str)
         reader['chromsome'] = reader.apply(lambda x: formatChromo(x.chromosome), axis=1)
 
         logging.info("Writing {0} to VCF".format(mutFile))
@@ -77,11 +71,39 @@ def isRowValidForProcessing(row):
     return isValid
 
 
-def removeDuplicatesInFiles():
+def processFiles():
     logging.info("removing duplicates in VCF/Ensembl files")
+    sortInPlace(vcfFilePath)
+    sortInPlace(ensemblFilePath)
     dropDuplicates(vcfFilePath)
     dropDuplicates(ensemblFilePath)
 
+
+def sortInPlace(aVCFfile):
+    with open(aVCFfile, 'r') as infile:
+        reader = csv.reader(infile, delimiter='\t')
+        secondKey = sorted(reader, key=lambda x: sortLocation(x[1]))
+        sortedFile = sorted(secondKey, key=lambda x: sortChromo(x[0]))
+    with open(aVCFfile, 'w') as outFile:
+        writer = csv.writer(outFile, delimiter='\t')
+        for row in sortedFile:
+            writer.writerow(row)
+
+def sortChromo(x):
+    decMatch = "^[0-9]{1,2}$"
+    isDec = re.match(decMatch, x)
+
+    if isDec:
+        return int(x)
+    elif len(x) == 1:
+        return ord(x)
+    else :
+        return 0
+
+def sortLocation(x):
+    firstTenD = "^[0-9]{1,10}"
+    loc = re.search(firstTenD, x)
+    return int(loc.group(0)) if x != 'pos' and loc != None else 0
 
 def dropDuplicates(vcfFilePath):
     vcfDf = ps.read_csv(vcfFilePath, sep='\t', keep_default_na=False, na_values=[''], dtype=str)
@@ -138,14 +160,14 @@ def formatChromo(givenChromo):
     return formattedChromo
 
 
-def annotateFile(vepIn):
+def annotateFile(vepIn, format):
     fastaDir, alleleDB, singularityVepImage, vepArgumentsList = getVepConfigurations()
     vepArguments = " ".join(vepArgumentsList)
     vepWarningFile = vepIn + ".vepWarnings"
     vepOut = vepIn + ".ANN"
     threads = cpu_count() * 2
-    vepCMD = """vep {0} --fork={1} --warning_file {2} -cache -dir_cache {3} -fasta {4} -i {5} -o {6} 2>> {7}.log""" \
-        .format(vepArguments, threads, vepWarningFile, alleleDB, fastaDir, vepIn, vepOut, mutFile)
+    vepCMD = """vep {-} --format {1} --fork={2} --warning_file {3} -cache -dir_cache {4} -fasta {5} -i {6} -o {7} 2>> {8}.log""" \
+        .format(vepArguments, format, threads, vepWarningFile, alleleDB, fastaDir, vepIn, vepOut, mutFile)
     logging.info("singularity exec {0} {1}".format(singularityVepImage, vepCMD))
     returnSignal = sp.call(
         "singularity exec {0} {1}".format(singularityVepImage, vepCMD), shell=True)
@@ -167,6 +189,22 @@ def getVepConfigurations():
         if not os.path.exists(singularityVepImage):
             raise IOError("singularity vep image does not exist at {}".format(singularityVepImage))
     return fastaDir, alleleDB, singularityVepImage, vepArguments
+
+def mergeResultAnnos(vcfPath, ensemblPath):
+       vcfAnnos = vcfPath + ".ANN"
+       ensemblAnnos = ensemblPath + ".ANN"
+       mergedAnnos = mutFile + ".ANN"
+       vcfDf = ps.read_csv(vcfAnnos, sep='\t', header=3)
+       headers = vcfDf.columns
+
+       (ps
+            .read_csv(ensemblAnnos, sep='\t', header=3, names=headers)
+            .append(vcfDf, ignore_index=True)
+            .to_csv(mergedAnnos, sep='\t', index=False)
+       )
+
+       os.remove(vcfAnnos)
+       os.remove(ensemblAnnos)
 
 
 if len(sys.argv) > 1:
