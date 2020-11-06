@@ -11,50 +11,57 @@ import pandas as ps
 import yaml
 
 if len(sys.argv) > 1:
-    file = sys.argv[1]
-    fileName = os.path.basename(file)
-    parentDirectoryPath = os.path.dirname(file)
-    vcfFilePath = file + '.vcf'
-    ensemblFilePath = file + '.ensembl'
-    logging.basicConfig(filename='{}.log'.format(file), filemode='a+', level=logging.DEBUG)
+    mutFile = sys.argv[1]
+    fileName = os.path.basename(mutFile)
+    parentDirectoryPath = os.path.dirname(mutFile)
+    vcfFilePath = mutFile + '.vcf'
+    ensemblFilePath = mutFile + '.ensembl'
+    logging.basicConfig(filename='{}.log'.format(mutFile), filemode='a+', level=logging.DEBUG)
     logging.info(" Starting annotation pipleline ")
 
 else:
     logging.info("Please pass the absolute path of the file to annotate")
 
+
 def run():
     formatToVcfOrEnsemblAndSave()
-    proccesVCF()
-    #annotateFile(vcfFilePath)
+    removeDuplicatesInFiles()
+    # annotateFile(vcfFilePath)
     annotateFile(ensemblFilePath)
-    #mergeResultsFiles(vcfFilePath, ensemblFilePath)
+    # mergeResultsFiles(vcfFilePath, ensemblFilePath)
     logging.info("Annotating is complete")
 
 
 def formatToVcfOrEnsemblAndSave():
-    with open(file, 'r') as delimitedFile, \
-            open(vcfFilePath, "w") as vcfFile, \
+    with open(vcfFilePath, "w") as vcfFile, \
             open(ensemblFilePath, "w") as ensembl:
-        reader = csv.DictReader(delimitedFile, delimiter="\t")
-        logging.info("Writing {0} to VCF".format(file))
+        reader = (
+            ps.read_csv(mutFile, sep='\t', dtypes)
+                .sort_values(by=['chromosome', 'seq_start_position'])
+                .groupby()
+                .reset_index(drop=True)
+        )
+        reader['chromsome'] = reader.apply(lambda x: formatChromo(x.chromosome), axis=1)
+
+        logging.info("Writing {0} to VCF".format(mutFile))
         vcfFile.write("#chrom\tpos\tid\tref\talt\tqual\tfilter\tinfo\n")
         ensembl.write("#chrom\tpos\tend\tref/alt\tstrand\tid\n")
-        rowCount = 0
-        for row in reader:
-            if isRowValidForProcessing(row):
-                rowCount += 1
-                if rowIsEnsembl(row):
-                    formatRowToEnsemblAndWrite(row, ensembl)
+        for index, row in reader.iterrows():
+            rowDict = row.to_dict()
+            if isRowValidForProcessing(rowDict):
+                if rowIsEnsembl(rowDict):
+                    formatRowToEnsemblAndWrite(rowDict, ensembl)
                 else:
-                    formatRowToVCFAndWrite(row, vcfFile)
-
-        message = "The file {0} has {1} data points (including header)".format(file, (rowCount - 1))
+                    formatRowToVCFAndWrite(rowDict, vcfFile)
+        message = "The file {0} has {1} data points (including header)".format(mutFile, (index + 1))
         logging.info(message)
+
 
 def rowIsEnsembl(row):
     refAllele = row["ref_allele"]
     altAllele = row["alt_allele"]
-    return bool(re.search('-',refAllele)) or bool(re.search('-', altAllele))
+    return bool(re.search('-', refAllele)) or bool(re.search('-', altAllele))
+
 
 def isRowValidForProcessing(row):
     isValid = True
@@ -69,61 +76,67 @@ def isRowValidForProcessing(row):
         isValid = False
     return isValid
 
-def proccesVCF():
-        logging.info("Sorting and removing duplicates in VCF")
-        #sortInPlace(vcfFilePath)
-        dropDuplicates(vcfFilePath)
-        dropDuplicates(ensemblFilePath)
+
+def removeDuplicatesInFiles():
+    logging.info("removing duplicates in VCF/Ensembl files")
+    dropDuplicates(vcfFilePath)
+    dropDuplicates(ensemblFilePath)
+
 
 def dropDuplicates(vcfFilePath):
     vcfDf = ps.read_csv(vcfFilePath, sep='\t', keep_default_na=False, na_values=[''], dtype=str)
     vcfDf.drop_duplicates(inplace=True)
     vcfDf.to_csv(vcfFilePath, sep='\t', index=False, na_rep='')
 
+
 def formatRowToVCFAndWrite(row, vcfFile):
-    formattedChromo = formatChromo(row["chromosome"])
     posId = createPosId(row, row["seq_start_position"], row["seq_start_position"])
-    vcfRow = "{0}\t{1}\t{2}\t{3}\t{4}\t.\t.\t.\n".format(formattedChromo, row["seq_start_position"], posId,
-                                                           row["ref_allele"], row["alt_allele"])
+    vcfRow = "{0}\t{1}\t{2}\t{3}\t{4}\t.\t.\t.\n".format(row['chromosome'], row["seq_start_position"], posId,
+                                                         row["ref_allele"], row["alt_allele"])
     vcfFile.write(vcfRow)
 
+
 def formatRowToEnsemblAndWrite(row, ensemblFile):
-    formattedChromo = formatChromo(row["chromosome"])
-    startPos,endPos = resolveEnsemblEndPos(row)
+    startPos, endPos = resolveEnsemblEndPos(row)
     posId = createPosId(row, startPos, endPos)
-    ensemblRow = "{0}\t{1}\t{2}\t{3}/{4}\t+\t{5}\n".format(formattedChromo, startPos, endPos,
+    ensemblRow = "{0}\t{1}\t{2}\t{3}/{4}\t+\t{5}\n".format(row['chromosome'], startPos, endPos,
                                                            row["ref_allele"], row["alt_allele"], posId)
     ensemblFile.write(ensemblRow)
+
 
 def resolveEnsemblEndPos(row):
     startPos = row['seq_start_position']
     endPos = startPos
     if bool(re.search("-", row["ref_allele"])):
-        #insertion rule: Start - 1 = end coordinate
+        # insertion rule: Start - 1 = end coordinate
         endPos = int(startPos) - 1
     elif bool(re.search("-", row["alt_allele"])):
-        #Deletion rule: Endpos = startPos + ( len(refAllele) - 1 )
-        endPos = int(startPos ) + len(row["ref_allele"]) - 1
+        # Deletion rule: Endpos = startPos + ( len(refAllele) - 1 )
+        endPos = int(startPos) + len(row["ref_allele"]) - 1
     return startPos, endPos
+
 
 def createPosId(row, startPos, endPos):
     return "{}_{}-{}_{}_{}".format(formatChromo(row["chromosome"]), startPos, endPos,
-                                row["ref_allele"], row["alt_allele"])
+                                   row["ref_allele"], row["alt_allele"])
+
 
 def anyGenomicCoordinateAreMissing(row):
     return not row["chromosome"] or not row["seq_start_position"] or not row["ref_allele"] or not row["alt_allele"]
 
+
 def allGenomicDataIsMissing(row):
     return not row["chromosome"] and not row["seq_start_position"] and not row["ref_allele"] and not row["alt_allele"]
 
+
 def formatChromo(givenChromo):
+    formattedChromo = givenChromo
     incorrectChrFormat = "(?i)^([0-9]{1,2}|[xym]{1}|mt|un)$"
     isMatch = re.match(incorrectChrFormat, givenChromo)
     if isMatch:
-        chromo = "chr" + isMatch.group(1)
-    else:
-        chromo = givenChromo
-    return chromo
+        formattedChromo = "chr" + isMatch.group(1)
+    return formattedChromo
+
 
 def annotateFile(vepIn):
     fastaDir, alleleDB, singularityVepImage, vepArgumentsList = getVepConfigurations()
@@ -131,13 +144,14 @@ def annotateFile(vepIn):
     vepWarningFile = vepIn + ".vepWarnings"
     vepOut = vepIn + ".ANN"
     threads = cpu_count() * 2
-    vepCMD = """vep {0} --fork={1} --warning_file {2} -cache -dir_cache {3} -fasta {4} -i {5} -o {6} 2>> {7}.log"""\
-        .format(vepArguments, threads, vepWarningFile, alleleDB, fastaDir, vepIn, vepOut, file)
+    vepCMD = """vep {0} --fork={1} --warning_file {2} -cache -dir_cache {3} -fasta {4} -i {5} -o {6} 2>> {7}.log""" \
+        .format(vepArguments, threads, vepWarningFile, alleleDB, fastaDir, vepIn, vepOut, mutFile)
     logging.info("singularity exec {0} {1}".format(singularityVepImage, vepCMD))
     returnSignal = sp.call(
         "singularity exec {0} {1}".format(singularityVepImage, vepCMD), shell=True)
     if (returnSignal != 0):
         raise Exception("Vep returned a non-zero exit code {}".format(returnSignal))
+
 
 def getVepConfigurations():
     with open('./config.yaml', 'r') as config:
@@ -152,7 +166,7 @@ def getVepConfigurations():
             raise IOError("vep data base does not exist at {}".format(alleleDB))
         if not os.path.exists(singularityVepImage):
             raise IOError("singularity vep image does not exist at {}".format(singularityVepImage))
-    return fastaDir,alleleDB,singularityVepImage,vepArguments
+    return fastaDir, alleleDB, singularityVepImage, vepArguments
 
 
 if len(sys.argv) > 1:
