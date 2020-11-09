@@ -36,7 +36,6 @@ def formatToVcfOrEnsemblAndSave():
             open(ensemblFilePath, "w") as ensembl:
         reader = ps.read_csv(mutFile, sep='\t', dtype=str)
         reader['chromsome'] = reader.apply(lambda x: formatChromo(x.chromosome), axis=1)
-
         logging.info("Writing {0} to VCF".format(mutFile))
         vcfFile.write("#chrom\tpos\tid\tref\talt\tqual\tfilter\tinfo\n")
         ensembl.write("#chrom\tpos\tend\tref/alt\tstrand\tid\n")
@@ -97,8 +96,8 @@ def sortChromo(x):
         return int(x)
     elif len(x) == 1:
         return ord(x)
-    else :
-        return 0
+
+    return 0
 
 def sortLocation(x):
     firstTenD = "^[0-9]{1,10}"
@@ -112,17 +111,15 @@ def dropDuplicates(vcfFilePath):
 
 
 def formatRowToVCFAndWrite(row, vcfFile):
-    posId = createPosId(row, row["seq_start_position"], row["seq_start_position"])
-    vcfRow = "{0}\t{1}\t{2}\t{3}\t{4}\t.\t.\t.\n".format(row['chromosome'], row["seq_start_position"], posId,
+    vcfRow = "{0}\t{1}\t{2}\t{3}\t{4}\t.\t.\t.\n".format(row['chromosome'], row["seq_start_position"], createPosId(row),
                                                          row["ref_allele"], row["alt_allele"])
     vcfFile.write(vcfRow)
 
 
 def formatRowToEnsemblAndWrite(row, ensemblFile):
     startPos, endPos = resolveEnsemblEndPos(row)
-    posId = createPosId(row, startPos, endPos)
     ensemblRow = "{0}\t{1}\t{2}\t{3}/{4}\t+\t{5}\n".format(row['chromosome'], startPos, endPos,
-                                                           row["ref_allele"], row["alt_allele"], posId)
+                                                           row["ref_allele"], row["alt_allele"], createPosId(row))
     ensemblFile.write(ensemblRow)
 
 
@@ -138,10 +135,9 @@ def resolveEnsemblEndPos(row):
     return startPos, endPos
 
 
-def createPosId(row, startPos, endPos):
-    return "{}_{}-{}_{}_{}".format(formatChromo(row["chromosome"]), startPos, endPos,
-                                   row["ref_allele"], row["alt_allele"])
-
+def createPosId(row):
+    return "{}_{}_{}_{}".format(formatChromo(row["chromosome"]),
+                row["seq_start_position"],row["ref_allele"], row["alt_allele"])
 
 def anyGenomicCoordinateAreMissing(row):
     return not row["chromosome"] or not row["seq_start_position"] or not row["ref_allele"] or not row["alt_allele"]
@@ -166,7 +162,7 @@ def annotateFile(vepIn, format):
     vepWarningFile = vepIn + ".vepWarnings"
     vepOut = vepIn + ".ANN"
     threads = cpu_count() * 2
-    vepCMD = """vep {-} --format {1} --fork={2} --warning_file {3} -cache -dir_cache {4} -fasta {5} -i {6} -o {7} 2>> {8}.log""" \
+    vepCMD = """vep {0} --format {1} --fork={2} --warning_file {3} -cache -dir_cache {4} -fasta {5} -i {6} -o {7} 2>> {8}.log""" \
         .format(vepArguments, format, threads, vepWarningFile, alleleDB, fastaDir, vepIn, vepOut, mutFile)
     logging.info("singularity exec {0} {1}".format(singularityVepImage, vepCMD))
     returnSignal = sp.call(
@@ -194,17 +190,24 @@ def mergeResultAnnos(vcfPath, ensemblPath):
        vcfAnnos = vcfPath + ".ANN"
        ensemblAnnos = ensemblPath + ".ANN"
        mergedAnnos = mutFile + ".ANN"
-       vcfDf = ps.read_csv(vcfAnnos, sep='\t', header=3)
-       headers = vcfDf.columns
+       with open(vcfAnnos, 'r') as vcfFile:
+           vcfFile.readline()
+           vcfFile.readline()
+           matchGroup = re.search("Format:(.+$)", vcfFile.readline())
+           infoColumnsHeaders = matchGroup.group(1).split("|")
 
-       (ps
-            .read_csv(ensemblAnnos, sep='\t', header=3, names=headers)
-            .append(vcfDf, ignore_index=True)
-            .to_csv(mergedAnnos, sep='\t', index=False)
-       )
+           vcfDf = ps.read_csv(vcfAnnos, sep='\t', header=3)
+           headers = vcfDf.columns
+           mergedAnnosDf = (ps
+                .read_csv(ensemblAnnos, sep='\t', header=3, names=headers)
+                .append(vcfDf, ignore_index=True)
+           )
 
-       os.remove(vcfAnnos)
-       os.remove(ensemblAnnos)
+           infoColumns = mergedAnnosDf['info'].str.split("|").tolist()
+           infoColumnsDf = ps.DataFrame(infoColumns, columns=infoColumnsHeaders)
+           mergedAnnosDf.join(infoColumnsDf).to_csv(mergedAnnos, sep='\t', index=False)
+           os.remove(vcfAnnos)
+           os.remove(ensemblAnnos)
 
 
 if len(sys.argv) > 1:

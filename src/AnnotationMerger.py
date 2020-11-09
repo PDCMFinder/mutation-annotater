@@ -36,7 +36,7 @@ def mergeRowsAndWrite():
             open(tsvFilePath, 'r') as tsvFile:
         outFileWriter = csv.writer(finalTemplate, delimiter="\t")
         tsvReader = getTsvReader(tsvFile)
-        annoReader = pa.read_csv(annoFile, delimiter='\t', error_bad_lines=False, header=97)
+        annoReader = pa.read_csv(annoFile, delimiter='\t', error_bad_lines=False)
         headers = buildHeaders()
         outFileWriter.writerow(headers)
         logBeginningOfMerge(tsvFilePath)
@@ -87,7 +87,7 @@ def rowIsHg38(row):
 
 
 def mergeRows(row, annoReader, rowNum):
-    annoRows = compareKeysOfFileAndReturnMatchingRows(row, annoReader, rowNum)
+    annoRows = compareKeysOfFileAndReturnMatchingRows(row, annoReader)
     if len(annoRows) == 0:
         builtRow = pa.Series()
     else:
@@ -96,16 +96,24 @@ def mergeRows(row, annoReader, rowNum):
     return builtRow
 
 
-def compareKeysOfFileAndReturnMatchingRows(row, annoReader, rowNum):
+def compareKeysOfFileAndReturnMatchingRows(row, annoReader):
     annotationKey = createAnnotationKey(row)
-    resultdf = annoReader[annoReader['#Uploaded_variation'] == annotationKey]
+    resultdf = annoReader[annoReader['id'] == annotationKey]
     if len(resultdf) == 0:
         logMissedPosition(row, annotationKey)
     return resultdf
 
 def createAnnotationKey(row):
-    return "{}_{}_{}_{}".format(vcfUtilities.formatChromo(row["chromosome"]),
+    return "{}_{}_{}_{}".format(formatChromo(row["chromosome"]),
                                 row["seq_start_position"], row["ref_allele"], row["alt_allele"])
+
+def formatChromo(givenChromo):
+    formattedChromo = givenChromo
+    incorrectChrFormat = "(?i)^([0-9]{1,2}|[xym]{1}|mt|un)$"
+    isMatch = re.match(incorrectChrFormat, givenChromo)
+    if isMatch:
+        formattedChromo = "chr" + isMatch.group(1)
+    return formattedChromo
 
 def extraColumnToJSON(extra):
     if extra:

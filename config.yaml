@@ -3,7 +3,7 @@ alleleDB: '/home/afollette/PycharmProjects/pdx_Annotater/vepDBs/homo_sapiens_vep
 vepSingularityImage: '/home/afollette/PycharmProjects/pdx_Annotater/pdx-liftover-vep_release98.3.simg'
 vepArguments:
   - --verbose
-  - --vcf #write output to VCF format
+  - --vcf
   - --force #Forces overwrite of existing output
   - --check_existing #Checks for existing variants in co-location
   - --check_ref #Checks reference against Ensembl database. Skips if not matching
@@ -14,6 +14,6 @@ vepArguments:
   - --polyphen s
   - --sift s
   - --hgvs
-  - --hgvsg
   - --variant_class
   - --canonical
+  - --pick --pick_order biotype,canonical,appris,tsl,ccds,rank,length,mane
