@@ -9,10 +9,6 @@ import logging
 import re
 import pandas as pa
 
-import AnnotationFilter
-
-mergedPointsMissed = 0
-
 if len(sys.argv) > 1:
     tsvFilePath = sys.argv[1]
     tsvFileName = os.path.basename(tsvFilePath)
@@ -61,20 +57,21 @@ def iterateThroughRowsAndMerge(reader, annoReader, outFileWriter):
         rowNum += 1
         if rowIsValidForMerge(row):
             mergedRow = mergeRows(row, annoReader, rowNum)
-            if len(mergedRow) >= 26:
+            if len(mergedRow) != 0:
                 outFileWriter.writerow(mergedRow)
                 rowAdded += 1
             else:
                 message = ("Info: Row Number {0}: "
                            "Dropping row for being invalid (size or column headers) "
                            "or missing match in annotations (Chromosome position error). "
-                           "Row: {0} - Length {1} - data {2}".format(rowNum, len(mergedRow), mergedRow))
+                           "Row: {0} - Length {1} - data {2}".format(rowNum, len(mergedRow), mergedRow.to_string()))
                 logging.warning(message)
         else:
             message2 = ("Info: Row Number {0}: is broken or legacy".format(rowNum))
             logging.warning(message2)
+            logging.warning(row.to_string())
     message3 = ("{0} The completed file file {1} has {2}"
-                " data points (including header)".format(time.ctime(), tsvFileName + ".ANN", rowAdded))
+                " data points out of {3}".format(time.ctime(), tsvFileName + ".ANN", rowAdded, rowNum))
     logging.info(message3)
 
 def rowIsValidForMerge(row):
@@ -87,15 +84,15 @@ def rowIsHg38(row):
 
 
 def mergeRows(row, annoReader, rowNum):
-    annoRow = compareKeysOfFileAndReturnMatchingRows(row, annoReader)
-    if len(annoRows) == 0:
+    annoRow = returnMatchingRows(row, annoReader)
+    if len(annoRow) == 0:
         builtRow = pa.Series()
     else:
-        builtRow = buildFinalTemplate(twoMatchingRows, row, rowNum)
+        builtRow = buildRow(annoRow, row, rowNum)
     return builtRow
 
 
-def compareKeysOfFileAndReturnMatchingRows(row, annoReader):
+def returnMatchingRows(row, annoReader):
     annotationKey = createAnnotationKey(row)
     resultdf = annoReader[annoReader['id'] == annotationKey]
     if len(resultdf) == 0:
@@ -114,18 +111,6 @@ def formatChromo(givenChromo):
         formattedChromo = "chr" + isMatch.group(1)
     return formattedChromo
 
-def extraColumnToJSON(extra):
-    if extra:
-        semiToComma = re.sub(';', '","', extra)
-        equalsToColon = re.sub("=", '":"', semiToComma)
-        addCurlyToStart = re.sub('(?m)^', '{"', equalsToColon)
-        JSONstr = re.sub('(?m)$', '"}', addCurlyToStart)
-        extraJson = json.loads(JSONstr) if extra != "" else pa.Series()
-    else:
-        extraJson = pa.Series()
-    return extraJson
-
-
 def buildHeaders():
     return ["model_id", "sample_id", "sample_origin", "host_strain_nomenclature", "passage", "symbol", "biotype",
             "coding_sequence_change",
@@ -135,68 +120,26 @@ def buildHeaders():
             "ncbi_transcript_id", "ensembl_gene_id",
             "ensembl_transcript_id", "variation_id", "genome_assembly", "platform"]
 
-
-def parseFilteredRows(twoMatchingRows):
-    annoRow = pa.DataFrame()
-    NCBIrow = pa.DataFrame()
-    if len(twoMatchingRows) > 1:
-        annoRow = twoMatchingRows.iloc[0]
-        NCBIrow = twoMatchingRows.iloc[1]
-    elif len(twoMatchingRows) == 1:
-        annoRow = twoMatchingRows.iloc[0]
-    return [annoRow, NCBIrow]
-
-
-def isEnsemblData(row):
-    geneId = getFromRow(row, 'Gene')
-    transcriptId = getFromRow(row, 'Feature')
-    return re.match("ENS", geneId) and re.match("ENS", transcriptId) if (geneId and transcriptId) else False
-
-
-def buildFinalTemplate(twoMatchingRows, row, rowNum):
-    ncbiRow = pa.DataFrame()
-    builtRow = []
-
-    if len(twoMatchingRows) > 0:
-        parsedRows = parseFilteredRows(twoMatchingRows)
-        if parsedRows[0].size > 0 :
-            annoRow = parsedRows[0]
-            if parsedRows[1].size > 0 and not isEnsemblData(parsedRows[1]):
-                ncbiRow = parsedRows[1]
-            extra = getFromRow(annoRow, 'Extra')
-            if extra is None:
-                extra = ""
-                logging.info("Extra Column not found for row")
-            annotationExtras = extraColumnToJSON(extra)
-            builtRow = buildRow(row, annoRow, annotationExtras, ncbiRow)
-        else:
-            logging.debug("Info: Row Number {2}: Annotations not valid. Possibly no ENSEMBL accession. Queried annotations:  {0} \n {1}"
-                          .format(parsedRows[0], parsedRows[1], rowNum))
-    if len(builtRow) == 0:
-        logging.info("Info: Row Number {0}: No annotations found for row with values : {1}".format(rowNum, row.values()))
-        builtRow = list()
-    return builtRow
-
-def buildRow(row, annoRow, extraAnno, ncbiRow):
+def buildRow(row, annoRow):
     return [getEitherFromRow(row, 'model_id', 'Model_ID'), getEitherFromRow(row, 'sample_id', 'Sample_ID'),
-                        getFromRow(row, 'sample_origin'),
-                        getEitherFromRow(row, 'host_strain_nomenclature', 'host strain nomenclature'),
-                        getEitherFromRow(row, 'passage', 'Passage'), getFromRow(extraAnno, 'SYMBOL', ),
-                        getFromRow(extraAnno, 'BIOTYPE'), parseHGSVc(getFromRow(extraAnno, 'HGVSc')),
-                        getFromRow(extraAnno, 'VARIANT_CLASS'), getFromRow(annoRow, 'Codons'),
-                        buildAminoAcidChange(getFromRow(annoRow, 'Amino_acids'),
+            getFromRow(row, 'sample_origin'),
+            getEitherFromRow(row, 'host_strain_nomenclature', 'host strain nomenclature'),
+            getEitherFromRow(row, 'passage', 'Passage'), getFromRow(annoRow, 'SYMBOL', ),
+            getFromRow(annoRow, 'BIOTYPE'), parseHGSVc(getFromRow(annoRow, 'HGVSc')),
+            getFromRow(annoRow, 'VARIANT_CLASS'), getFromRow(annoRow, 'Codons'),
+            buildAminoAcidChange(getFromRow(annoRow, 'Amino_acids'),
                                              getFromRow(annoRow, 'Protein_position')),
-                        getFromRow(annoRow, 'Consequence'),
-                        parseFunctionalPredictions(getFromRow(extraAnno, 'PolyPhen'), getFromRow(extraAnno, 'SIFT')),
-                        getFromRow(row, 'read_depth'), getEitherFromRow(row, 'Allele_frequency', 'allele_frequency'),
-                        getFromRow(row, 'chromosome'),
-                        getFromRow(row, 'seq_start_position'),
-                        getFromRow(row, 'ref_allele'), getFromRow(row, 'alt_allele'), getFromRow(row, 'ucsc_gene_id'),
-                        getFromRow(ncbiRow, 'Gene'),
-                        getFromRow(ncbiRow, 'Feature'), getFromRow(annoRow, 'Gene'),
-                        getFromRow(annoRow, 'Feature'),
-                        getFromRow(annoRow, 'Existing_variation'),
-                        getFromRow(row, 'genome_assembly'), getEitherFromRow(row, 'platform', 'Platform')]
+            getFromRow(annoRow, 'Consequence'),
+            parseFunctionalPredictions(getFromRow(annoRow, 'PolyPhen'), getFromRow(annoRow, 'SIFT')),
+            getFromRow(row, 'read_depth'), getEitherFromRow(row, 'Allele_frequency', 'allele_frequency'),
+            getFromRow(row, 'chromosome'),
+            getFromRow(annoRow, 'pos'),
+            getFromRow(annoRow, 'ref'), getFromRow(annoRow, 'alt'), getFromRow(row, 'ucsc_gene_id'),
+                        "",
+                        "", getFromRow(annoRow, 'Gene'),
+            getFromRow(annoRow, 'Feature'),
+            getFromRow(annoRow, 'Existing_variation'),
+            getFromRow(row, 'genome_assembly'), getEitherFromRow(row, 'platform', 'Platform')]
 
 def getEitherFromRow(row, attributeId, alternativeId):
     returnStr = getFromRow(row, attributeId)
@@ -231,21 +174,13 @@ def isColumnHeader(line):
     return ((line[0] == '#') and (line[1] != '#'))
 
 
-def isCanonical(line):
-    return (line.find("CANONICAL=YES") != -1)
-
-
 def logMissedPosition(row, chrStartPosKey):
     global mergedPointsMissed
     mergedPointsMissed += 1
 
-    message = "Total dropped: {0} could not find {1} in annotations. Ref: {2} Alt {3} for sample {4}".format(
-        mergedPointsMissed,
-        chrStartPosKey,
-        getFromRow(row, "ref_allele"),
-        getFromRow(row, 'alt_allele'), getEitherFromRow(row, 'sample_id', 'Sample_ID'))
+    message = "Total dropped: {0} could not find {1} in annotations:".format(mergedPointsMissed,chrStartPosKey)
     logging.warning(message)
-
+    logging.warning(row.to_string())
 
 if len(sys.argv) > 1:
     run()
