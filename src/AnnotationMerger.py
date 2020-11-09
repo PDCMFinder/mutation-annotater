@@ -87,11 +87,10 @@ def rowIsHg38(row):
 
 
 def mergeRows(row, annoReader, rowNum):
-    annoRows = compareKeysOfFileAndReturnMatchingRows(row, annoReader)
+    annoRow = compareKeysOfFileAndReturnMatchingRows(row, annoReader)
     if len(annoRows) == 0:
         builtRow = pa.Series()
     else:
-        twoMatchingRows = AnnotationFilter.run(annoRows, tsvFileName, parentDirectory)
         builtRow = buildFinalTemplate(twoMatchingRows, row, rowNum)
     return builtRow
 
