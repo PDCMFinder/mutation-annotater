@@ -15,5 +15,5 @@ vepArguments:
   - --sift s
   - --hgvs
   - --variant_class
-  - --canonical
+  - --no-stats #Turned off stats
   - --pick --pick_order biotype,canonical,appris,tsl,ccds,rank,length,mane
