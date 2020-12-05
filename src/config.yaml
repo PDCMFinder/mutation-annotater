@@ -3,17 +3,17 @@ alleleDB: '/home/afollette/PycharmProjects/pdx_Annotater/vepDBs/homo_sapiens_vep
 vepSingularityImage: '/home/afollette/PycharmProjects/pdx_Annotater/pdx-liftover-vep_release98.3.simg'
 vepArguments:
   - --verbose
-  - --vcf
+  - --vcf # Format output in VCF
   - --force #Forces overwrite of existing output
   - --check_existing #Checks for existing variants in co-location
   - --check_ref #Checks reference against Ensembl database. Skips if not matching
   - --merged #Get Refseq and Ensembl lookup databases
   - --use_given_ref # Overrides BAM assorted RefSeq
-  - --offline
+  - --offline # offline local use of VEP. Light years faster
   - --symbol
   - --polyphen s
   - --sift s
   - --hgvs
   - --variant_class
   - --no-stats #Turned off stats
-  - --pick --pick_order biotype,canonical,appris,tsl,ccds,rank,length,mane
+  - --pick --pick_order biotype,canonical,appris,tsl,ccds,rank,length,mane # PDX Finder personal preference order
