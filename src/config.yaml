@@ -15,5 +15,5 @@ vepArguments:
   - --sift s
   - --hgvs
   - --variant_class
-  - --no-stats #Turned off stats
+  - --no_stats #Turned off stats
   - --pick --pick_order biotype,canonical,appris,tsl,ccds,rank,length,mane # PDX Finder personal preference order
