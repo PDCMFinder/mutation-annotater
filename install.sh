@@ -1,10 +1,11 @@
 #!/usr/bin/bash
-dockerURI='pdxfinder/pdx-liftover:vep_release98.3\n'
-printf "Pulling docker image at docker://%s in %s" "$dockerURI" "$(pwd)"
-singularity pull docker://"$dockerURI"
-singularity build "$dockerURI"
+dockerURI="pdxfinder/pdx-liftover:vep_release98.3"
+#printf "Pulling docker image at docker://%s in %s" "$dockerURI" "$(pwd)"
+#singularity pull docker://"$dockerURI"
+#singularity build "$dockerURI" 
+singularity build --sandbox pdx-liftover-vep/ docker://"$dockerURI"
 
-printf "Installing database. Download is approximately 14G\n"
+#printf "Installing database. Download is approximately 14G\n"
 mkdir -p ./vepDB
 cd ./vepDB || exit 1
 mkdir -p homo_sapiens
