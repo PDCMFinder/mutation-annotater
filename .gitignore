@@ -1,3 +1,7 @@
+*.sif
 *.simg
 *.pyc
 *.py.swp
+.DS_Store
+singularity/
+vepDB/
