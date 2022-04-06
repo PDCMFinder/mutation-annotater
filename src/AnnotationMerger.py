@@ -11,7 +11,8 @@ import pandas as pa
 
 
 class AnnotationMerger:
-
+    global mergedPointsMissed
+    mergedPointsMissed=0
     def __init__(self, mutTarget):
         self.tsvFilePath = mutTarget
         self.tsvFileName = os.path.basename(self.tsvFilePath)
@@ -20,6 +21,7 @@ class AnnotationMerger:
         self.parentDirectory = os.path.dirname(sys.argv[1])
         self.provider = os.path.dirname(self.parentDirectory)
         self.Updog = os.path.dirname(self.provider)
+
 
     def run(self):
         self.mergeRowsAndWrite()
@@ -34,7 +36,7 @@ class AnnotationMerger:
             headers = self.buildHeaders()
             outFileWriter.writerow(headers)
             self.logBeginningOfMerge()
-            annoReader = pa.read_csv(self.annotationFilePath, delimiter='\t', error_bad_lines=False)
+            annoReader = pa.read_csv(self.annotationFilePath, delimiter='\t')
 
             self.iterateThroughRowsAndMerge(tsvReader, annoReader, outFileWriter)
 
@@ -192,7 +194,7 @@ class AnnotationMerger:
 
         message = "Total dropped: {0} could not find {1} in annotations:".format(mergedPointsMissed, chrStartPosKey)
         logging.warning(message)
-        logging.warning(row.to_string())
+        logging.warning(row.__str__())
 
 
 

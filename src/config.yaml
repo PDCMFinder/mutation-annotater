@@ -1,6 +1,6 @@
-fastaDir: '/home/afollette/PycharmProjects/pdx_Annotater/vepDBs/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa'
-alleleDB: '/home/afollette/PycharmProjects/pdx_Annotater/vepDBs/homo_sapiens_vep_98_GRCh38'
-vepSingularityImage: '/home/afollette/PycharmProjects/pdx_Annotater/pdx-liftover-vep_release98.3.simg'
+fastaDir: '/Users/tushar/pdx/mutation-annotater/vepDB/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa'
+alleleDB: '/Users/tushar/pdx/mutation-annotater/vepDB/homo_sapiens_vep_98_GRCh38'
+vepSingularityImage: 'pdx-liftover_vep_release98.3.sif'
 vepArguments:
   - --verbose
   - --vcf # Format output in VCF

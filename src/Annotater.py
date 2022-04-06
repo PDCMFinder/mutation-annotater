@@ -54,7 +54,7 @@ class Annotater:
    def rowIsEnsembl(self, row):
         refAllele = row["ref_allele"]
         altAllele = row["alt_allele"]
-        return bool(re.search('-', refAllele)) or bool(re.search('-', altAllele))
+        return True #bool(re.search('-', refAllele)) or bool(re.search('-', altAllele))
 
 
    def isRowValidForProcessing(self, row):
@@ -113,8 +113,9 @@ class Annotater:
 
    def formatRowToEnsemblAndWrite(self, row, ensemblFile):
         startPos, endPos = self.resolveEnsemblEndPos(row)
-        ensemblRow = "{0}\t{1}\t{2}\t{3}/{4}\t+\t{5}\n".format(row['chromosome'], startPos, endPos,
-                                                               row["ref_allele"], row["alt_allele"], self.createPosId(row))
+        strand = '+' if row['strand'] == "" else row["strand"]
+        ensemblRow = "{0}\t{1}\t{2}\t{3}/{4}\t{5}\t{6}\n".format(row['chromosome'], startPos, endPos,
+                                                               row["ref_allele"], row["alt_allele"], strand, self.createPosId(row))
         ensemblFile.write(ensemblRow)
 
 
@@ -160,9 +161,9 @@ class Annotater:
         vepCMD = """vep {0} --format {1} --fork={2} --warning_file {3} -cache -dir_cache {4} -fasta {5} -i {6} -o {7} 2>> {8}.log""" \
             .format(vepArguments, format, threads, vepWarningFile, alleleDB, fastaDir, vepIn, vepOut, self.mutTarget)
         print(vepCMD)
-        logging.info("singularity exec {0} {1}".format(singularityVepImage, vepCMD))
+        logging.info("vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format('/Users/tushar/pdx/update-data,/Users/tushar/pdx/mutation-annotater:/Users/tushar/pdx/mutation-annotater:rw', singularityVepImage, vepCMD))
         returnSignal = sp.call(
-            "singularity exec {0} {1}".format(singularityVepImage, vepCMD), shell=True)
+            "cd ../singularity; vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format('/Users/tushar/pdx/update-data,/Users/tushar/pdx/mutation-annotater:/Users/tushar/pdx/mutation-annotater:rw', singularityVepImage, vepCMD), shell=True)
         if (returnSignal != 0):
             raise Exception("Vep returned a non-zero exit code {}".format(returnSignal))
 
