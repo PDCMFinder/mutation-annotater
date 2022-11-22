@@ -7,13 +7,13 @@ import sys
 import time
 import logging
 import re
-import pandas as pa
+import pandas as pd
 
 
 class AnnotationMerger:
     global mergedPointsMissed
     mergedPointsMissed=0
-    def __init__(self, mutTarget):
+    def __init__(self, mutTarget, run_type):
         self.tsvFilePath = mutTarget
         self.tsvFileName = os.path.basename(self.tsvFilePath)
         self.annotationFilePath = "{}.ANN".format(self.tsvFilePath)
@@ -21,6 +21,7 @@ class AnnotationMerger:
         self.parentDirectory = os.path.dirname(sys.argv[1])
         self.provider = os.path.dirname(self.parentDirectory)
         self.Updog = os.path.dirname(self.provider)
+        self.run_type = run_type
 
 
     def run(self):
@@ -36,7 +37,7 @@ class AnnotationMerger:
             headers = self.buildHeaders()
             outFileWriter.writerow(headers)
             self.logBeginningOfMerge()
-            annoReader = pa.read_csv(self.annotationFilePath, delimiter='\t')
+            annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t')
 
             self.iterateThroughRowsAndMerge(tsvReader, annoReader, outFileWriter)
 
@@ -87,8 +88,9 @@ class AnnotationMerger:
     def mergeRows(self, row, annoReader):
         annoRow = self.returnMatchingRows(row, annoReader)
         if len(annoRow) == 0:
-            builtRow = pa.Series()
+            builtRow = pd.Series()
         else:
+            annoRow.columns = annoRow.columns.str.lower()
             builtRow = self.buildRow(row, annoRow)
         return builtRow
 
@@ -102,8 +104,12 @@ class AnnotationMerger:
 
 
     def createAnnotationKey(self, row):
-        return "{}_{}_{}_{}".format(self.formatChromo(row["chromosome"]),
-                                    row["seq_start_position"], row["ref_allele"], row["alt_allele"])
+        if self.run_type == 'hgvs':
+            annotation_key = "{}:c.{}".format(row["ncbi_transcript_id"], row["coding_sequence_change"])
+        else:
+            annotation_key = "{}_{}_{}_{}".format(self.formatChromo(row["chromosome"]),
+                                                  row["seq_start_position"], row["ref_allele"], row["alt_allele"])
+        return annotation_key
 
 
     def formatChromo(self, givenChromo):
@@ -128,18 +134,18 @@ class AnnotationMerger:
     def buildRow(self, row, annoRow):
         return [
                 self.getFromRow(row, 'sample_id'),
-                self.getFromRow(annoRow, 'SYMBOL', ),
-                self.getFromRow(annoRow, 'BIOTYPE'),
-                self.parseHGSVc(self.getFromRow(annoRow, 'HGVSc')),
-                self.getFromRow(annoRow, 'VARIANT_CLASS'),
-                self.getFromRow(annoRow, 'Codons'),
-                self.buildAminoAcidChange(self.getFromRow(annoRow, 'Amino_acids'),
-                self.getFromRow(annoRow, 'Protein_position')),
-                self.getFromRow(annoRow, 'Consequence'),
-                self.parseFunctionalPredictions(self.getFromRow(annoRow, 'PolyPhen'),
-                self.getFromRow(annoRow, 'SIFT')),
+                self.getFromRow(annoRow, 'symbol'),
+                self.getFromRow(annoRow, 'biotype'),
+                self.parseHGSVc(self.getFromRow(annoRow, 'hgvsc')),
+                self.getFromRow(annoRow, 'variant_class'),
+                self.getFromRow(annoRow, 'codons'),
+                self.buildAminoAcidChange(self.getFromRow(annoRow, 'amino_acids'),
+                self.getFromRow(annoRow, 'protein_position')),
+                self.getFromRow(annoRow, 'consequence'),
+                self.parseFunctionalPredictions(self.getFromRow(annoRow, 'polyphen'),
+                self.getFromRow(annoRow, 'sift')),
                 self.getFromRow(row, 'read_depth'),
-                self.getFromRow(row, 'Allele_frequency'),
+                self.getFromRow(row, 'allele_frequency'),
                 self.getFromRow(row, 'chromosome'),
                 self.getFromRow(annoRow, 'pos'),
                 self.getFromRow(annoRow, 'ref'),
@@ -147,15 +153,15 @@ class AnnotationMerger:
                 self.getFromRow(row, 'ucsc_gene_id'),
                 "",
                 "",
-                self.getFromRow(annoRow, 'Gene'),
-                self.getFromRow(annoRow, 'Feature'),
-                self.getFromRow(annoRow, 'Existing_variation'),
+                self.getFromRow(annoRow, 'gene'),
+                self.getFromRow(annoRow, 'feature'),
+                self.getFromRow(annoRow, 'existing_variation'),
                 self.getFromRow(row, 'platform_id')]
 
 
     def getFromRow(self, row, attributeID):
         attribute = ""
-        if type(row) is pa.DataFrame:
+        if type(row) is pd.DataFrame:
             rawAttribute = row.get(attributeID).iloc[0]
         else:
             rawAttribute = row.get(attributeID)
@@ -202,16 +208,17 @@ class AnnotationMerger:
 def cmdline_runner():
     if len(sys.argv) > 1:
         mutTarget = sys.argv[1]
+        run_type = sys.argv[2]
         if os.path.isfile(mutTarget):
             logging.basicConfig(filename='{}.log'.format(mutTarget), filemode='a+', level=logging.DEBUG)
             logging.info("Starting merge of annotations")
-            AnnotationMerger(mutTarget).run()
+            AnnotationMerger(mutTarget, run_type).run()
         elif os.path.isdir(mutTarget):
            globForTsv = os.path.join(mutTarget, "*tsv")
            for mutFile in glob.iglob(globForTsv):
                mutfile_path = os.path.join(mutTarget,mutFile)
                print(mutfile_path)
-               AnnotationMerger(mutfile_path).run()
+               AnnotationMerger(mutfile_path, run_type).run()
     else:
         logging.info("Please pass the absolute path of the file to annotate")
 cmdline_runner()
