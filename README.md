@@ -9,6 +9,8 @@ Singularity to the system run the install.sh script. The install.sh script will:
 * pdxfinder/pdx-liftover:vep_release98.3, this is the containerized instance of VEP  
 * Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz, a VEP running dependency
 * homo_sapiens_merged_vep_98_GRCh38.gz, another vep running dependency
+* homo_sapiens_refseq_vep_98_GRCh38.gz, another vep running dependency
+
 
 Once these are installed the variables in the `config.yaml` must be set.
 
