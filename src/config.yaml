@@ -1,15 +1,13 @@
-fastaDir: '/home/afollette/PycharmProjects/pdx_Annotater/vepDBs/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa'
-alleleDB: '/home/afollette/PycharmProjects/pdx_Annotater/vepDBs/homo_sapiens_vep_98_GRCh38'
-vepSingularityImage: '/home/afollette/PycharmProjects/pdx_Annotater/pdx-liftover-vep_release98.3.simg'
+fastaDir: '/Users/tushar/pdx/mutation-annotater/vepDB/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa'
+alleleDB: '/Users/tushar/pdx/mutation-annotater/vepDB/homo_sapiens_vep_98_GRCh38'
+vepSingularityImage: 'pdx-liftover_vep_release98.3.sif'
 vepArguments:
   - --verbose
   - --vcf # Format output in VCF
   - --force #Forces overwrite of existing output
   - --check_existing #Checks for existing variants in co-location
   - --check_ref #Checks reference against Ensembl database. Skips if not matching
-  - --merged #Get Refseq and Ensembl lookup databases
   - --use_given_ref # Overrides BAM assorted RefSeq
-  - --offline # offline local use of VEP. Light years faster
   - --symbol
   - --polyphen s
   - --sift s

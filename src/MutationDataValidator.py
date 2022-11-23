@@ -16,7 +16,7 @@ ncbiRootURL = 'http://api.ncbi.nlm.nih.gov/variation/v0/beta/refsnp/'
 ensemblApiRsRoot = 'http://rest.ensembl.org/variation/human/rs'
 seqApi = 'http://rest.ensembl.org/sequence/region/human/'
 
-updogFolders = glob.glob("/home/afollette/Finder_Data_Repositories/pdxfinder-data/data/UPDOG/*")
+updogFolders = glob.glob("/Users/tushar/pdx/pdxfinder-data/data/UPDOG/*")
 
 def parseDBsnpJson(responseJson):
     dbsnpJson = json.load(responseJson)
