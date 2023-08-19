@@ -10,6 +10,7 @@ import re
 import logging
 import pandas as pd
 import yaml
+from os.path import join
 
 
 class Annotater:
@@ -191,8 +192,9 @@ class Annotater:
         return formattedChromo
 
     def annotateFile(self, vepIn, format):
-        fastaDir, alleleDB, singularityVepImage, vepArgumentsList = self.getVepConfigurations()
+        fastaDir, alleleDB, singularityVepImage, vepArgumentsList, mutationAnnotator, dataPath = self.getVepConfigurations()
         vepArguments = " ".join(vepArgumentsList)
+        mutationAnnotator = dataPath +":"+ dataPath +","+ mutationAnnotator + ":" + mutationAnnotator + ":rw"
         vepWarningFile = vepIn + ".vepWarnings"
         vepOut = vepIn + ".ANN"
         threads = cpu_count() * 2
@@ -203,30 +205,34 @@ class Annotater:
         elif format == 'hgvs':
             vepCMD = vepCMD + " --refseq "
         print(vepCMD)
-        logging.info("vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(
-            '/Users/tushar/PycharmProjects/PDCMDataAggregator/output,/Users/tushar/pdx/update-data,/Users/tushar/pdx/mutation-annotater:/Users/tushar/pdx/mutation-annotater:rw',
-            singularityVepImage, vepCMD))
-        returnSignal = sp.call(
-            "cd ../singularity; vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(
-                '/Users/tushar/PycharmProjects/PDCMDataAggregator/output,/Users/tushar/pdx/update-data,/Users/tushar/pdx/mutation-annotater:/Users/tushar/pdx/mutation-annotater:rw',
-                singularityVepImage, vepCMD), shell=True)
+        logging.info("vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(mutationAnnotator, singularityVepImage, vepCMD))
+        returnSignal = sp.call("cd ../vm-singularity && vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(mutationAnnotator, singularityVepImage, vepCMD), shell=True)
         if (returnSignal != 0):
             raise Exception("Vep returned a non-zero exit code {}".format(returnSignal))
 
     def getVepConfigurations(self):
         with open(self.configDir, 'r') as config:
             configDirs = yaml.safe_load(config)
-            fastaDir = configDirs.get("fastaDir")
-            alleleDB = configDirs.get("alleleDB")
-            singularityVepImage = configDirs.get("vepSingularityImage")
+            mutationAnnotator = configDirs.get("mutationAnnotator")
+            dataPath = configDirs.get("dataPath")
+            fastaDir = join(mutationAnnotator, configDirs.get("fastaDir"))
+            alleleDB = join(mutationAnnotator,configDirs.get("alleleDB"))
+            singularityVepImage = join(mutationAnnotator, configDirs.get("vepSingularityImage"))
+
             vepArguments = configDirs.get("vepArguments")
+
+            if not os.path.exists(dataPath):
+                raise IOError("Please fix the path to the data at {}".format(dataPath))
+            if not os.path.exists(mutationAnnotator):
+                raise IOError("Please fix the path to the mutation-annotator at {}".format(mutationAnnotator))
             if not os.path.exists(fastaDir):
                 raise IOError("Fasta database does not exist at {}".format(fastaDir))
             if not os.path.exists(alleleDB):
                 raise IOError("vep data base does not exist at {}".format(alleleDB))
             if not os.path.exists(singularityVepImage):
                 raise IOError("singularity vep image does not exist at {}".format(singularityVepImage))
-        return fastaDir, alleleDB, singularityVepImage, vepArguments
+
+        return fastaDir, alleleDB, singularityVepImage, vepArguments, mutationAnnotator, dataPath
 
     def mergeResultAnnos(self, vcfPath, ensemblPath):
         vcfAnnos = vcfPath + ".ANN"
@@ -240,11 +246,7 @@ class Annotater:
 
             vcfDf = pd.read_csv(vcfAnnos, sep='\t', header=3)
             headers = vcfDf.columns
-            mergedAnnosDf = (pd
-                             .read_csv(ensemblAnnos, sep='\t', header=3, names=headers)
-                             .append(vcfDf, ignore_index=True)
-                             )
-
+            mergedAnnosDf = pd.concat([pd.read_csv(ensemblAnnos, sep='\t', header=3, names=headers), vcfDf], ignore_index=True)
             infoColumns = mergedAnnosDf['info'].str.split("|").tolist()
             infoColumnsDf = pd.DataFrame(infoColumns, columns=infoColumnsHeaders)
             mergedAnnosDf.join(infoColumnsDf).to_csv(mergedAnnos, sep='\t', index=False)

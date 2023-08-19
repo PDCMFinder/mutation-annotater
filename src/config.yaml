@@ -1,6 +1,6 @@
-fastaDir: '/Users/tushar/pdx/mutation-annotater/vepDB/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa'
-alleleDB: '/Users/tushar/pdx/mutation-annotater/vepDB/homo_sapiens_vep_98_GRCh38'
-vepSingularityImage: 'pdx-liftover_vep_release98.3.sif'
+fastaDir: 'vepDB/homo_sapiens/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa'
+alleleDB: 'vepDB/'
+vepSingularityImage: "pdx-liftover-vep_release98.3.img"
 vepArguments:
   - --verbose
   - --vcf # Format output in VCF
@@ -15,3 +15,5 @@ vepArguments:
   - --variant_class
   - --no_stats #Turned off stats
   - --pick --pick_order biotype,canonical,appris,tsl,ccds,rank,length,mane # PDX Finder personal preference order
+mutationAnnotator: '/Users/tushar/CancerModels/utils/mutation-annotater'
+dataPath: "/Users/tushar/CancerModels/pdxfinder-data/data/UPDOG"
