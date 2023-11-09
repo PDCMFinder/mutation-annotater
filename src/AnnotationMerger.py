@@ -13,7 +13,7 @@ import pandas as pd
 class AnnotationMerger:
     global mergedPointsMissed
     mergedPointsMissed=0
-    def __init__(self, mutTarget, run_type):
+    def __init__(self, mutTarget, run_type, local):
         self.tsvFilePath = mutTarget
         self.tsvFileName = os.path.basename(self.tsvFilePath)
         self.annotationFilePath = "{}.ANN".format(self.tsvFilePath)
@@ -22,6 +22,7 @@ class AnnotationMerger:
         self.provider = os.path.dirname(self.parentDirectory)
         self.Updog = os.path.dirname(self.provider)
         self.run_type = run_type
+        self.local = local
 
 
     def run(self):
@@ -209,6 +210,7 @@ def cmdline_runner():
     if len(sys.argv) > 1:
         mutTarget = sys.argv[1]
         run_type = sys.argv[2]
+        local = sys.argv[3]
         if os.path.isfile(mutTarget):
             logging.basicConfig(filename='{}.log'.format(mutTarget), filemode='a+', level=logging.DEBUG)
             logging.info("Starting merge of annotations")
@@ -218,7 +220,7 @@ def cmdline_runner():
            for mutFile in glob.iglob(globForTsv):
                mutfile_path = os.path.join(mutTarget,mutFile)
                print(mutfile_path)
-               AnnotationMerger(mutfile_path, run_type).run()
+               AnnotationMerger(mutfile_path, run_type, local).run()
     else:
         logging.info("Please pass the absolute path of the file to annotate")
 cmdline_runner()

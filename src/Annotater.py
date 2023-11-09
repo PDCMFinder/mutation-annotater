@@ -14,10 +14,11 @@ from os.path import join
 
 
 class Annotater:
-    def __init__(self, mutTarget, run_type, configDir='./config.yaml'):
+    def __init__(self, mutTarget, run_type, local, configDir='./config.yaml'):
         self.mutTarget = mutTarget
         self.configDir = configDir
         self.run_type = run_type
+        self.local = local
         self.fileName = os.path.basename(mutTarget)
         self.parentDirectoryPath = os.path.dirname(mutTarget)
         self.hgvsFilePath = mutTarget + '.hgvs'
@@ -205,19 +206,31 @@ class Annotater:
         elif format == 'hgvs':
             vepCMD = vepCMD + " --refseq "
         print(vepCMD)
-        logging.info("vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(mutationAnnotator, singularityVepImage, vepCMD))
-        returnSignal = sp.call("cd ../vm-singularity && vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(mutationAnnotator, singularityVepImage, vepCMD), shell=True)
+        if not self.local:
+            logging.info("singularity exec -B {0} {1} {2}".format(mutationAnnotator, singularityVepImage, vepCMD))
+            returnSignal = sp.call(
+                "singularity exec -B {0} {1} {2}".format(mutationAnnotator, singularityVepImage, vepCMD), shell=True)
+        else:
+            logging.info("vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(mutationAnnotator, singularityVepImage, vepCMD))
+            returnSignal = sp.call("cd ../vm-singularity && vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(mutationAnnotator, singularityVepImage, vepCMD), shell=True)
         if (returnSignal != 0):
             raise Exception("Vep returned a non-zero exit code {}".format(returnSignal))
 
     def getVepConfigurations(self):
         with open(self.configDir, 'r') as config:
             configDirs = yaml.safe_load(config)
-            mutationAnnotator = configDirs.get("mutationAnnotator")
-            dataPath = configDirs.get("dataPath")
-            fastaDir = join(mutationAnnotator, configDirs.get("fastaDir"))
-            alleleDB = join(mutationAnnotator,configDirs.get("alleleDB"))
-            singularityVepImage = join(mutationAnnotator, configDirs.get("vepSingularityImage"))
+            if not self.local:
+                mutationAnnotator = configDirs.get("mutationAnnotator_codon")
+                dataPath = configDirs.get("dataPath_codon")
+                fastaDir = join(mutationAnnotator, configDirs.get("fastaDir_codon"))
+                alleleDB = join(mutationAnnotator,configDirs.get("alleleDB_codon"))
+                singularityVepImage = join(mutationAnnotator, configDirs.get("vepSingularityImage_codon"))
+            else:
+                mutationAnnotator = configDirs.get("mutationAnnotator")
+                dataPath = configDirs.get("dataPath")
+                fastaDir = join(mutationAnnotator, configDirs.get("fastaDir"))
+                alleleDB = join(mutationAnnotator, configDirs.get("alleleDB"))
+                singularityVepImage = join(mutationAnnotator, configDirs.get("vepSingularityImage"))
 
             vepArguments = configDirs.get("vepArguments")
 
@@ -258,16 +271,17 @@ def cmdline_runner():
     if len(sys.argv) > 1:
         mutTarget = sys.argv[1]
         run_type = sys.argv[2]
+        local = sys.argv[3]
         if os.path.isfile(mutTarget):
             logging.basicConfig(filename='{}.log'.format(mutTarget), filemode='a+', level=logging.DEBUG)
             logging.info(" Starting annotation pipleline ")
-            Annotater(mutTarget, run_type).run()
+            Annotater(mutTarget, run_type, local).run()
         elif os.path.isdir(mutTarget):
             globForTsv = os.path.join(mutTarget, "*tsv")
             for mutFile in glob.iglob(globForTsv):
                 mutfile_path = os.path.join(mutTarget, mutFile)
                 print(mutfile_path)
-                Annotater(mutfile_path, run_type, 'config.yaml').run()
+                Annotater(mutfile_path, run_type, local,'config.yaml').run()
     else:
         logging.info("Please pass the absolute path of the file to annotate")
 
