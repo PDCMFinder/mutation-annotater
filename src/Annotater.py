@@ -272,6 +272,7 @@ def cmdline_runner():
         mutTarget = sys.argv[1]
         run_type = sys.argv[2]
         local = sys.argv[3]
+        local = local == "True"
         if os.path.isfile(mutTarget):
             logging.basicConfig(filename='{}.log'.format(mutTarget), filemode='a+', level=logging.DEBUG)
             logging.info(" Starting annotation pipleline ")
