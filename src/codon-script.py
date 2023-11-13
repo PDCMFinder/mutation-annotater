@@ -5,15 +5,15 @@ import os
 import subprocess as sp
 import sys
 import logging
-from os.path import join, exists
+from os.path import join, exists, isdir, isfile
 from Annotater import Annotater
 from AnnotationMerger import AnnotationMerger
 
 def get_dirs(path):
-    return [f for f in os.listdir(path) if os.isdir(join(path, f))]
+    return [f for f in os.listdir(path) if isdir(join(path, f))]
 
 def get_files(path):
-    return [join(path, f) for f in os.listdir(path) if os.isfile(join(path, f)) and f.endswith('.tsv')]
+    return [join(path, f) for f in os.listdir(path) if isfile(join(path, f)) and f.endswith('.tsv')]
 
 def generate_mutTarget(path):
     file_list = get_files(path)
@@ -48,7 +48,12 @@ if len(sys.argv) > 1:
                         AnnotationMerger(mutTarget, run_type, local).run()
                         logging.info("Annotations complete")
                         logging.info(sp.call("tail -n 2 "+mutTarget+".log"))
-
+                        os.remove(mutTarget + '.vcf')
+                        os.remove(mutTarget + '.vcf.vepWarnings')
+                        os.remove(mutTarget + '.ensembl')
+                        os.remove(mutTarget + '.ensembl.vepWarnings')
+                        if os.path.exists(mutTarget + '.ANN'):
+                            os.remove(mutTarget + '.ANN')
                     else:
                         logging.info("Not a file: " + mutTarget)
             else:
