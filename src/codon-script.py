@@ -48,6 +48,7 @@ if len(sys.argv) > 1:
                         AnnotationMerger(mutTarget, run_type, local).run()
                         logging.info("Annotations complete")
                         logging.info(sp.call("tail -n 2 "+mutTarget+".log"))
+
                     else:
                         logging.info("Not a file: " + mutTarget)
             else:
