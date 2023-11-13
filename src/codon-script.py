@@ -47,7 +47,8 @@ if len(sys.argv) > 1:
                         logging.info("Starting merge of annotations")
                         AnnotationMerger(mutTarget, run_type, local).run()
                         logging.info("Annotations complete")
-                        logging.info(sp.call("tail -n 2 "+mutTarget+".log"))
+                        #logging.info(sp.call("tail -n 2 "+mutTarget+".log"))
+
                         os.remove(mutTarget + '.vcf')
                         os.remove(mutTarget + '.vcf.vepWarnings')
                         os.remove(mutTarget + '.ensembl')
