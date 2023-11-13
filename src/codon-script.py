@@ -26,12 +26,13 @@ def generate_mutTarget(path):
 
 
 if len(sys.argv) > 1:
-    logging.basicConfig(filename='{}.log'.format(), filemode='a+', level=logging.DEBUG)
-    logging.info("Starting annotations")
     target = sys.argv[1]
     run_type = sys.argv[2]
     local = sys.argv[3]
+    log_location = sys.argv[4]
     local = local == "local"
+    logging.basicConfig(filename='{}.log'.format(log_location), filemode='a+', level=logging.DEBUG)
+    logging.info("Starting annotations")
 
     if exists(target):
         for provider in get_dirs(target):
@@ -48,6 +49,6 @@ if len(sys.argv) > 1:
                         logging.info("Annotations complete")
                         logging.info(sp.call("tail -n 2 "+mutTarget+".log"))
                     else:
-                        logging.info("Not a file: "+ mutTarget)
+                        logging.info("Not a file: " + mutTarget)
             else:
                 logging.info("Please pass the absolute path of the file to annotate")
