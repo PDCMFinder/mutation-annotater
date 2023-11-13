@@ -214,7 +214,7 @@ def cmdline_runner():
         if os.path.isfile(mutTarget):
             logging.basicConfig(filename='{}.log'.format(mutTarget), filemode='a+', level=logging.DEBUG)
             logging.info("Starting merge of annotations")
-            AnnotationMerger(mutTarget, run_type).run()
+            AnnotationMerger(mutTarget, run_type, local).run()
         elif os.path.isdir(mutTarget):
            globForTsv = os.path.join(mutTarget, "*tsv")
            for mutFile in glob.iglob(globForTsv):

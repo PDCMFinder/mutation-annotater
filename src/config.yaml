@@ -14,6 +14,6 @@ vepArguments:
   - --hgvs
   - --variant_class
   - --no_stats #Turned off stats
-  - --pick --pick_order biotype,canonical,appris,tsl,ccds,rank,length,mane # PDX Finder personal preference order
+  - --pick --pick_order biotype,canonical,appris,tsl,ccds,rank,length,mane_select # PDX Finder personal preference order
 mutationAnnotator: '/Users/tushar/CancerModels/utils/mutation-annotater'
 dataPath: "/Users/tushar/CancerModels/pdxfinder-data/data/UPDOG"

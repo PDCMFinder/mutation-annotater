@@ -257,9 +257,9 @@ class Annotater:
             matchGroup = re.search("Format:(.+$)", vcfFile.readline())
             infoColumnsHeaders = matchGroup.group(1).split("|")
 
-            vcfDf = pd.read_csv(vcfAnnos, sep='\t', header=3)
+            vcfDf = pd.read_csv(vcfAnnos, sep='\t', header=4)
             headers = vcfDf.columns
-            mergedAnnosDf = pd.concat([pd.read_csv(ensemblAnnos, sep='\t', header=3, names=headers), vcfDf], ignore_index=True)
+            mergedAnnosDf = pd.concat([pd.read_csv(ensemblAnnos, sep='\t', header=4, names=headers), vcfDf], ignore_index=True)
             infoColumns = mergedAnnosDf['info'].str.split("|").tolist()
             infoColumnsDf = pd.DataFrame(infoColumns, columns=infoColumnsHeaders)
             mergedAnnosDf.join(infoColumnsDf).to_csv(mergedAnnos, sep='\t', index=False)
@@ -272,7 +272,7 @@ def cmdline_runner():
         mutTarget = sys.argv[1]
         run_type = sys.argv[2]
         local = sys.argv[3]
-        local = local == "True"
+        local = local == "local"
         if os.path.isfile(mutTarget):
             logging.basicConfig(filename='{}.log'.format(mutTarget), filemode='a+', level=logging.DEBUG)
             logging.info(" Starting annotation pipleline ")
