@@ -38,7 +38,7 @@ if len(sys.argv) > 1:
         for provider in get_dirs(target):
             provider_path = join(target, provider)
             mut_path = join(provider_path, 'mut')
-            if exists(mut_path):
+            if exists(mut_path) and provider != "CMP":
                 files = generate_mutTarget(mut_path)
                 for mutTarget in files:
                     if os.path.isfile(mutTarget):
@@ -53,6 +53,8 @@ if len(sys.argv) > 1:
                         os.remove(mutTarget + '.ensembl.vepWarnings')
                         if os.path.exists(mutTarget + '.ANN'):
                             os.remove(mutTarget + '.ANN')
+                        os.remove(mutTarget)
+                        os.rename(mutTarget+'.hmz', mutTarget)
                     else:
                         logging.info("Not a file: " + mutTarget)
             else:
