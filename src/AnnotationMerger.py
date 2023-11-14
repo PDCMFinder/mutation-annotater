@@ -127,7 +127,7 @@ class AnnotationMerger:
                 "coding_sequence_change",
                 "variant_class", "codon_change", "amino_acid_change", "consequence", "functional_prediction", "read_depth",
                 "allele_frequency",
-                "chromosome", "seq_start_position", "ref_allele", "alt_allele", "ucsc_gene_id", "ncbi_gene_id",
+                "chromosome", "strand", "seq_start_position", "ref_allele", "alt_allele", "ucsc_gene_id", "ncbi_gene_id",
                 "ncbi_transcript_id", "ensembl_gene_id",
                 "ensembl_transcript_id", "variation_id", "platform_id"]
 

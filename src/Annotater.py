@@ -263,8 +263,6 @@ class Annotater:
             infoColumns = mergedAnnosDf['info'].str.split("|").tolist()
             infoColumnsDf = pd.DataFrame(infoColumns, columns=infoColumnsHeaders)
             mergedAnnosDf.join(infoColumnsDf).to_csv(mergedAnnos, sep='\t', index=False)
-            os.remove(vcfAnnos)
-            os.remove(ensemblAnnos)
 
 
 def cmdline_runner():

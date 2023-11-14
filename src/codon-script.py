@@ -49,7 +49,10 @@ if len(sys.argv) > 1:
                         logging.info("Annotations complete")
                         #logging.info(sp.call("tail -n 2 "+mutTarget+".log"))
                         os.remove(mutTarget + '.vcf')
+                        os.remove(mutTarget + '.vcf.ANN')
+
                         os.remove(mutTarget + '.ensembl')
+                        os.remove(mutTarget + '.ensembl.ANN')
                         os.remove(mutTarget + '.ensembl.vepWarnings')
                         if os.path.exists(mutTarget + '.ANN'):
                             os.remove(mutTarget + '.ANN')
