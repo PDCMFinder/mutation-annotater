@@ -148,6 +148,7 @@ class AnnotationMerger:
                 self.getFromRow(row, 'read_depth'),
                 self.getFromRow(row, 'allele_frequency'),
                 self.getFromRow(row, 'chromosome'),
+                self.getFromRow(annoRow, 'strand'),
                 self.getFromRow(annoRow, 'pos'),
                 self.getFromRow(annoRow, 'ref'),
                 self.getFromRow(annoRow, 'alt'),

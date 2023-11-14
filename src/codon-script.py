@@ -60,6 +60,7 @@ if len(sys.argv) > 1:
 
                         os.remove(mutTarget)
                         os.rename(mutTarget+'.hmz', mutTarget)
+
                     else:
                         logging.info("Not a file: " + mutTarget)
             else:
