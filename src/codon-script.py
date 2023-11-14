@@ -24,6 +24,12 @@ def generate_mutTarget(path):
             file_list = file_list + temp
     return file_list
 
+def remove_files(path):
+    if exists(path):
+        os.remove(path)
+        logging.info("File removed: "+path)
+    else:
+        logging.info("File does not exist: " + path)
 
 if len(sys.argv) > 1:
     target = sys.argv[1]
@@ -48,14 +54,10 @@ if len(sys.argv) > 1:
                         AnnotationMerger(mutTarget, run_type, local).run()
                         logging.info("Annotations complete")
                         #logging.info(sp.call("tail -n 2 "+mutTarget+".log"))
-                        os.remove(mutTarget + '.vcf')
-                        os.remove(mutTarget + '.vcf.ANN')
+                        rmfs = ['.vcf', '.vcf.ANN', '.ensembl', '.ensembl.ANN', '.ensembl.vepWarnings', '.ANN']
+                        for rmf in rmfs:
+                            remove_files(mutTarget + rmf)
 
-                        os.remove(mutTarget + '.ensembl')
-                        os.remove(mutTarget + '.ensembl.ANN')
-                        os.remove(mutTarget + '.ensembl.vepWarnings')
-                        if os.path.exists(mutTarget + '.ANN'):
-                            os.remove(mutTarget + '.ANN')
                         os.remove(mutTarget)
                         os.rename(mutTarget+'.hmz', mutTarget)
                     else:
