@@ -39,12 +39,12 @@ if len(sys.argv) > 1:
     local = local == "local"
     logging.basicConfig(filename='{}.log'.format(log_location), filemode='a+', level=logging.DEBUG)
     logging.info("Starting annotations")
-
+    skip_provider = ["CMP", "BROD", "CCIA", "CHOP", "CRL", "CSHL"]
     if exists(target):
         for provider in get_dirs(target):
             provider_path = join(target, provider)
             mut_path = join(provider_path, 'mut')
-            if exists(mut_path) and provider != "CMP":
+            if exists(mut_path) and provider not in skip_provider:
                 files = generate_mutTarget(mut_path)
                 for mutTarget in files:
                     if os.path.isfile(mutTarget):
