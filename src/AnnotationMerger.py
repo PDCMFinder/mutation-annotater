@@ -33,15 +33,18 @@ class AnnotationMerger:
 
     def read_annotation_file(self):
         start = time.time()
+        logging.info("{0}: Reading Annotation file!".format(time.ctime()))
         print("{0}: Reading Annotation file!".format(time.ctime()))
         self.annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t', low_memory=False)
         start = time.time() - start
+        logging.info("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
         print("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
         self.annoReader.columns = self.annoReader.columns.str.lower()
         self.annoReader = self.annoReader.apply(lambda x: self.generate_annotation_columns(x), axis=1)
         mapper = {'codons': 'codon_change', 'pos': 'seq_start_position', 'ref': 'ref_allele',
                   'alt': 'alt_allele', 'existing_variation': 'variation_id'}
         self.annoReader.rename(columns=mapper, inplace=True)
+        logging.info("{0}: Annotation file processed in {1}s!".format(time.ctime(), time.time()-start))
         print("{0}: Annotation file processed in {1}s!".format(time.ctime(), time.time()-start))
 
     def mergeRowsAndWrite(self):
@@ -91,6 +94,7 @@ class AnnotationMerger:
         rowAdded = 0
         index = 0
         start = time.time()
+        logging.info("{0}: Reading mutation file!".format(time.ctime()))
         print("{0}: Reading mutation file!".format(time.ctime()))
         mut_raw = pd.read_csv(self.tsvFilePath, sep='\t', low_memory=False)
         out_cols = mut_raw.columns
@@ -104,8 +108,10 @@ class AnnotationMerger:
                 'ensembl_transcript_id', "variation_id"]
 
         annotated = mut_raw[annotations].merge(self.annoReader[cols], left_on='annotation_key', right_on='id', how='left')
+        logging.info("{0}: Mutation file annotated in {1}s!".format(time.ctime(), time.time()-start))
         print("{0}: Mutation file annotated in {1}s!".format(time.ctime(), time.time()-start))
         annotated[out_cols].to_csv(self.outFilePath, sep='\t', index=False)
+        logging.info("{0}: Annotated file written to disk!".format(time.ctime()))
         print("{0}: Annotated file written to disk!".format(time.ctime()))
         # for row in reader:
         #    rowAdded = self.validateMergeAndWrite(index, row, annoReader, outFileWriter, rowAdded)
