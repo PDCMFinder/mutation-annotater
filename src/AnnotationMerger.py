@@ -104,7 +104,7 @@ class AnnotationMerger:
                        'chromosome']
         cols = ['id', 'symbol', 'biotype', 'coding_sequence_change', 'variant_class', 'codon_change',
                 'amino_acid_change', 'consequence', 'functional_prediction', 'strand', 'seq_start_position',
-                'ref_allele', 'alt_allele', 'ucsc_gene_id', "ncbi_gene_id", "ncbi_transcript_id", "ensembl_gene_id",
+                'ref_allele', 'alt_allele', "ncbi_gene_id", "ncbi_transcript_id", "ensembl_gene_id",
                 'ensembl_transcript_id', "variation_id"]
 
         annotated = mut_raw[annotations].merge(self.annoReader[cols], left_on='annotation_key', right_on='id', how='left')
