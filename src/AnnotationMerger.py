@@ -35,7 +35,7 @@ class AnnotationMerger:
         start = time.time()
         logging.info("{0}: Reading Annotation file!".format(time.ctime()))
         print("{0}: Reading Annotation file!".format(time.ctime()))
-        self.annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t', low_memory=False)
+        self.annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t', low_memory=False, nrows=1000)
         start = time.time() - start
         logging.info("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
         print("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
@@ -96,8 +96,18 @@ class AnnotationMerger:
         start = time.time()
         logging.info("{0}: Reading mutation file!".format(time.ctime()))
         print("{0}: Reading mutation file!".format(time.ctime()))
-        mut_raw = pd.read_csv(self.tsvFilePath, sep='\t', low_memory=False)
+        mut_raw = pd.read_csv(self.tsvFilePath, sep='\t', low_memory=False, nrows=10000)
         out_cols = mut_raw.columns
+        mut_size = mut_raw.shape[0]
+        indices_to_drop = mut_raw[mut_raw[['chromosome', 'seq_start_position']].isna().any(axis=1)].index
+        for index in indices_to_drop:
+            chromosome = mut_raw.at[index, 'chromosome']
+            pos = mut_raw.at[index, 'seq_start_position']
+            message2 = ("Info: Row Index {} is missing essential value or legacy. chromosome: {} pos: {} "
+                        .format(index, chromosome, pos))
+            logging.warning(message2)
+        mut_raw = mut_raw.dropna(subset=['chromosome', 'seq_start_position'])
+
         mut_raw['annotation_key'] = mut_raw.apply(self.createAnnotationKey, axis=1)
         mut_raw['chromosome'] = mut_raw['chromosome'].str.replace('chr', '')
         annotations = ['sample_id', 'annotation_key', 'platform_id', 'ucsc_gene_id', 'read_depth', 'allele_frequency',
@@ -107,23 +117,28 @@ class AnnotationMerger:
                 'ref_allele', 'alt_allele', "ncbi_gene_id", "ncbi_transcript_id", "ensembl_gene_id",
                 'ensembl_transcript_id', "variation_id"]
 
-        annotated = mut_raw[annotations].merge(self.annoReader[cols], left_on='annotation_key', right_on='id', how='left')
+        annotated = mut_raw[annotations].merge(self.annoReader[cols], left_on='annotation_key',
+                                               right_on='id', how='left', indicator=True)
         logging.info("{0}: Mutation file annotated in {1}s!".format(time.ctime(), time.time()-start))
         print("{0}: Mutation file annotated in {1}s!".format(time.ctime(), time.time()-start))
         annotated[out_cols].to_csv(self.outFilePath, sep='\t', index=False)
         logging.info("{0}: Annotated file written to disk!".format(time.ctime()))
         print("{0}: Annotated file written to disk!".format(time.ctime()))
+        rows_without_match = annotated[annotated['_merge'] == 'left_only']
+        indices_to_drop = rows_without_match.index
+        for index in indices_to_drop:
+            message = ("Info: Row Dropped at index {0}: "
+                   "Dropping row for being invalid or failed to annotated"
+                   "data {1}, {2}".format(index, rows_without_match.at[index, 'sample_id'],
+                                          rows_without_match.at[index, 'annotation_key']))
+            logging.warning(message)
         # for row in reader:
         #    rowAdded = self.validateMergeAndWrite(index, row, annoReader, outFileWriter, rowAdded)
         #    index += 1
         message3 = ("{0} The completed file file {1} has {2}"
                     " data points out of {3} attempted".format(time.ctime(), self.tsvFileName + ".ANN", annotated.shape[0],
-                                                               mut_raw.shape[0]))
+                                                               mut_size))
         logging.info(message3)
-        #message = ("Info: Row Dropped at index {0}: "
-        #           "Dropping row for being invalid or failed to annotated"
-        #           "data {1}".format(index, mergedRow.to_string()))
-        #logging.warning(message)
 
     def validateMergeAndWrite(self, index, row, outFileWriter, rowAdded):
         if self.checkRowForValidity(index, row):
@@ -234,7 +249,7 @@ class AnnotationMerger:
     def parseHGSVc(self, HGSV):
         regexToRemoveAccession = "(?m)(c|n)\\.(.+$)"
         hgsvMatch = re.findall(regexToRemoveAccession, str(HGSV))
-        return hgsvMatch[0] if len(hgsvMatch) > 0 else ""
+        return hgsvMatch[0][1] if len(hgsvMatch) > 0 else ""
 
     def buildAminoAcidChange(self, aminoAcids, protienPosition):
         aminoAcidChange = ""
@@ -245,7 +260,7 @@ class AnnotationMerger:
 
     def parseFunctionalPredictions(self, polyphen, sift):
         functionalPredictions = ""
-        if bool(polyphen) and bool(sift):
+        if bool(polyphen) and bool(sift) and isinstance(polyphen, str) and pd.notna(polyphen) and isinstance(sift, str) and pd.notna(sift):
             functionalPredictions = "PolyPhen: {0} | Sift: {1}".format(polyphen, sift)
         return functionalPredictions
 
