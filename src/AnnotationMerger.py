@@ -35,7 +35,7 @@ class AnnotationMerger:
         start = time.time()
         logging.info("{0}: Reading Annotation file!".format(time.ctime()))
         print("{0}: Reading Annotation file!".format(time.ctime()))
-        self.annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t', low_memory=False, nrows=1000)
+        self.annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t', low_memory=False)
         start = time.time() - start
         logging.info("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
         print("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
@@ -96,7 +96,7 @@ class AnnotationMerger:
         start = time.time()
         logging.info("{0}: Reading mutation file!".format(time.ctime()))
         print("{0}: Reading mutation file!".format(time.ctime()))
-        mut_raw = pd.read_csv(self.tsvFilePath, sep='\t', low_memory=False, nrows=10000)
+        mut_raw = pd.read_csv(self.tsvFilePath, sep='\t', low_memory=False)
         out_cols = mut_raw.columns
         mut_size = mut_raw.shape[0]
         indices_to_drop = mut_raw[mut_raw[['chromosome', 'seq_start_position']].isna().any(axis=1)].index
@@ -121,10 +121,11 @@ class AnnotationMerger:
                                                right_on='id', how='left', indicator=True)
         logging.info("{0}: Mutation file annotated in {1}s!".format(time.ctime(), time.time()-start))
         print("{0}: Mutation file annotated in {1}s!".format(time.ctime(), time.time()-start))
+        rows_without_match = annotated[annotated['_merge'] == 'left_only']
+        annotated = annotated[annotated['_merge'] == 'both']
         annotated[out_cols].to_csv(self.outFilePath, sep='\t', index=False)
         logging.info("{0}: Annotated file written to disk!".format(time.ctime()))
         print("{0}: Annotated file written to disk!".format(time.ctime()))
-        rows_without_match = annotated[annotated['_merge'] == 'left_only']
         indices_to_drop = rows_without_match.index
         for index in indices_to_drop:
             message = ("Info: Row Dropped at index {0}: "
