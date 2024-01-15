@@ -40,7 +40,7 @@ if len(sys.argv) > 1:
     logging.basicConfig(filename='{}.log'.format(log_location), filemode='a+', level=logging.DEBUG)
     logging.info("Starting annotations")
     #skip_provider = ["BROD", "CCIA", "CHOP", "CMP", "CRL", "CSHL", "CUIMC", "Curie-BC", "Curie-LC", "GCCRI"]
-    skip_provider = ["CMP"]
+    skip_provider = ["NKI"]
     if exists(target):
         for provider in get_dirs(target):
             provider_path = join(target, provider)
