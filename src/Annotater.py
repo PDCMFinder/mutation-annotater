@@ -81,7 +81,7 @@ class Annotater:
     def formatHGVSFiles(self):
         with open(self.hgvsFilePath, 'w') as hgvsFile:
             reader = pd.read_csv(self.mutTarget, sep='\t', dtype=str, engine='python').fillna('')
-            logging.info('Writing {0} to HGVS'. format(self.fileName))
+            #logging.info('Writing {0} to HGVS'. format(self.fileName))
             hgvsFile.write('#HGVSIdentifier\n')
             for index, row in reader.iterrows():
                 if row['ncbi_transcript_id'] != '' and row['coding_sequence_change'] != '':
@@ -104,10 +104,10 @@ class Annotater:
         reader['id'] = reader.apply(
             lambda x: "{}_{}_{}_{}".format(self.formatChromo(x["chromosome"]), x["seq_start_position"],
                                            x["ref_allele"], x["alt_allele"]), axis=1)
-        logging.info("Writing {0} to VCF".format(self.fileName))
+        #logging.info("Writing {0} to VCF".format(self.fileName))
         self.generate_ensembl_file(reader)
         self.generate_vcf_file(reader)
-        message = "The file {0} has {1} data points (including header)".format(self.fileName, (reader.shape[0] + 1))
+        message = "Annotations: {0} has {1} data points)".format(self.mutTarget, (reader.shape[0]))
         logging.info(message)
 
     def isRowValidForProcessing(self, df):

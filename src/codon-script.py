@@ -50,7 +50,7 @@ if len(sys.argv) > 1:
                 annotate = Annotater(mut_path, run_type, local)
                 for mutTarget in files:
                     if os.path.isfile(mutTarget):
-                        logging.info("Annotating file: " + mutTarget)
+                        #logging.info("Annotating file: " + mutTarget)
                         annotate.run(mutTarget)
                 annotate.processFiles()
                 annotate.annotate()
