@@ -50,24 +50,25 @@ if len(sys.argv) > 1:
                 annotate = Annotater(mut_path, run_type, local)
                 for mutTarget in files:
                     if os.path.isfile(mutTarget):
-                        #logging.info("Annotating file: " + mutTarget)
+                        logging.info("Annotating file: " + mutTarget)
                         annotate.run(mutTarget)
                 annotate.processFiles()
                 annotate.annotate()
                 merger = AnnotationMerger(mut_path, run_type, local)
                 for mutTarget in files:
                     if os.path.isfile(mutTarget):
-                        logging.info("Starting merge of annotations")
+                        #logging.info("Starting merge of annotations")
                         #AnnotationMerger(mutTarget, run_type, local).run()
                         merger.run(mutTarget)
-                        logging.info("Annotations complete")
+                        #logging.info("Annotations complete")
                         #logging.info(sp.call("tail -n 2 "+mutTarget+".log"))
-                        rmfs = ['.vcf', '.vcf.ANN', '.ensembl', '.ensembl.ANN', '.ensembl.vepWarnings', '.ANN']
-                        for rmf in rmfs:
-                            remove_files(mutTarget + rmf)
                         os.remove(mutTarget)
-                        os.rename(mutTarget+'.hmz', mutTarget)
+                        os.rename(mutTarget + '.hmz', mutTarget)
                     else:
                         logging.info("Not a file: " + mutTarget)
+                rmfs = ['.vcf', '.vcf.ANN', '.ensembl', '.ensembl.ANN', '.ensembl.vepWarnings', '.ANN']
+                rmTarget = join(mut_path, 'merged')
+                for rmf in rmfs:
+                    remove_files(mutTarget + rmf)
             else:
                 logging.info("Please pass the absolute path of the file to annotate")

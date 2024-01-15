@@ -54,7 +54,7 @@ class Annotater:
             self.annotateFile(self.vcfFilePath, "vcf")
             self.annotateFile(self.ensemblFilePath, "ensembl")
             self.mergeResultAnnos(self.vcfFilePath, self.ensemblFilePath)
-        logging.info("Annotating is complete")
+        #logging.info("Annotating is complete")
 
 
     def process_hgvs(self):
@@ -81,13 +81,13 @@ class Annotater:
     def formatHGVSFiles(self):
         with open(self.hgvsFilePath, 'w') as hgvsFile:
             reader = pd.read_csv(self.mutTarget, sep='\t', dtype=str, engine='python').fillna('')
-            logging.info('Writing {0} to HGVS'. format(self.mutTarget))
+            logging.info('Writing {0} to HGVS'. format(self.fileName))
             hgvsFile.write('#HGVSIdentifier\n')
             for index, row in reader.iterrows():
                 if row['ncbi_transcript_id'] != '' and row['coding_sequence_change'] != '':
                     out_row = row['ncbi_transcript_id']+':c.'+row['coding_sequence_change'] +'\n'
                     hgvsFile.write(out_row)
-            message = "Annotater: {0} has {1} data points (including header)".format(self.mutTarget, (index + 1))
+            message = "Annotater: {0} has {1} data points (including header)".format(self.fileName, (index + 1))
             logging.info(message)
 
     def process_VCForEnsembl(self):
@@ -104,10 +104,10 @@ class Annotater:
         reader['id'] = reader.apply(
             lambda x: "{}_{}_{}_{}".format(self.formatChromo(x["chromosome"]), x["seq_start_position"],
                                            x["ref_allele"], x["alt_allele"]), axis=1)
-        logging.info("Writing {0} to VCF".format(self.mutTarget))
+        logging.info("Writing {0} to VCF".format(self.fileName))
         self.generate_ensembl_file(reader)
         self.generate_vcf_file(reader)
-        message = "The file {0} has {1} data points (including header)".format(self.mutTarget, (reader.shape[0] + 1))
+        message = "The file {0} has {1} data points (including header)".format(self.fileName, (reader.shape[0] + 1))
         logging.info(message)
 
     def isRowValidForProcessing(self, df):
@@ -118,11 +118,11 @@ class Annotater:
         for index in dropped_indices:
             logging.info(
                 "Row has incomplete data : Row {0} in file {1} has missing chr, seq start, ref or alt allele data"
-                .format(index, self.mutTarget))
+                .format(index, self.fileName))
         return df
 
     def processFiles(self):
-        logging.info("removing duplicates in VCF/Ensembl files")
+        #logging.info("removing duplicates in VCF/Ensembl files")
         self.vcfDf = sort_vcf_ensembl_df(self.vcfDf)
         self.ensemblDf = sort_vcf_ensembl_df(self.ensemblDf)
 

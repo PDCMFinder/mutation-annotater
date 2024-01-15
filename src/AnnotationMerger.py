@@ -29,7 +29,7 @@ class AnnotationMerger:
         self.tsvFileName = os.path.basename(self.tsvFilePath)
         self.outFilePath = "{}.hmz".format(self.tsvFilePath)
         self.mergeRowsAndWrite()
-        logging.info("Merge complete")
+        #logging.info("Merge complete")
 
     def read_annotation_file(self):
         start = time.time()
@@ -84,8 +84,7 @@ class AnnotationMerger:
         return row
 
     def logBeginningOfMerge(self):
-        message = ("Merging original data :"
-                   " {0} /n and annotated data : {1} at {2}".format(self.tsvFilePath, self.annotationFilePath,
+        message = ("{2}: Merging original data: {0} and annotated data: {1}".format(self.tsvFileName, self.annotationFilePath,
                                                                     time.ctime()))
         logging.info(message)
 
