@@ -135,8 +135,6 @@ class AnnotationMerger:
                        'chromosome']
         return mut_raw[annotations], out_cols, mut_size
 
-    def annotate_raw_data(self):
-
     def createAnnotationKey(self, row):
         if self.run_type == 'hgvs':
             annotation_key = "{}:c.{}".format(row["ncbi_transcript_id"], row["coding_sequence_change"])
