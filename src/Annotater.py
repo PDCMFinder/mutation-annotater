@@ -39,7 +39,7 @@ class Annotater:
         self.fileName = os.path.basename(self.mutTarget)
         self.parentDirectoryPath = os.path.dirname(self.mutTarget)
         logging.basicConfig(filename='{}.log'.format(join(self.parentDirectoryPath, 'annotater')), filemode='a+', level=logging.DEBUG)
-        logging.info("Starting merge of annotations using " + str(cpu_count())+" CPUs")
+        logging.info("Starting merge of annotations")
         if self.run_type == 'vcf':
             self.process_VCForEnsembl()
         elif self.run_type == 'hgvs':
@@ -290,10 +290,9 @@ def cmdline_runner():
 def sort_vcf_ensembl_df(df):
     cols = df.columns
     df['pos'] = df['pos'].astype(int)
-    df = df.sort_values(by=['pos'])
     df['chromosome'] = pd.Categorical(df['#chrom'], ordered=True,
                                               categories=['chr' + str(i) for i in range(1, 23)] + ['chrX', 'chrY'])
-    df = df.sort_values(by=['chromosome'])
+    df = df.sort_values(by=['chromosome', 'pos']).reset_index(drop=True)
     return df[cols]
 
 #cmdline_runner()
