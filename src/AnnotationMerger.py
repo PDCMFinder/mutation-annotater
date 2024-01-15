@@ -16,18 +16,18 @@ class AnnotationMerger:
     mergedPointsMissed = 0
 
     def __init__(self, mutTarget, run_type, local):
-        self.tsvFilePath = mutTarget
-        self.tsvFileName = os.path.basename(self.tsvFilePath)
-        self.annotationFilePath = "{}.ANN".format(self.tsvFilePath)
-        self.outFilePath = "{}.hmz".format(self.tsvFilePath)
-        self.parentDirectory = os.path.dirname(sys.argv[1])
+        self.parentDirectory = os.path.dirname(mutTarget)
+        self.annotationFilePath = "{}.ANN".format(os.path.join(self.parentDirectory, 'merged'))
         self.provider = os.path.dirname(self.parentDirectory)
         self.Updog = os.path.dirname(self.provider)
         self.run_type = run_type
         self.local = local
         self.read_annotation_file()
 
-    def run(self):
+    def run(self, mutTarget):
+        self.tsvFilePath = mutTarget
+        self.tsvFileName = os.path.basename(self.tsvFilePath)
+        self.outFilePath = "{}.hmz".format(self.tsvFilePath)
         self.mergeRowsAndWrite()
         logging.info("Merge complete")
 
@@ -107,9 +107,9 @@ class AnnotationMerger:
                         .format(index, chromosome, pos))
             logging.warning(message2)
         mut_raw = mut_raw.dropna(subset=['chromosome', 'seq_start_position'])
-
         mut_raw['annotation_key'] = mut_raw.apply(self.createAnnotationKey, axis=1)
         mut_raw['chromosome'] = mut_raw['chromosome'].str.replace('chr', '')
+        logging.info("{0}: mutation data processed!".format(time.ctime()))
         annotations = ['sample_id', 'annotation_key', 'platform_id', 'ucsc_gene_id', 'read_depth', 'allele_frequency',
                        'chromosome']
         cols = ['id', 'symbol', 'biotype', 'coding_sequence_change', 'variant_class', 'codon_change',
@@ -282,16 +282,20 @@ def cmdline_runner():
         mutTarget = sys.argv[1]
         run_type = sys.argv[2]
         local = sys.argv[3]
+        mutDir = os.path.dirname(mutTarget)
+        merger = AnnotationMerger(mutDir, run_type, local)
         if os.path.isfile(mutTarget):
             logging.basicConfig(filename='{}.log'.format(mutTarget), filemode='a+', level=logging.DEBUG)
             logging.info("Starting merge of annotations")
-            AnnotationMerger(mutTarget, run_type, local).run()
+            #AnnotationMerger(mutTarget, run_type, local).run()
+            merger.run(mutTarget)
         elif os.path.isdir(mutTarget):
             globForTsv = os.path.join(mutTarget, "*tsv")
             for mutFile in glob.iglob(globForTsv):
                 mutfile_path = os.path.join(mutTarget, mutFile)
                 print(mutfile_path)
-                AnnotationMerger(mutfile_path, run_type, local).run()
+                merger.run(mutfile_path)
+                #AnnotationMerger(mutfile_path, run_type, local).run()
     else:
         logging.info("Please pass the absolute path of the file to annotate")
 

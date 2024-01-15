@@ -47,21 +47,26 @@ if len(sys.argv) > 1:
             mut_path = join(provider_path, 'mut')
             if exists(mut_path) and provider in skip_provider:
                 files = generate_mutTarget(mut_path)
+                annotate = Annotater(mut_path, run_type, local)
                 for mutTarget in files:
                     if os.path.isfile(mutTarget):
                         logging.info("Annotating file: " + mutTarget)
-                        #Annotater(mutTarget, run_type, local).run()
+                        annotate.run(mutTarget)
+                annotate.processFiles()
+                annotate.annotate()
+                merger = AnnotationMerger(mut_path, run_type, local)
+                for mutTarget in files:
+                    if os.path.isfile(mutTarget):
                         logging.info("Starting merge of annotations")
-                        AnnotationMerger(mutTarget, run_type, local).run()
+                        #AnnotationMerger(mutTarget, run_type, local).run()
+                        merger.run(mutTarget)
                         logging.info("Annotations complete")
                         #logging.info(sp.call("tail -n 2 "+mutTarget+".log"))
                         rmfs = ['.vcf', '.vcf.ANN', '.ensembl', '.ensembl.ANN', '.ensembl.vepWarnings', '.ANN']
                         for rmf in rmfs:
                             remove_files(mutTarget + rmf)
-
                         os.remove(mutTarget)
                         os.rename(mutTarget+'.hmz', mutTarget)
-
                     else:
                         logging.info("Not a file: " + mutTarget)
             else:
