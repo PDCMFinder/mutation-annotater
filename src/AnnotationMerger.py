@@ -17,7 +17,7 @@ class AnnotationMerger:
 
     def __init__(self, mutTarget, run_type, local):
         self.parentDirectory = os.path.dirname(mutTarget)
-        self.annotationFilePath = "{}.ANN".format(os.path.join(self.parentDirectory, 'merged'))
+        self.annotationFilePath = "{}.ANN".format(os.path.join(self.parentDirectory, 'mut/merged'))
         self.provider = os.path.dirname(self.parentDirectory)
         self.Updog = os.path.dirname(self.provider)
         self.run_type = run_type
@@ -33,11 +33,11 @@ class AnnotationMerger:
 
     def read_annotation_file(self):
         start = time.time()
-        logging.info("{0}: Reading Annotation file!".format(time.ctime()))
+        #logging.info("{0}: Reading Annotation file!".format(time.ctime()))
         print("{0}: Reading Annotation file!".format(time.ctime()))
         self.annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t', low_memory=False)
         start = time.time() - start
-        logging.info("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
+        #logging.info("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
         print("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
         self.annoReader.columns = self.annoReader.columns.str.lower()
         self.annoReader = self.annoReader.apply(lambda x: self.generate_annotation_columns(x), axis=1)
@@ -49,7 +49,7 @@ class AnnotationMerger:
                 'ref_allele', 'alt_allele', "ncbi_gene_id", "ncbi_transcript_id", "ensembl_gene_id",
                 'ensembl_transcript_id', "variation_id"]
         self.annoReader = self.annoReader[cols]
-        logging.info("{0}: Annotation file processed in {1}s!".format(time.ctime(), time.time()-start))
+        #logging.info("{0}: Annotation file processed in {1}s!".format(time.ctime(), time.time()-start))
         print("{0}: Annotation file processed in {1}s!".format(time.ctime(), time.time()-start))
 
     def mergeRowsAndWrite(self):
@@ -91,19 +91,19 @@ class AnnotationMerger:
 
     def iterateThroughRowsAndMerge(self):#, reader, outFileWriter):
         start = time.time()
-        logging.info("{0}: Reading mutation file!".format(time.ctime()))
+        #logging.info("{0}: Reading mutation file!".format(time.ctime()))
         print("{0}: Reading mutation file!".format(time.ctime()))
         mut_raw, out_cols, mut_size = self.process_raw_data()
-        logging.info("{0}: mutation data processed!".format(time.ctime()))
+        #logging.info("{0}: mutation data processed!".format(time.ctime()))
         annotated = mut_raw.merge(self.annoReader, left_on='annotation_key',
                                                right_on='id', how='left', indicator=True)
-        logging.info("{0}: Mutation file annotated in {1}s!".format(time.ctime(), time.time()-start))
+        #logging.info("{0}: Mutation file annotated in {1}s!".format(time.ctime(), time.time()-start))
         print("{0}: Mutation file annotated in {1}s!".format(time.ctime(), time.time()-start))
 
         rows_without_match = annotated[annotated['_merge'] == 'left_only']
         annotated = annotated[annotated['_merge'] == 'both']
         annotated[out_cols].to_csv(self.outFilePath, sep='\t', index=False)
-        logging.info("{0}: Annotated file written to disk!".format(time.ctime()))
+        #logging.info("{0}: Annotated file written to disk!".format(time.ctime()))
         print("{0}: Annotated file written to disk!".format(time.ctime()))
         indices_to_drop = rows_without_match.index
         for index in indices_to_drop:

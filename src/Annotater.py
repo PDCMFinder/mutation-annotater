@@ -39,7 +39,7 @@ class Annotater:
         self.fileName = os.path.basename(self.mutTarget)
         self.parentDirectoryPath = os.path.dirname(self.mutTarget)
         logging.basicConfig(filename='{}.log'.format(join(self.parentDirectoryPath, 'annotater')), filemode='a+', level=logging.DEBUG)
-        logging.info("Starting merge of annotations")
+        #logging.info("Starting merge of annotations")
         if self.run_type == 'vcf':
             self.process_VCForEnsembl()
         elif self.run_type == 'hgvs':
@@ -87,7 +87,7 @@ class Annotater:
                 if row['ncbi_transcript_id'] != '' and row['coding_sequence_change'] != '':
                     out_row = row['ncbi_transcript_id']+':c.'+row['coding_sequence_change'] +'\n'
                     hgvsFile.write(out_row)
-            message = "The file {0} has {1} data points (including header)".format(self.mutTarget, (index + 1))
+            message = "Annotater: {0} has {1} data points (including header)".format(self.mutTarget, (index + 1))
             logging.info(message)
 
     def process_VCForEnsembl(self):
@@ -195,7 +195,7 @@ class Annotater:
         mutationAnnotator = dataPath +":"+ dataPath +","+ mutationAnnotator + ":" + mutationAnnotator + ":rw"
         vepWarningFile = vepIn + ".vepWarnings"
         vepOut = vepIn + ".ANN"
-        threads = cpu_count() * 2
+        threads = cpu_count() * 4
         vepCMD = """vep {0} --format {1} --fork={2} --warning_file {3} --cache --dir_cache {4} --fasta {5} -i {6} -o {7} 2>> {8}.log""" \
             .format(vepArguments, format, threads, vepWarningFile, alleleDB, fastaDir, vepIn, vepOut, join(self.parentDirectoryPath, 'annotater'))
         if format != 'hgvs':
