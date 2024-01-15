@@ -1,4 +1,8 @@
 # mutation-annotater
+Workflow:
+
+![Annotation pipeline workflow](annotation%20pipeline.png "Annotation pipeline workflow")
+
 annotation pipeline for PDXFinder mut templates using VEP.
 
 The pipeline was written in python 2.7. It has not been tested in higher versions.
