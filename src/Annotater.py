@@ -19,6 +19,7 @@ class Annotater:
         self.configDir = configDir
         self.run_type = run_type
         self.local = local
+        self.parentDirectoryPath = os.path.dirname(self.mutTarget)
         vcf_cols = ["#chrom", "pos", "id", "ref", "alt", "qual", "filter", "info"]
         ensembl_cols = ["#chrom", "pos", "end", "ref/alt", "strand", "id"]
         if os.path.isfile(self.mutTarget):
