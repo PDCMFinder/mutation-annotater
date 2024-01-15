@@ -123,8 +123,8 @@ class Annotater:
 
     def processFiles(self):
         logging.info("removing duplicates in VCF/Ensembl files")
-        self.vcfDf = self.sortInPlace(self.vcfDf)
-        self.ensemblDf = self.sortInPlace(self.ensemblDf)
+        self.vcfDf = sort_vcf_ensembl_df(self.vcfDf)
+        self.ensemblDf = sort_vcf_ensembl_df(self.ensemblDf)
 
         self.vcfDf.to_csv(self.vcfFilePath, sep='\t', index=False)
         self.ensemblDf.to_csv(self.ensemblFilePath, sep='\t', index=False)
@@ -286,5 +286,14 @@ def cmdline_runner():
 
     else:
         logging.info("Please pass the absolute path of the file to annotate")
+
+def sort_vcf_ensembl_df(df):
+    cols = df.columns
+    df['pos'] = df['pos'].astype(int)
+    df = df.sort_values(by=['pos'])
+    df['chromosome'] = pd.Categorical(df['#chrom'], ordered=True,
+                                              categories=['chr' + str(i) for i in range(1, 23)] + ['chrX', 'chrY'])
+    df = df.sort_values(by=['chromosome'])
+    return df[cols]
 
 #cmdline_runner()
