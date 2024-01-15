@@ -59,10 +59,6 @@ class Annotater:
     def process_hgvs(self):
         self.formatHGVSFiles()
         self.dropDuplicates(self.hgvsFilePath)
-        #'singularity exec -B /Users/tushar/PycharmProjects/PDCMDataAggregator/output,/Users/tushar/pdx/update-data,/Users/tushar/pdx/mutation-annotater:/Users/tushar/pdx/mutation-annotater:rw pdx-liftover_vep_release98.3.sif vep --verbose --vcf --force --check_existing --check_ref --refseq --use_given_ref --symbol --polyphen s --sift s --hgvs --variant_class --no_stats --pick --pick_order biotype,canonical,appris,tsl,ccds,rank,length,mane --fork=16 --warning_file  /Users/tushar/PycharmProjects/PDCMDataAggregator/output/CMP/pdcm_format/mut/CMP_mut.tsv.ensembl.vepWarnings --cache --dir_cache /Users/tushar/pdx/mutation-annotater/vepDB/homo_sapiens_vep_98_GRCh38 --fasta /Users/tushar/pdx/mutation-annotater/vepDB/homo_sapiens/Homo_sapiens.GRCh38.dna.primary_assembly.fa --format hgvs -i /Users/tushar/PycharmProjects/PDCMDataAggregator/output/CMP/pdcm_format/mut/WGS/CMP_mut_SIDS01895.tsv.refseq -o /Users/tushar/PycharmProjects/PDCMDataAggregator/output/CMP/pdcm_format/mut/WGS/CMP_mut_SIDS01895.tsv.ANN 2>> /Users/tushar/PycharmProjects/PDCMDataAggregator/output/CMP/pdcm_format/mut/WGS/CMP_mut_SIDS01895.tsv.log'
-        #self.annotateFile(self.hgvsFilePath, 'hgvs')
-        #self.process_hgvs_annotations()
-        #os.remove(self.hgvsFilePath)
 
     def process_hgvs_annotations(self):
         mergedAnnos = self.mutTarget + ".ANN"
@@ -107,19 +103,9 @@ class Annotater:
         reader['id'] = reader.apply(
             lambda x: "{}_{}_{}_{}".format(self.formatChromo(x["chromosome"]), x["seq_start_position"],
                                            x["ref_allele"], x["alt_allele"]), axis=1)
-
         logging.info("Writing {0} to VCF".format(self.mutTarget))
         self.generate_ensembl_file(reader)
         self.generate_vcf_file(reader)
-
-        #for index, row in reader.iterrows():
-        #    rowDict = row.to_dict()
-        #    if self.isRowValidForProcessing(rowDict):
-        #        if self.rowIsEnsembl(rowDict):
-        #            self.formatRowToEnsemblAndWrite(rowDict, ensembl)
-        #        else:
-        #            self.formatRowToVCFAndWrite(rowDict, vcfFile)
-
         message = "The file {0} has {1} data points (including header)".format(self.mutTarget, (reader.shape[0] + 1))
         logging.info(message)
 
@@ -143,40 +129,10 @@ class Annotater:
         #self.sortInPlace(self.vcfFilePath)
         #self.sortInPlace(self.ensemblFilePath)
 
-    def sortInPlace(self, aVCFfile):
-        with open(aVCFfile, 'r') as infile:
-            reader = csv.reader(infile, delimiter='\t')
-            secondKey = sorted(reader, key=lambda x: self.sortLocation(x[1]))
-            sortedFile = sorted(secondKey, key=lambda x: self.sortChromo(x[0]))
-        with open(aVCFfile, 'w') as outFile:
-            writer = csv.writer(outFile, delimiter='\t')
-            for row in sortedFile:
-                writer.writerow(row)
-
-    def sortChromo(self, x):
-        decMatch = "^[0-9]{1,2}$"
-        isDec = re.match(decMatch, x)
-        if isDec:
-            return int(x)
-        elif len(x) == 1:
-            return ord(x)
-        return 0
-
-    def sortLocation(self, x):
-        firstTenD = "^[0-9]{1,10}"
-        loc = re.search(firstTenD, x)
-        return int(loc.group(0)) if x != 'pos' and loc != None else 0
-
     def dropDuplicates(self, vcfFilePath):
         vcfDf = pd.read_csv(vcfFilePath, sep='\t', keep_default_na=False, na_values=[''], dtype=str)
         vcfDf.drop_duplicates(inplace=True)
         vcfDf.to_csv(vcfFilePath, sep='\t', index=False, na_rep='')
-
-    def formatRowToVCFAndWrite(self, row, vcfFile):
-        vcfRow = "{0}\t{1}\t{2}\t{3}\t{4}\t.\t.\t.\n".format(row['chromosome'], row["seq_start_position"],
-                                                             self.createPosId(row),
-                                                             row["ref_allele"], row["alt_allele"])
-        vcfFile.write(vcfRow)
 
     def generate_vcf_file(self, df):
         temp = df[~df['ref_allele'].str.contains('-') & ~df['alt_allele'].str.contains('-')]
@@ -205,36 +161,6 @@ class Annotater:
             cols = ['#chrom', 'pos', 'end', 'ref/alt', 'strand', 'id']
             self.ensemblDf = pd.concat([self.ensemblDf, temp[cols]])
             self.ensemblDf = self.ensemblDf.drop_duplicates().reset_index(drop=True)
-
-    def formatRowToEnsemblAndWrite(self, row, ensemblFile):
-        startPos, endPos = self.resolveEnsemblEndPos(row)
-        strand = '+' if row['strand'] == "" else row["strand"]
-        ensemblRow = "{0}\t{1}\t{2}\t{3}/{4}\t{5}\t{6}\n".format(row['chromosome'], startPos, endPos,
-                                                                 row["ref_allele"], row["alt_allele"], strand,
-                                                                 self.createPosId(row))
-        ensemblFile.write(ensemblRow)
-
-    def resolveEnsemblEndPos(self, row):
-        startPos = row['seq_start_position']
-        endPos = startPos
-        if bool(re.search("-", row["ref_allele"])):
-            # insertion rule: Start - 1 = end coordinate
-            endPos = int(startPos) - 1
-        elif bool(re.search("-", row["alt_allele"])):
-            # Deletion rule: Endpos = startPos + ( len(refAllele) - 1 )
-            endPos = int(startPos) + len(row["ref_allele"]) - 1
-        return startPos, endPos
-
-    def createPosId(self, row):
-        return "{}_{}_{}_{}".format(self.formatChromo(row["chromosome"]),
-                                    row["seq_start_position"], row["ref_allele"], row["alt_allele"])
-
-    def anyGenomicCoordinateAreMissing(self, row):
-        return not row["chromosome"] or not row["seq_start_position"] or not row["ref_allele"] or not row["alt_allele"]
-
-    def allGenomicDataIsMissing(self, row):
-        return not row["chromosome"] and not row["seq_start_position"] and not row["ref_allele"] and not row[
-            "alt_allele"]
 
     def formatChromo(self, givenChromo):
         formattedChromo = givenChromo
