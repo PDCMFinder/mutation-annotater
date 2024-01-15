@@ -192,4 +192,4 @@ def cmdline_runner():
                 #AnnotationMerger(mutfile_path, run_type, local).run()
     else:
         logging.info("Please pass the absolute path of the file to annotate")
-cmdline_runner()
+#cmdline_runner()

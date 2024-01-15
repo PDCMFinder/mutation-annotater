@@ -123,13 +123,31 @@ class Annotater:
 
     def processFiles(self):
         logging.info("removing duplicates in VCF/Ensembl files")
-        self.vcfDf = sort_vcf_ensembl_df(self.vcfDf)
-        self.ensemblDf = sort_vcf_ensembl_df(self.ensemblDf)
+        self.vcfDf = self.sortInPlace(self.vcfDf)
+        self.ensemblDf = self.sortInPlace(self.ensemblDf)
+
         self.vcfDf.to_csv(self.vcfFilePath, sep='\t', index=False)
         self.ensemblDf.to_csv(self.ensemblFilePath, sep='\t', index=False)
         #self.sortInPlace(self.vcfFilePath)
         #self.sortInPlace(self.ensemblFilePath)
 
+    def sortInPlace(self, df):
+        secondKey = sorted(df, key=lambda x: self.sortLocation(x[1]))
+        sortedFile = sorted(secondKey, key=lambda x: self.sortChromo(x[0]))
+        return sortedFile
+    def sortChromo(self, x):
+        decMatch = "^[0-9]{1,2}$"
+        isDec = re.match(decMatch, x)
+        if isDec:
+            return int(x)
+        elif len(x) == 1:
+            return ord(x)
+        return 0
+
+    def sortLocation(self, x):
+        firstTenD = "^[0-9]{1,10}"
+        loc = re.search(firstTenD, x)
+        return int(loc.group(0)) if x != 'pos' and loc != None else 0
     def dropDuplicates(self, vcfFilePath):
         vcfDf = pd.read_csv(vcfFilePath, sep='\t', keep_default_na=False, na_values=[''], dtype=str)
         vcfDf.drop_duplicates(inplace=True)
@@ -269,11 +287,4 @@ def cmdline_runner():
     else:
         logging.info("Please pass the absolute path of the file to annotate")
 
-def sort_vcf_ensembl_df(df):
-    cols = df.columns
-    df['chromosome'] = pd.Categorical(df['#chrom'], ordered=True,
-                                              categories=['chr' + str(i) for i in range(1, 23)] + ['chrX', 'chrY'])
-    df = df.sort_values(by=['chromosome', 'pos'])
-    return df[cols]
-
-cmdline_runner()
+#cmdline_runner()
