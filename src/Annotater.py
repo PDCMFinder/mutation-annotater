@@ -204,9 +204,9 @@ class Annotater:
             vepCMD = vepCMD + " --refseq "
         print(vepCMD)
         if not self.local:
-            logging.info("singularity exec -B {0} {1} {2}".format(mutationAnnotator, singularityVepImage, vepCMD))
+            logging.info("{0}/{1}".format(singularityVepImage, vepCMD))
             returnSignal = sp.call(
-                "singularity exec -B {0} {1} {2}".format(mutationAnnotator, singularityVepImage, vepCMD), shell=True)
+                "{0}/{1}".format(singularityVepImage, vepCMD), shell=True)
         else:
             logging.info("vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(mutationAnnotator, singularityVepImage, vepCMD))
             returnSignal = sp.call("cd ../vm-singularity && vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(mutationAnnotator, singularityVepImage, vepCMD), shell=True)
@@ -222,6 +222,11 @@ class Annotater:
                 fastaDir = join(mutationAnnotator, configDirs.get("fastaDir_codon"))
                 alleleDB = join(mutationAnnotator,configDirs.get("alleleDB_codon"))
                 singularityVepImage = join(mutationAnnotator, configDirs.get("vepSingularityImage_codon"))
+                try:
+                    vepPath = configDirs.get("vepPath")
+                    singularityVepImage = vepPath
+                except:
+                    print("VEP not found on CODON!")
             else:
                 mutationAnnotator = configDirs.get("mutationAnnotator")
                 dataPath = configDirs.get("dataPath")

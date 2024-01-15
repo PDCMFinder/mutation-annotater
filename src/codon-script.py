@@ -40,12 +40,12 @@ if len(sys.argv) > 1:
     logging.basicConfig(filename='{}.log'.format(log_location), filemode='a+', level=logging.DEBUG)
     logging.info("Starting annotations")
     #skip_provider = ["BROD", "CCIA", "CHOP", "CMP", "CRL", "CSHL", "CUIMC", "Curie-BC", "Curie-LC", "GCCRI"]
-    skip_provider = ["NKI"]
+    skip_provider = []
     if exists(target):
         for provider in sorted(get_dirs(target)):
             provider_path = join(target, provider)
             mut_path = join(provider_path, 'mut')
-            if exists(mut_path) and provider in skip_provider:
+            if exists(mut_path) and provider not in skip_provider:
                 files = generate_mutTarget(mut_path)
                 annotate = Annotater(mut_path, run_type, local)
                 for mutTarget in files:
