@@ -160,7 +160,10 @@ class AnnotationMerger:
     def buildAminoAcidChange(self, aminoAcids, protienPosition):
         aminoAcidChange = ""
         if (bool(aminoAcids) and bool(protienPosition)) and isinstance(aminoAcids, str) and pd.notna(aminoAcids) and len(aminoAcids) == 3:
-            protienPosition = str(int(protienPosition))
+            try:
+                protienPosition = str(int(protienPosition))
+            except:
+                protienPosition = str(protienPosition)
             aminoAcidChange = aminoAcids[0] + protienPosition + aminoAcids[2]
         return aminoAcidChange
 
