@@ -128,7 +128,7 @@ class AnnotationMerger:
                         .format(index, chromosome, pos))
             logging.warning(message2)
         mut_raw = mut_raw.dropna(subset=['chromosome', 'seq_start_position'])
-        mut_raw['annotation_key'] = mut_raw.apply(self.createAnnotationKey, axis=1)
+        mut_raw['annotation_key'] = mut_raw.fillna('').apply(self.createAnnotationKey, axis=1)
         mut_raw['chromosome'] = mut_raw['chromosome'].str.replace('chr', '')
         annotations = ['sample_id', 'annotation_key', 'platform_id', 'ucsc_gene_id', 'read_depth', 'allele_frequency',
                        'chromosome']
@@ -138,9 +138,9 @@ class AnnotationMerger:
         if self.run_type == 'hgvs':
             annotation_key = "{}:c.{}".format(row["ncbi_transcript_id"], row["coding_sequence_change"])
         else:
-            annotation_key = "{}_{}_{}_{}".format(self.formatChromo(row["chromosome"].fillna('')),
-                                                  row["seq_start_position"].fillna(''), row["ref_allele"].fillna(''),
-                                                    row["alt_allele"].fillna(''))
+            annotation_key = "{}_{}_{}_{}".format(self.formatChromo(row["chromosome"]),
+                                                  row["seq_start_position"], row["ref_allele"],
+                                                    row["alt_allele"])
         return annotation_key
 
     def formatChromo(self, givenChromo):
