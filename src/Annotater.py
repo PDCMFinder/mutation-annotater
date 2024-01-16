@@ -195,7 +195,7 @@ class Annotater:
         if not self.local:
             logging.info("{0}/{1}".format(singularityVepImage, vepCMD))
             returnSignal = sp.run(
-                "{0}/{1}".format(singularityVepImage, vepCMD), shell=True, capture_output=False)
+                "{0}/{1}".format(singularityVepImage, vepCMD), shell=True)
         else:
             logging.info("vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(mutationAnnotator, singularityVepImage, vepCMD))
             returnSignal = sp.call("cd ../vm-singularity && vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(mutationAnnotator, singularityVepImage, vepCMD), shell=True)
