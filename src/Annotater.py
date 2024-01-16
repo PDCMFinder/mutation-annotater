@@ -240,7 +240,7 @@ class Annotater:
         return fastaDir, alleleDB, singularityVepImage, vepArguments, mutationAnnotator, dataPath
 
     def mergeVCFAnnos(self):
-        files = [self.vcfFilePath + '_' + str(chr) + '.vcf' for chr in self.chromosomes]
+        files = [self.vcfFilePath + '_' + str(chr) + '.vcf.ANN' for chr in self.chromosomes]
         vcfDfANN = pd.DataFrame()
         for f in files:
             temp = pd.read_csv(f, sep='\t', header=4)
