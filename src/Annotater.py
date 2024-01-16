@@ -56,8 +56,8 @@ class Annotater:
             os.remove(self.hgvsFilePath)
         elif self.run_type == 'vcf':
             files = [self.vcfFilePath+'_'+str(chr)+'.vcf' for chr in self.chromosomes]
-            with ThreadPoolExecutor(max_workers=cpu_count()*4) as executor:
-                executor.map(self.annotateFile, files, ['vcf']*4)
+            with ThreadPoolExecutor(max_workers=cpu_count()*2) as executor:
+                executor.map(self.annotateFile, files, ['vcf']*len(files))
             self.mergeVCFAnnos()
             #self.annotateFile(self.vcfFilePath, "vcf")
             self.annotateFile(self.ensemblFilePath, "ensembl")
