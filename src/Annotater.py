@@ -55,13 +55,14 @@ class Annotater:
             self.process_hgvs_annotations()
             os.remove(self.hgvsFilePath)
         elif self.run_type == 'vcf':
-            self.annotateFile(self.ensemblFilePath, "ensembl")
+            if self.ensemblDf.shape[0] > 0:
+                self.annotateFile(self.ensemblFilePath, "ensembl")
+            self.mergeResultAnnos(self.vcfFilePath, self.ensemblFilePath)
             files = [self.vcfFilePath+'_'+str(chr)+'.vcf' for chr in self.chromosomes]
             with ThreadPoolExecutor(max_workers=min(len(files), 4)) as executor:
                 executor.map(self.annotateFile, files, ['vcf']*len(files))
             logging.info('Merging individual ANN files to one')
             self.mergeVCFAnnos()
-            self.mergeResultAnnos(self.vcfFilePath, self.ensemblFilePath)
         #logging.info("Annotating is complete")
 
 
@@ -261,7 +262,10 @@ class Annotater:
 
             vcfDf = pd.read_csv(vcfAnnos, sep='\t')
             headers = vcfDf.columns
-            mergedAnnosDf = pd.concat([pd.read_csv(ensemblAnnos, sep='\t', header=4, names=headers), vcfDf], ignore_index=True)
+            if self.ensemblDf.shape[0] > 0:
+                mergedAnnosDf = pd.concat([pd.read_csv(ensemblAnnos, sep='\t', header=4, names=headers), vcfDf], ignore_index=True)
+            else:
+                mergedAnnosDf = vcfDf
             infoColumns = mergedAnnosDf['info'].str.split("|").tolist()
             infoColumnsDf = pd.DataFrame(infoColumns, columns=infoColumnsHeaders)
             mergedAnnosDf.join(infoColumnsDf).to_csv(mergedAnnos, sep='\t', index=False)
