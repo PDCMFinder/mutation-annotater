@@ -113,7 +113,7 @@ class Annotater:
         #logging.info("Writing {0} to VCF".format(self.fileName))
         self.generate_ensembl_file(reader)
         self.generate_vcf_file(reader)
-        message = "Annotations: {0} has {1} data points)".format(self.mutTarget, (reader.shape[0]))
+        message = "Annotations: {0} has {1} data points)".format(self.fileName, (reader.shape[0]))
         logging.info(message)
 
     def isRowValidForProcessing(self, df):
