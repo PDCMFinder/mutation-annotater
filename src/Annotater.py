@@ -56,7 +56,7 @@ class Annotater:
             os.remove(self.hgvsFilePath)
         elif self.run_type == 'vcf':
             files = [self.vcfFilePath+'_'+str(chr)+'.vcf' for chr in self.chromosomes]
-            with ThreadPoolExecutor(max_workers=cpu_count()*2) as executor:
+            with ThreadPoolExecutor(max_workers=cpu_count()*len(files)) as executor:
                 executor.map(self.annotateFile, files, ['vcf']*len(files))
             self.mergeVCFAnnos()
             #self.annotateFile(self.vcfFilePath, "vcf")
@@ -182,7 +182,7 @@ class Annotater:
         mutationAnnotator = dataPath +":"+ dataPath +","+ mutationAnnotator + ":" + mutationAnnotator + ":rw"
         vepWarningFile = vepIn + ".vepWarnings"
         vepOut = vepIn + ".ANN"
-        threads = cpu_count()
+        threads = cpu_count()*4
 
         vepCMD = """vep {0} --format {1} --fork={2} --warning_file {3} --cache --dir_cache {4} --fasta {5} -i {6} -o {7} 2>> {8}.log""" \
             .format(vepArguments, format, threads, vepWarningFile, alleleDB, fastaDir, vepIn, vepOut, join(self.parentDirectoryPath, 'annotations/annotater'))
