@@ -84,7 +84,7 @@ class AnnotationMerger:
         return row
 
     def logBeginningOfMerge(self):
-        message = ("{2}: Merging original data: {0} and annotated data: {1}".format(self.tsvFileName, self.annotationFilePath,
+        message = ("{2}: Merging: {0} with annotated data: {1}".format(self.tsvFileName, self.annotationFilePath,
                                                                     time.ctime()))
         logging.info(message)
 
@@ -111,7 +111,7 @@ class AnnotationMerger:
                    "data {1}, {2}".format(index, rows_without_match.at[index, 'sample_id'],
                                           rows_without_match.at[index, 'annotation_key']))
             logging.warning(message)
-        message3 = ("{0} The completed file file {1} has {2}"
+        message3 = ("{0} The completed file {1} has {2}"
                     " data points out of {3} attempted".format(time.ctime(), self.tsvFileName + ".ANN", annotated.shape[0],
                                                                mut_size))
         logging.info(message3)
