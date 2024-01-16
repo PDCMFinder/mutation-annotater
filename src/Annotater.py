@@ -55,12 +55,12 @@ class Annotater:
             self.process_hgvs_annotations()
             os.remove(self.hgvsFilePath)
         elif self.run_type == 'vcf':
-            files = [self.vcfFilePath+'_'+str(chr)+'.vcf' for chr in self.chromosomes]
-            with ThreadPoolExecutor(max_workers=cpu_count()*len(files)) as executor:
-                executor.map(self.annotateFile, files, ['vcf']*len(files))
-            self.mergeVCFAnnos()
-            #self.annotateFile(self.vcfFilePath, "vcf")
             self.annotateFile(self.ensemblFilePath, "ensembl")
+            files = [self.vcfFilePath+'_'+str(chr)+'.vcf' for chr in self.chromosomes]
+            with ThreadPoolExecutor(max_workers=min(len(files), 4)) as executor:
+                executor.map(self.annotateFile, files, ['vcf']*len(files))
+            logging.info('Merging individual ANN files to one')
+            self.mergeVCFAnnos()
             self.mergeResultAnnos(self.vcfFilePath, self.ensemblFilePath)
         #logging.info("Annotating is complete")
 
@@ -190,12 +190,12 @@ class Annotater:
             vepCMD = vepCMD + " --offline --merged " #Get Refseq and Ensembl lookup databases
         elif format == 'hgvs':
             vepCMD = vepCMD + " --refseq "
-        print(vepCMD)
+        #print(vepCMD)
 
         if not self.local:
             logging.info("{0}/{1}".format(singularityVepImage, vepCMD))
             returnSignal = sp.run(
-                "{0}/{1}".format(singularityVepImage, vepCMD), shell=True)
+                "{0}/{1}".format(singularityVepImage, vepCMD), shell=True, capture_output=False)
         else:
             logging.info("vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(mutationAnnotator, singularityVepImage, vepCMD))
             returnSignal = sp.call("cd ../vm-singularity && vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(mutationAnnotator, singularityVepImage, vepCMD), shell=True)
@@ -259,7 +259,7 @@ class Annotater:
             matchGroup = re.search("Format:(.+$)", vcfFile.readline())
             infoColumnsHeaders = matchGroup.group(1).split("|")
 
-            vcfDf = pd.read_csv(vcfAnnos, sep='\t', header=4)
+            vcfDf = pd.read_csv(vcfAnnos, sep='\t')
             headers = vcfDf.columns
             mergedAnnosDf = pd.concat([pd.read_csv(ensemblAnnos, sep='\t', header=4, names=headers), vcfDf], ignore_index=True)
             infoColumns = mergedAnnosDf['info'].str.split("|").tolist()
