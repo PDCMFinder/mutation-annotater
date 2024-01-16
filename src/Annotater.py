@@ -58,7 +58,7 @@ class Annotater:
             if self.ensemblDf.shape[0] > 0:
                 self.annotateFile(self.ensemblFilePath, "ensembl")
             files = [self.vcfFilePath+'_'+str(chr)+'.vcf' for chr in self.chromosomes]
-            with ThreadPoolExecutor(max_workers=len(files)+1) as executor:
+            with ThreadPoolExecutor(max_workers=min(len(files), 4)) as executor:
                 executor.map(self.annotateFile, files, ['vcf']*len(files))
             logging.info('Merging individual ANN files to one')
             self.mergeVCFAnnos()
@@ -183,7 +183,7 @@ class Annotater:
         mutationAnnotator = dataPath +":"+ dataPath +","+ mutationAnnotator + ":" + mutationAnnotator + ":rw"
         vepWarningFile = vepIn + ".vepWarnings"
         vepOut = vepIn + ".ANN"
-        threads = cpu_count()*4
+        threads = cpu_count()
 
         vepCMD = """vep {0} --format {1} --fork={2} --warning_file {3} --cache --dir_cache {4} --fasta {5} -i {6} -o {7} 2>> {8}.log""" \
             .format(vepArguments, format, threads, vepWarningFile, alleleDB, fastaDir, vepIn, vepOut, join(self.parentDirectoryPath, 'annotations/annotater'))
