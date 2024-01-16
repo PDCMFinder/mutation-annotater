@@ -57,12 +57,12 @@ class Annotater:
         elif self.run_type == 'vcf':
             if self.ensemblDf.shape[0] > 0:
                 self.annotateFile(self.ensemblFilePath, "ensembl")
-            self.mergeResultAnnos(self.vcfFilePath, self.ensemblFilePath)
             files = [self.vcfFilePath+'_'+str(chr)+'.vcf' for chr in self.chromosomes]
             with ThreadPoolExecutor(max_workers=min(len(files), 4)) as executor:
                 executor.map(self.annotateFile, files, ['vcf']*len(files))
             logging.info('Merging individual ANN files to one')
             self.mergeVCFAnnos()
+            self.mergeResultAnnos(self.vcfFilePath, self.ensemblFilePath)
         #logging.info("Annotating is complete")
 
 
