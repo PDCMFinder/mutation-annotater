@@ -73,7 +73,7 @@ if len(sys.argv) > 1:
                 #rmTarget = join(mut_path, 'merged')
                 #for rmf in rmfs:
                 #    remove_files(mutTarget + rmf)
-                end = round((time() - start)/60)
+                end = round((time.time() - start)/60)
                 logging.info("{0}: Annotations for {1} took {2} mins!".format(time.ctime(), provider, end))
             else:
                 logging.info("Please pass the absolute path of the file to annotate")
