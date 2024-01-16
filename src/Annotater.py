@@ -247,28 +247,27 @@ class Annotater:
             temp = pd.read_csv(f, sep='\t', header=4)
             #headers = temp.columns
             vcfDfANN = pd.concat([vcfDfANN, temp]).reset_index(drop=True)
-
+        with open(files[0], 'r') as vcfFile:
+            vcfFile.readline()
+            vcfFile.readline()
+            matchGroup = re.search("Format:(.+$)", vcfFile.readline())
+            self.infoColumnsHeaders = matchGroup.group(1).split("|")
         vcfDfANN.to_csv(self.vcfFilePath + ".ANN", sep='\t', index=False)
 
     def mergeResultAnnos(self, vcfPath, ensemblPath):
         vcfAnnos = vcfPath + ".ANN"
         ensemblAnnos = ensemblPath + ".ANN"
         mergedAnnos = self.annFilePath
-        with open(vcfAnnos, 'r') as vcfFile:
-            vcfFile.readline()
-            vcfFile.readline()
-            matchGroup = re.search("Format:(.+$)", vcfFile.readline())
-            infoColumnsHeaders = matchGroup.group(1).split("|")
 
-            vcfDf = pd.read_csv(vcfAnnos, sep='\t')
-            headers = vcfDf.columns
-            if self.ensemblDf.shape[0] > 0:
-                mergedAnnosDf = pd.concat([pd.read_csv(ensemblAnnos, sep='\t', header=4, names=headers), vcfDf], ignore_index=True)
-            else:
-                mergedAnnosDf = vcfDf
-            infoColumns = mergedAnnosDf['info'].str.split("|").tolist()
-            infoColumnsDf = pd.DataFrame(infoColumns, columns=infoColumnsHeaders)
-            mergedAnnosDf.join(infoColumnsDf).to_csv(mergedAnnos, sep='\t', index=False)
+        vcfDf = pd.read_csv(vcfAnnos, sep='\t')
+        headers = vcfDf.columns
+        if self.ensemblDf.shape[0] > 0:
+            mergedAnnosDf = pd.concat([pd.read_csv(ensemblAnnos, sep='\t', header=4, names=headers), vcfDf], ignore_index=True)
+        else:
+            mergedAnnosDf = vcfDf
+        infoColumns = mergedAnnosDf['info'].str.split("|").tolist()
+        infoColumnsDf = pd.DataFrame(infoColumns, columns=self.infoColumnsHeaders)
+        mergedAnnosDf.join(infoColumnsDf).to_csv(mergedAnnos, sep='\t', index=False)
 
 
 def cmdline_runner():
