@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import os
-import subprocess as sp
 import sys
 import logging
 import time
 from os.path import join, exists, isdir, isfile
 from Annotater import Annotater
 from AnnotationMerger import AnnotationMerger
+from shutil import rmtree
 
 def get_dirs(path):
     return [f for f in os.listdir(path) if isdir(join(path, f))]
@@ -28,7 +28,7 @@ def generate_mutTarget(path):
 def remove_files(path):
     if exists(path):
         os.remove(path)
-        logging.info("File removed: "+path)
+        logging.info("File removed: " + path)
     else:
         logging.info("File does not exist: " + path)
 
@@ -69,9 +69,10 @@ if len(sys.argv) > 1:
                     else:
                         logging.info("Not a file: " + mutTarget)
                 rmfs = ['.vcf', '.vcf.ANN', '.ensembl', '.ensembl.ANN', '.ensembl.vepWarnings', '.ANN']
-                rmTarget = join(mut_path, 'merged')
-                for rmf in rmfs:
-                    remove_files(mutTarget + rmf)
+                rmtree(join(mut_path, 'annotations'))
+                #rmTarget = join(mut_path, 'merged')
+                #for rmf in rmfs:
+                #    remove_files(mutTarget + rmf)
                 end = round((time() - start)/60)
                 logging.info("{0}: Annotations for {1} took {2} mins!".format(time.ctime(), provider, end))
             else:

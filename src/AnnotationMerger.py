@@ -17,7 +17,7 @@ class AnnotationMerger:
 
     def __init__(self, mutTarget, run_type, local):
         self.parentDirectory = os.path.dirname(mutTarget)
-        self.annotationFilePath = "{}.ANN".format(os.path.join(self.parentDirectory, 'mut/merged'))
+        self.annotationFilePath = "{}.ANN".format(os.path.join(self.parentDirectory, 'mut/annotations/merged'))
         self.provider = os.path.dirname(self.parentDirectory)
         self.Updog = os.path.dirname(self.provider)
         self.run_type = run_type
@@ -35,7 +35,7 @@ class AnnotationMerger:
         start = time.time()
         #logging.info("{0}: Reading Annotation file!".format(time.ctime()))
         #print("{0}: Reading Annotation file!".format(time.ctime()))
-        self.annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t', low_memory=False, nrows=5000)
+        self.annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t', low_memory=False)
         start = time.time() - start
         #logging.info("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
         print("{0}: Annotation file read in {1}s!".format(time.ctime(), start))

@@ -4,6 +4,7 @@ import glob
 import os
 import csv
 import subprocess as sp
+from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import cpu_count
 import sys
 import re
@@ -26,10 +27,13 @@ class Annotater:
             target = os.path.dirname(self.mutTarget)
         else:
             target = mutTarget
-        self.hgvsFilePath = os.path.join(target, 'merged.hgvs')
-        self.vcfFilePath = os.path.join(target, 'merged.vcf')
-        self.ensemblFilePath = os.path.join(target, 'merged.ensembl')
-        self.annFilePath = os.path.join(target, 'merged.ANN')
+        target = join(target, 'annotations')
+        if not os.path.exists(target):
+            os.makedirs(target)
+        self.hgvsFilePath = join(target, 'merged.hgvs')
+        self.vcfFilePath = join(target, 'merged.vcf')
+        self.ensemblFilePath = join(target, 'merged.ensembl')
+        self.annFilePath = join(target, 'merged.ANN')
         self.vcfDf = pd.DataFrame(columns=vcf_cols)
         self.ensemblDf = pd.DataFrame(columns=ensembl_cols)
 
@@ -51,7 +55,11 @@ class Annotater:
             self.process_hgvs_annotations()
             os.remove(self.hgvsFilePath)
         elif self.run_type == 'vcf':
-            self.annotateFile(self.vcfFilePath, "vcf")
+            files = [self.vcfFilePath+'_'+str(chr)+'.vcf' for chr in self.chromosomes]
+            with ThreadPoolExecutor(max_workers=cpu_count()*4) as executor:
+                executor.map(self.annotateFile, files, ['vcf']*4)
+            self.mergeVCFAnnos()
+            #self.annotateFile(self.vcfFilePath, "vcf")
             self.annotateFile(self.ensemblFilePath, "ensembl")
             self.mergeResultAnnos(self.vcfFilePath, self.ensemblFilePath)
         #logging.info("Annotating is complete")
@@ -92,10 +100,7 @@ class Annotater:
 
     def process_VCForEnsembl(self):
         self.formatToVcfOrEnsemblAndSave()
-        #self.processFiles()
-        #self.annotateFile(self.vcfFilePath, "vcf")
-        #self.annotateFile(self.ensemblFilePath, "ensembl")
-        #self.mergeResultAnnos(self.vcfFilePath, self.ensemblFilePath)
+
 
     def formatToVcfOrEnsemblAndSave(self):
         reader = pd.read_csv(self.mutTarget, sep='\t', dtype=str, engine='python')
@@ -122,32 +127,14 @@ class Annotater:
         return df
 
     def processFiles(self):
-        #logging.info("removing duplicates in VCF/Ensembl files")
         self.vcfDf = sort_vcf_ensembl_df(self.vcfDf)
         self.ensemblDf = sort_vcf_ensembl_df(self.ensemblDf)
-
-        self.vcfDf.to_csv(self.vcfFilePath, sep='\t', index=False)
+        self.chromosomes = sorted(list(self.vcfDf['#chrom'].unique()))
+        for chr in self.chromosomes:
+            temp = self.vcfDf[self.vcfDf['#chrom'] == chr]
+            temp.to_csv(self.vcfFilePath+'_'+str(chr)+'.vcf', sep='\t', index=False)
         self.ensemblDf.to_csv(self.ensemblFilePath, sep='\t', index=False)
-        #self.sortInPlace(self.vcfFilePath)
-        #self.sortInPlace(self.ensemblFilePath)
 
-    def sortInPlace(self, df):
-        secondKey = sorted(df, key=lambda x: self.sortLocation(x[1]))
-        sortedFile = sorted(secondKey, key=lambda x: self.sortChromo(x[0]))
-        return sortedFile
-    def sortChromo(self, x):
-        decMatch = "^[0-9]{1,2}$"
-        isDec = re.match(decMatch, x)
-        if isDec:
-            return int(x)
-        elif len(x) == 1:
-            return ord(x)
-        return 0
-
-    def sortLocation(self, x):
-        firstTenD = "^[0-9]{1,10}"
-        loc = re.search(firstTenD, x)
-        return int(loc.group(0)) if x != 'pos' and loc != None else 0
     def dropDuplicates(self, vcfFilePath):
         vcfDf = pd.read_csv(vcfFilePath, sep='\t', keep_default_na=False, na_values=[''], dtype=str)
         vcfDf.drop_duplicates(inplace=True)
@@ -195,23 +182,26 @@ class Annotater:
         mutationAnnotator = dataPath +":"+ dataPath +","+ mutationAnnotator + ":" + mutationAnnotator + ":rw"
         vepWarningFile = vepIn + ".vepWarnings"
         vepOut = vepIn + ".ANN"
-        threads = cpu_count() * 4
+        threads = cpu_count()
+
         vepCMD = """vep {0} --format {1} --fork={2} --warning_file {3} --cache --dir_cache {4} --fasta {5} -i {6} -o {7} 2>> {8}.log""" \
-            .format(vepArguments, format, threads, vepWarningFile, alleleDB, fastaDir, vepIn, vepOut, join(self.parentDirectoryPath, 'annotater'))
+            .format(vepArguments, format, threads, vepWarningFile, alleleDB, fastaDir, vepIn, vepOut, join(self.parentDirectoryPath, 'annotations/annotater'))
         if format != 'hgvs':
             vepCMD = vepCMD + " --offline --merged " #Get Refseq and Ensembl lookup databases
         elif format == 'hgvs':
             vepCMD = vepCMD + " --refseq "
         print(vepCMD)
+
         if not self.local:
             logging.info("{0}/{1}".format(singularityVepImage, vepCMD))
-            returnSignal = sp.call(
+            returnSignal = sp.run(
                 "{0}/{1}".format(singularityVepImage, vepCMD), shell=True)
         else:
             logging.info("vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(mutationAnnotator, singularityVepImage, vepCMD))
             returnSignal = sp.call("cd ../vm-singularity && vagrant ssh -c 'singularity exec -B {0} {1} {2}'".format(mutationAnnotator, singularityVepImage, vepCMD), shell=True)
         if (returnSignal != 0):
             raise Exception("Vep returned a non-zero exit code {}".format(returnSignal))
+
 
     def getVepConfigurations(self):
         with open(self.configDir, 'r') as config:
@@ -249,6 +239,16 @@ class Annotater:
 
         return fastaDir, alleleDB, singularityVepImage, vepArguments, mutationAnnotator, dataPath
 
+    def mergeVCFAnnos(self):
+        files = [self.vcfFilePath + '_' + str(chr) + '.vcf' for chr in self.chromosomes]
+        vcfDfANN = pd.DataFrame()
+        for f in files:
+            temp = pd.read_csv(f, sep='\t', header=4)
+            #headers = temp.columns
+            vcfDfANN = pd.concat([vcfDfANN, temp]).reset_index(drop=True)
+
+        vcfDfANN.to_csv(self.vcfFilePath + ".ANN", sep='\t', index=False)
+
     def mergeResultAnnos(self, vcfPath, ensemblPath):
         vcfAnnos = vcfPath + ".ANN"
         ensemblAnnos = ensemblPath + ".ANN"
@@ -281,9 +281,9 @@ def cmdline_runner():
             annotate.processFiles()
             annotate.annotate()
         elif os.path.isdir(mutTarget):
-            globForTsv = os.path.join(mutTarget, "*tsv")
+            globForTsv = join(mutTarget, "*tsv")
             for mutFile in glob.iglob(globForTsv):
-                #mutfile_path = os.path.join(mutTarget, mutFile)
+                #mutfile_path = join(mutTarget, mutFile)
                 #print(mutfile_path)
                 annotate.run(mutFile)
             annotate.processFiles()
