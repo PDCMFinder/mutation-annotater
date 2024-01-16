@@ -34,7 +34,7 @@ class AnnotationMerger:
     def read_annotation_file(self):
         start = time.time()
         #logging.info("{0}: Reading Annotation file!".format(time.ctime()))
-        print("{0}: Reading Annotation file!".format(time.ctime()))
+        #print("{0}: Reading Annotation file!".format(time.ctime()))
         self.annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t', low_memory=False)
         start = time.time() - start
         #logging.info("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
@@ -91,7 +91,7 @@ class AnnotationMerger:
     def iterateThroughRowsAndMerge(self):#, reader, outFileWriter):
         start = time.time()
         #logging.info("{0}: Reading mutation file!".format(time.ctime()))
-        print("{0}: Reading mutation file!".format(time.ctime()))
+        #print("{0}: Reading mutation file!".format(time.ctime()))
         mut_raw, out_cols, mut_size = self.process_raw_data()
         #logging.info("{0}: mutation data processed!".format(time.ctime()))
         annotated = mut_raw.merge(self.annoReader, left_on='annotation_key',
@@ -103,7 +103,7 @@ class AnnotationMerger:
         annotated = annotated[annotated['_merge'] == 'both']
         annotated[out_cols].to_csv(self.outFilePath, sep='\t', index=False)
         #logging.info("{0}: Annotated file written to disk!".format(time.ctime()))
-        print("{0}: Annotated file written to disk!".format(time.ctime()))
+        #print("{0}: Annotated file written to disk!".format(time.ctime()))
         indices_to_drop = rows_without_match.index
         for index in indices_to_drop:
             message = ("Info: Row Dropped at index {0}: "
@@ -138,8 +138,9 @@ class AnnotationMerger:
         if self.run_type == 'hgvs':
             annotation_key = "{}:c.{}".format(row["ncbi_transcript_id"], row["coding_sequence_change"])
         else:
-            annotation_key = "{}_{}_{}_{}".format(self.formatChromo(row["chromosome"]),
-                                                  row["seq_start_position"], row["ref_allele"], row["alt_allele"])
+            annotation_key = "{}_{}_{}_{}".format(self.formatChromo(row["chromosome"].fillna('')),
+                                                  row["seq_start_position"].fillna(''), row["ref_allele"].fillna(''),
+                                                    row["alt_allele"].fillna(''))
         return annotation_key
 
     def formatChromo(self, givenChromo):

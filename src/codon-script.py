@@ -5,6 +5,7 @@ import os
 import subprocess as sp
 import sys
 import logging
+import time
 from os.path import join, exists, isdir, isfile
 from Annotater import Annotater
 from AnnotationMerger import AnnotationMerger
@@ -38,11 +39,12 @@ if len(sys.argv) > 1:
     log_location = sys.argv[4]
     local = local == "local"
     logging.basicConfig(filename='{}.log'.format(log_location), filemode='a+', level=logging.DEBUG)
-    logging.info("Starting annotations")
+    logging.info("{0}: Starting annotations", time.ctime())
     #skip_provider = ["BROD", "CCIA", "CHOP", "CMP", "CRL", "CSHL", "CUIMC", "Curie-BC", "Curie-LC", "GCCRI"]
     skip_provider = []
     if exists(target):
         for provider in sorted(get_dirs(target)):
+            start = time.time()
             provider_path = join(target, provider)
             mut_path = join(provider_path, 'mut')
             if exists(mut_path) and provider not in skip_provider:
@@ -70,5 +72,7 @@ if len(sys.argv) > 1:
                 rmTarget = join(mut_path, 'merged')
                 for rmf in rmfs:
                     remove_files(mutTarget + rmf)
+                end = round((time() - start)/60)
+                logging.info("{0}: Annotations for {1} took {2} mins!".format(time.ctime(), provider, end))
             else:
                 logging.info("Please pass the absolute path of the file to annotate")
