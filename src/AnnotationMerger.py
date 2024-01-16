@@ -53,7 +53,7 @@ class AnnotationMerger:
         print("{0}: Annotation file processed in {1}s!".format(time.ctime(), time.time()-start))
 
     def mergeRowsAndWrite(self):
-        self.logBeginningOfMerge()
+        #self.logBeginningOfMerge()
         self.iterateThroughRowsAndMerge()#tsvReader, outFileWriter)
 
     def generate_annotation_columns(self, row):
@@ -83,10 +83,10 @@ class AnnotationMerger:
         row['chromosome'] = row['#chrom'].replace('chr', '')
         return row
 
-    def logBeginningOfMerge(self):
-        message = ("{2}: Merging: {0} with annotated data: {1}".format(self.tsvFileName, self.annotationFilePath,
-                                                                    time.ctime()))
-        logging.info(message)
+    #def logBeginningOfMerge(self):
+        #message = ("{2}: Merging: {0} with annotated data: {1}".format(self.tsvFileName, self.annotationFilePath,
+        #                                                            time.ctime()))
+        #logging.info(message)
 
     def iterateThroughRowsAndMerge(self):#, reader, outFileWriter):
         start = time.time()

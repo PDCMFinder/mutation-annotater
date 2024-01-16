@@ -4,6 +4,7 @@ import glob
 import os
 import csv
 import subprocess as sp
+import time
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import cpu_count
 import sys
@@ -58,9 +59,9 @@ class Annotater:
             if self.ensemblDf.shape[0] > 0:
                 self.annotateFile(self.ensemblFilePath, "ensembl")
             files = [self.vcfFilePath+'_'+str(chr)+'.vcf' for chr in self.chromosomes]
-            with ThreadPoolExecutor(max_workers=min(len(files), 4)) as executor:
+            with ThreadPoolExecutor(max_workers=min(len(files), 8)) as executor:
                 executor.map(self.annotateFile, files, ['vcf']*len(files))
-            logging.info('Merging individual ANN files to one')
+            logging.info('{0}: Merging individual ANN files to one'.format(time.ctime()))
             self.mergeVCFAnnos()
             self.mergeResultAnnos(self.vcfFilePath, self.ensemblFilePath)
         #logging.info("Annotating is complete")
@@ -101,7 +102,6 @@ class Annotater:
 
     def process_VCForEnsembl(self):
         self.formatToVcfOrEnsemblAndSave()
-
 
     def formatToVcfOrEnsemblAndSave(self):
         reader = pd.read_csv(self.mutTarget, sep='\t', dtype=str, engine='python')
@@ -194,7 +194,8 @@ class Annotater:
         #print(vepCMD)
 
         if not self.local:
-            logging.info("{0}/{1}".format(singularityVepImage, vepCMD))
+            if vepIn.__contains__('_chr1'):
+                logging.info("{0}/{1}".format(singularityVepImage, vepCMD))
             returnSignal = sp.run(
                 "{0}/{1}".format(singularityVepImage, vepCMD), shell=True)
         else:
