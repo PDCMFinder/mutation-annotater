@@ -49,19 +49,19 @@ if len(sys.argv) > 1:
             mut_path = join(provider_path, 'mut')
             if exists(mut_path) and provider not in skip_provider:
                 files = generate_mutTarget(mut_path)
-                annotate = Annotater(mut_path, run_type, local)
+                annotater = Annotater(mut_path, run_type, local)
                 for mutTarget in files:
                     if os.path.isfile(mutTarget):
                         #logging.info("Annotating file: " + mutTarget)
-                        annotate.run(mutTarget)
-                annotate.processFiles()
-                annotate.annotate()
-                merger = AnnotationMerger(mut_path, run_type, local)
+                        annotater.run(mutTarget)
+                annotater.processFiles()
+                annotater.annotate()
+                annotater = AnnotationMerger(mut_path, run_type, local)
                 for mutTarget in files:
                     if os.path.isfile(mutTarget):
                         #logging.info("Starting merge of annotations")
                         #AnnotationMerger(mutTarget, run_type, local).run()
-                        merger.run(mutTarget)
+                        annotater.run(mutTarget)
                         #logging.info("Annotations complete")
                         #logging.info(sp.call("tail -n 2 "+mutTarget+".log"))
                         os.remove(mutTarget)
