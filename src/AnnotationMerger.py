@@ -35,7 +35,7 @@ class AnnotationMerger:
         start = time.time()
         #logging.info("{0}: Reading Annotation file!".format(time.ctime()))
         #print("{0}: Reading Annotation file!".format(time.ctime()))
-        self.annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t', low_memory=False)
+        self.annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t', low_memory=False, nrows=5000)
         start = time.time() - start
         #logging.info("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
         print("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
@@ -128,6 +128,7 @@ class AnnotationMerger:
                         .format(index, chromosome, pos))
             logging.warning(message2)
         mut_raw = mut_raw.dropna(subset=['chromosome', 'seq_start_position'])
+        mut_raw['chromosome'] = mut_raw['chromosome'].astype(str)
         mut_raw['annotation_key'] = mut_raw.fillna('').apply(self.createAnnotationKey, axis=1)
         mut_raw['chromosome'] = mut_raw['chromosome'].str.replace('chr', '')
         annotations = ['sample_id', 'annotation_key', 'platform_id', 'ucsc_gene_id', 'read_depth', 'allele_frequency',
@@ -146,7 +147,7 @@ class AnnotationMerger:
     def formatChromo(self, givenChromo):
         formattedChromo = givenChromo
         incorrectChrFormat = "(?i)^([0-9]{1,2}|[xym]{1}|mt|un)$"
-        isMatch = re.match(incorrectChrFormat, givenChromo)
+        isMatch = re.match(incorrectChrFormat, str(givenChromo))
         if isMatch:
             formattedChromo = "chr" + isMatch.group(1)
         return formattedChromo

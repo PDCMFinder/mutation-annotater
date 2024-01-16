@@ -39,7 +39,7 @@ if len(sys.argv) > 1:
     log_location = sys.argv[4]
     local = local == "local"
     logging.basicConfig(filename='{}.log'.format(log_location), filemode='a+', level=logging.DEBUG)
-    logging.info("{0}: Starting annotations", time.ctime())
+    logging.info("{0}: Starting annotations".format(time.ctime()))
     #skip_provider = ["BROD", "CCIA", "CHOP", "CMP", "CRL", "CSHL", "CUIMC", "Curie-BC", "Curie-LC", "GCCRI"]
     skip_provider = []
     if exists(target):
@@ -50,12 +50,12 @@ if len(sys.argv) > 1:
             if exists(mut_path) and provider not in skip_provider:
                 files = generate_mutTarget(mut_path)
                 annotate = Annotater(mut_path, run_type, local)
-                for mutTarget in files:
-                    if os.path.isfile(mutTarget):
+                #for mutTarget in files:
+                    #if os.path.isfile(mutTarget):
                         #logging.info("Annotating file: " + mutTarget)
-                        annotate.run(mutTarget)
-                annotate.processFiles()
-                annotate.annotate()
+                        #annotate.run(mutTarget)
+                #annotate.processFiles()
+                #annotate.annotate()
                 merger = AnnotationMerger(mut_path, run_type, local)
                 for mutTarget in files:
                     if os.path.isfile(mutTarget):
