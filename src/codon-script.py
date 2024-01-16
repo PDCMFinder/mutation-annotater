@@ -50,12 +50,12 @@ if len(sys.argv) > 1:
             if exists(mut_path) and provider not in skip_provider:
                 files = generate_mutTarget(mut_path)
                 annotate = Annotater(mut_path, run_type, local)
-                #for mutTarget in files:
-                    #if os.path.isfile(mutTarget):
+                for mutTarget in files:
+                    if os.path.isfile(mutTarget):
                         #logging.info("Annotating file: " + mutTarget)
-                        #annotate.run(mutTarget)
-                #annotate.processFiles()
-                #annotate.annotate()
+                        annotate.run(mutTarget)
+                annotate.processFiles()
+                annotate.annotate()
                 merger = AnnotationMerger(mut_path, run_type, local)
                 for mutTarget in files:
                     if os.path.isfile(mutTarget):
