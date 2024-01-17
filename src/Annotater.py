@@ -60,7 +60,7 @@ class Annotater:
             if self.ensemblDf.shape[0] > 0:
                 self.annotateFile(self.ensemblFilePath, "ensembl")
             files = [self.vcfFilePath+'_'+str(chr)+'.vcf' for chr in self.chromosomes]
-            with ThreadPoolExecutor(max_workers=min(len(files), 8)) as executor:
+            with ThreadPoolExecutor(max_workers=min(len(files), 4)) as executor:
                 executor.map(self.annotateFile, files, ['vcf']*len(files))
             logging.info('{0}: Merging individual ANN files to one'.format(time.ctime()))
             self.mergeVCFAnnos()
@@ -99,6 +99,7 @@ class Annotater:
                 if row['ncbi_transcript_id'] != '' and row['coding_sequence_change'] != '':
                     out_row = row['ncbi_transcript_id']+':c.'+row['coding_sequence_change'] +'\n'
                     hgvsFile.write(out_row)
+            message = "Annotater: {0} has {1} data points (including header)".format(self.fileName, (index + 1))
             message = "Annotater: {0} has {1} data points (including header)".format(self.fileName, (index + 1))
             logging.info(message)
 
@@ -185,7 +186,7 @@ class Annotater:
         mutationAnnotator = dataPath +":"+ dataPath +","+ mutationAnnotator + ":" + mutationAnnotator + ":rw"
         vepWarningFile = vepIn + ".vepWarnings"
         vepOut = vepIn + ".ANN"
-        threads = cpu_count()
+        threads = cpu_count()*4
 
         vepCMD = """vep {0} --format {1} --fork={2} --warning_file {3} --cache --dir_cache {4} --fasta {5} -i {6} -o {7} 2>> {8}.log""" \
             .format(vepArguments, format, threads, vepWarningFile, alleleDB, fastaDir, vepIn, vepOut, join(self.parentDirectoryPath, 'annotations/annotater'))
@@ -197,7 +198,7 @@ class Annotater:
 
         if not self.local:
             if vepIn.__contains__('_chr1'):
-                logging.info("{2}: {0}/{1}".format(singularityVepImage, vepCMD, time.ctime(c)))
+                logging.info("{2}: {0}/{1}".format(singularityVepImage, vepCMD, time.ctime()))
             returnSignal = sp.run(
                 "{0}/{1}".format(singularityVepImage, vepCMD), shell=True)
         else:
