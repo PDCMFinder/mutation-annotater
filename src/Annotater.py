@@ -100,7 +100,6 @@ class Annotater:
                 if row['ncbi_transcript_id'] != '' and row['coding_sequence_change'] != '':
                     out_row = row['ncbi_transcript_id']+':c.'+row['coding_sequence_change'] +'\n'
                     hgvsFile.write(out_row)
-
             message = "Annotater: {0} has {1} data points (including header)".format(self.fileName, (index + 1))
             logging.info(message)
 
@@ -117,7 +116,7 @@ class Annotater:
         #logging.info("Writing {0} to VCF".format(self.fileName))
         self.generate_ensembl_file(reader)
         self.generate_vcf_file(reader)
-        message = "{2}: Annotations: {0} has {1} data points".format(self.fileName, (reader.shape[0]), time.ctime())
+        message = "{2}: {0} has {1} data points".format(self.fileName, (reader.shape[0]), time.ctime())
         logging.info(message)
 
     def isRowValidForProcessing(self, df):

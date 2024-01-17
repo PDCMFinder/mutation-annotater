@@ -55,11 +55,11 @@ if len(sys.argv) > 1:
                         #logging.info("Annotating file: " + mutTarget)
                         annotater.run(mutTarget)
                 annotater.processFiles()
-                mid = round((time.time() - start) / 60)
-                logging.info("{0}: Create VEP input for {1} took {2} mins!".format(time.ctime(), provider, mid))
+                mid = time.time() - start
+                logging.info("{0}: Create VEP input for {1} took {2} mins!".format(time.ctime(), provider, round(mid/60)))
                 annotater.annotate()
-                mid = round((time.time()/60) - mid)
-                logging.info("{0}: Annotations for {1} took {2} mins!".format(time.ctime(), provider, mid))
+                mid = time.time() - mid
+                logging.info("{0}: Annotations for {1} took {2} mins!".format(time.ctime(), provider, round(mid/60)))
                 annotater = AnnotationMerger(mut_path, run_type, local)
                 for mutTarget in files:
                     if os.path.isfile(mutTarget):
@@ -68,8 +68,8 @@ if len(sys.argv) > 1:
                         os.rename(mutTarget + '.hmz', mutTarget)
                     else:
                         logging.info("Not a file: " + mutTarget)
-                mid = round((time.time()/60) - mid)
-                logging.info("{0}: Merge of annotations for {1} took {2} mins!".format(time.ctime(), provider, mid))
+                mid = time.time() - mid
+                logging.info("{0}: Merge of annotations for {1} took {2} mins!".format(time.ctime(), provider, round(mid/60)))
                 rmfs = ['.vcf', '.vcf.ANN', '.ensembl', '.ensembl.ANN', '.ensembl.vepWarnings', '.ANN']
                 rmtree(join(mut_path, 'annotations'))
                 end = round((time.time() - start)/60)
