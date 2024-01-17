@@ -45,7 +45,7 @@ class Annotater:
         self.fileName = os.path.basename(self.mutTarget)
         self.parentDirectoryPath = os.path.dirname(self.mutTarget)
         logging.basicConfig(filename='{}.log'.format(join(self.parentDirectoryPath, 'annotater')), filemode='a+', level=logging.DEBUG)
-        logging.info("Starting merge of annotations using {0} CPUs".format(self.threads))
+        #logging.info("Starting merge of annotations using {0} CPUs".format(self.threads))
         if self.run_type == 'vcf':
             self.process_VCForEnsembl()
         elif self.run_type == 'hgvs':
@@ -100,7 +100,7 @@ class Annotater:
                 if row['ncbi_transcript_id'] != '' and row['coding_sequence_change'] != '':
                     out_row = row['ncbi_transcript_id']+':c.'+row['coding_sequence_change'] +'\n'
                     hgvsFile.write(out_row)
-            message = "Annotater: {0} has {1} data points (including header)".format(self.fileName, (index + 1))
+
             message = "Annotater: {0} has {1} data points (including header)".format(self.fileName, (index + 1))
             logging.info(message)
 
@@ -117,7 +117,7 @@ class Annotater:
         #logging.info("Writing {0} to VCF".format(self.fileName))
         self.generate_ensembl_file(reader)
         self.generate_vcf_file(reader)
-        message = "Annotations: {0} has {1} data points".format(self.fileName, (reader.shape[0]))
+        message = "{2}: Annotations: {0} has {1} data points".format(self.fileName, (reader.shape[0]), time.ctime())
         logging.info(message)
 
     def isRowValidForProcessing(self, df):
