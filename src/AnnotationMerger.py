@@ -33,13 +33,7 @@ class AnnotationMerger:
 
     def read_annotation_file(self):
         start = time.time()
-        #logging.info("{0}: Reading Annotation file!".format(time.ctime()))
-        #print("{0}: Reading Annotation file!".format(time.ctime()))
         self.annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t', low_memory=False)
-        start = time.time() - start
-        #logging.info("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
-        print("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
-        start = time.time()
         self.annoReader.columns = self.annoReader.columns.str.lower()
         self.annoReader = self.annoReader.apply(lambda x: self.generate_annotation_columns(x), axis=1)
         mapper = {'codons': 'codon_change', 'pos': 'seq_start_position', 'ref': 'ref_allele',
@@ -51,14 +45,8 @@ class AnnotationMerger:
                 'ensembl_transcript_id', "variation_id"]
         self.annoReader = self.annoReader[cols]
         logging.info("{0}: Annotation file processed in {1}s!".format(time.ctime(), time.time()-start))
-        print("{0}: Annotation file processed in {1}s!".format(time.ctime(), time.time()-start))
 
     def mergeRowsAndWrite(self):
-        #self.logBeginningOfMerge()
-        # message = ("{2}: Merging: {0} with annotated data: {1}".format(self.tsvFileName, self.annotationFilePath,
-        #                                                            time.ctime()))
-        # logging.info(message)
-
         self.iterateThroughRowsAndMerge()#tsvReader, outFileWriter)
 
     def generate_annotation_columns(self, row):
@@ -88,27 +76,13 @@ class AnnotationMerger:
         row['chromosome'] = row['#chrom'].replace('chr', '')
         return row
 
-    #def logBeginningOfMerge(self):
-        #message = ("{2}: Merging: {0} with annotated data: {1}".format(self.tsvFileName, self.annotationFilePath,
-        #                                                            time.ctime()))
-        #logging.info(message)
-
     def iterateThroughRowsAndMerge(self):#, reader, outFileWriter):
-        start = time.time()
-        #logging.info("{0}: Reading mutation file!".format(time.ctime()))
-        #print("{0}: Reading mutation file!".format(time.ctime()))
         mut_raw, out_cols, mut_size = self.process_raw_data()
-        #logging.info("{0}: mutation data processed!".format(time.ctime()))
         annotated = mut_raw.merge(self.annoReader, left_on='annotation_key',
                                                right_on='id', how='left', indicator=True)
-        #logging.info("{0}: Mutation file annotated in {1}s!".format(time.ctime(), time.time()-start))
-        print("{0}: Mutation file annotated in {1}s!".format(time.ctime(), time.time()-start))
-
         rows_without_match = annotated[annotated['_merge'] == 'left_only']
         annotated = annotated[annotated['_merge'] == 'both']
         annotated[out_cols].to_csv(self.outFilePath, sep='\t', index=False)
-        #logging.info("{0}: Annotated file written to disk!".format(time.ctime()))
-        #print("{0}: Annotated file written to disk!".format(time.ctime()))
         indices_to_drop = rows_without_match.index
         for index in indices_to_drop:
             message = ("Info: Row Dropped at index {0}: "

@@ -45,14 +45,12 @@ class Annotater:
         self.fileName = os.path.basename(self.mutTarget)
         self.parentDirectoryPath = os.path.dirname(self.mutTarget)
         logging.basicConfig(filename='{}.log'.format(join(self.parentDirectoryPath, 'annotater')), filemode='a+', level=logging.DEBUG)
-        #logging.info("Starting merge of annotations using {0} CPUs".format(self.threads))
         if self.run_type == 'vcf':
             self.process_VCForEnsembl()
         elif self.run_type == 'hgvs':
             self.process_hgvs()
 
     def annotate(self):
-        start = time.time()
         if self.run_type == 'hgvs':
             self.annotateFile(self.hgvsFilePath, 'hgvs')
             self.process_hgvs_annotations()
@@ -66,8 +64,6 @@ class Annotater:
             logging.info('{0}: Merging individual ANN files to one'.format(time.ctime()))
             self.mergeVCFAnnos()
             self.mergeResultAnnos(self.vcfFilePath, self.ensemblFilePath)
-        end = round((time.time() - start)/60)
-        #logging.info("Annotating is complete")
 
 
     def process_hgvs(self):
@@ -94,7 +90,6 @@ class Annotater:
     def formatHGVSFiles(self):
         with open(self.hgvsFilePath, 'w') as hgvsFile:
             reader = pd.read_csv(self.mutTarget, sep='\t', dtype=str, engine='python').fillna('')
-            #logging.info('Writing {0} to HGVS'. format(self.fileName))
             hgvsFile.write('#HGVSIdentifier\n')
             for index, row in reader.iterrows():
                 if row['ncbi_transcript_id'] != '' and row['coding_sequence_change'] != '':
@@ -113,11 +108,8 @@ class Annotater:
         reader['id'] = reader.apply(
             lambda x: "{}_{}_{}_{}".format(self.formatChromo(x["chromosome"]), x["seq_start_position"],
                                            x["ref_allele"], x["alt_allele"]), axis=1)
-        #logging.info("Writing {0} to VCF".format(self.fileName))
         self.generate_ensembl_file(reader)
         self.generate_vcf_file(reader)
-        #message = "{2}: {0} has {1} data points".format(self.fileName, (reader.shape[0]), time.ctime())
-        #logging.info(message)
 
     def isRowValidForProcessing(self, df):
         indices_before = df.index
@@ -154,7 +146,6 @@ class Annotater:
             temp['qual'] = ''
             temp['filter'] = ''
             temp['info'] = ''
-            #temp['strand'] = ['1' if r == "" else str(int(r)) for r in temp['strand']]
             cols = ["#chrom", "pos", "id", "ref", "alt", "qual", "filter", "info"]
             self.vcfDf = pd.concat([self.vcfDf, temp[cols]])
             self.vcfDf = self.vcfDf.drop_duplicates().reset_index(drop=True)
@@ -181,7 +172,6 @@ class Annotater:
         return formattedChromo
 
     def annotateFile(self, vepIn, format):
-        #logging.info("{1}: VEP annotation: {0}".format(os.path.basename(vepIn), time.ctime()))
         fastaDir, alleleDB, singularityVepImage, vepArgumentsList, mutationAnnotator, dataPath = self.getVepConfigurations()
         vepArguments = " ".join(vepArgumentsList)
         mutationAnnotator = dataPath +":"+ dataPath +","+ mutationAnnotator + ":" + mutationAnnotator + ":rw"
@@ -195,8 +185,6 @@ class Annotater:
             vepCMD = vepCMD + " --offline --merged " #Get Refseq and Ensembl lookup databases
         elif format == 'hgvs':
             vepCMD = vepCMD + " --refseq "
-        #print(vepCMD)
-
         if not self.local:
             returnSignal = sp.run(
                 "{0}/{1}".format(singularityVepImage, vepCMD), shell=True)
@@ -220,7 +208,7 @@ class Annotater:
                     vepPath = configDirs.get("vepPath")
                     singularityVepImage = vepPath
                 except:
-                    print("VEP not found on CODON!")
+                    logging.info("VEP not found on CODON!")
             else:
                 mutationAnnotator = configDirs.get("mutationAnnotator")
                 dataPath = configDirs.get("dataPath")
@@ -248,7 +236,6 @@ class Annotater:
         vcfDfANN = pd.DataFrame()
         for f in files:
             temp = pd.read_csv(f, sep='\t', header=4)
-            #headers = temp.columns
             vcfDfANN = pd.concat([vcfDfANN, temp]).reset_index(drop=True)
         with open(files[0], 'r') as vcfFile:
             vcfFile.readline()
@@ -289,8 +276,6 @@ def cmdline_runner():
         elif os.path.isdir(mutTarget):
             globForTsv = join(mutTarget, "*tsv")
             for mutFile in glob.iglob(globForTsv):
-                #mutfile_path = join(mutTarget, mutFile)
-                #print(mutfile_path)
                 annotate.run(mutFile)
             annotate.processFiles()
             annotate.annotate()
@@ -305,5 +290,3 @@ def sort_vcf_ensembl_df(df):
                                               categories=['chr' + str(i) for i in range(1, 23)] + ['chrX', 'chrY'])
     df = df.sort_values(by=['chromosome', 'pos']).reset_index(drop=True)
     return df[cols]
-
-#cmdline_runner()
