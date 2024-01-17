@@ -45,7 +45,7 @@ class Annotater:
         self.fileName = os.path.basename(self.mutTarget)
         self.parentDirectoryPath = os.path.dirname(self.mutTarget)
         logging.basicConfig(filename='{}.log'.format(join(self.parentDirectoryPath, 'annotater')), filemode='a+', level=logging.DEBUG)
-        logging.info("Starting merge of annotations using {0}".format(self.threads))
+        logging.info("Starting merge of annotations using {0} CPUs".format(self.threads))
         if self.run_type == 'vcf':
             self.process_VCForEnsembl()
         elif self.run_type == 'hgvs':
@@ -61,7 +61,6 @@ class Annotater:
             if self.ensemblDf.shape[0] > 0:
                 self.annotateFile(self.ensemblFilePath, "ensembl")
             files = [self.vcfFilePath+'_'+str(chr)+'.vcf' for chr in self.chromosomes]
-            logging.info('Starting annotation using {0}'.format(self.threads))
             with ThreadPoolExecutor(max_workers=self.threads) as executor:
                 executor.map(self.annotateFile, files, ['vcf']*len(files))
             logging.info('{0}: Merging individual ANN files to one'.format(time.ctime()))
@@ -183,7 +182,7 @@ class Annotater:
         return formattedChromo
 
     def annotateFile(self, vepIn, format):
-        logging.info("{1}: VEP annotation: {0}}".format(os.path.basename(vepIn), time.ctime()))
+        logging.info("{1}: VEP annotation: {0}".format(os.path.basename(vepIn), time.ctime()))
         fastaDir, alleleDB, singularityVepImage, vepArgumentsList, mutationAnnotator, dataPath = self.getVepConfigurations()
         vepArguments = " ".join(vepArgumentsList)
         mutationAnnotator = dataPath +":"+ dataPath +","+ mutationAnnotator + ":" + mutationAnnotator + ":rw"
