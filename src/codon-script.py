@@ -57,9 +57,11 @@ if len(sys.argv) > 1:
                 annotater.processFiles()
                 mid = time.time() - start
                 logging.info("{0}: Create VEP input for {1} took {2} mins!".format(time.ctime(), provider, round(mid/60)))
+                mid = time.time()
                 annotater.annotate()
                 mid = time.time() - mid
                 logging.info("{0}: Annotations for {1} took {2} mins!".format(time.ctime(), provider, round(mid/60)))
+                mid = time.time()
                 annotater = AnnotationMerger(mut_path, run_type, local)
                 for mutTarget in files:
                     if os.path.isfile(mutTarget):
