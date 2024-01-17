@@ -21,6 +21,7 @@ class Annotater:
         self.configDir = configDir
         self.run_type = run_type
         self.local = local
+        self.threads = cpu_count()
         self.parentDirectoryPath = os.path.dirname(self.mutTarget)
         vcf_cols = ["#chrom", "pos", "id", "ref", "alt", "qual", "filter", "info"]
         ensembl_cols = ["#chrom", "pos", "end", "ref/alt", "strand", "id"]
@@ -44,7 +45,7 @@ class Annotater:
         self.fileName = os.path.basename(self.mutTarget)
         self.parentDirectoryPath = os.path.dirname(self.mutTarget)
         logging.basicConfig(filename='{}.log'.format(join(self.parentDirectoryPath, 'annotater')), filemode='a+', level=logging.DEBUG)
-        #logging.info("Starting merge of annotations")
+        logging.info("Starting merge of annotations using {0}".format(self.threads))
         if self.run_type == 'vcf':
             self.process_VCForEnsembl()
         elif self.run_type == 'hgvs':
@@ -60,7 +61,7 @@ class Annotater:
             if self.ensemblDf.shape[0] > 0:
                 self.annotateFile(self.ensemblFilePath, "ensembl")
             files = [self.vcfFilePath+'_'+str(chr)+'.vcf' for chr in self.chromosomes]
-            with ThreadPoolExecutor(max_workers=min(len(files), 4)) as executor:
+            with ThreadPoolExecutor(max_workers=min(len(files), self.threads)) as executor:
                 executor.map(self.annotateFile, files, ['vcf']*len(files))
             logging.info('{0}: Merging individual ANN files to one'.format(time.ctime()))
             self.mergeVCFAnnos()
@@ -116,7 +117,7 @@ class Annotater:
         #logging.info("Writing {0} to VCF".format(self.fileName))
         self.generate_ensembl_file(reader)
         self.generate_vcf_file(reader)
-        message = "Annotations: {0} has {1} data points)".format(self.fileName, (reader.shape[0]))
+        message = "Annotations: {0} has {1} data points".format(self.fileName, (reader.shape[0]))
         logging.info(message)
 
     def isRowValidForProcessing(self, df):
@@ -181,12 +182,13 @@ class Annotater:
         return formattedChromo
 
     def annotateFile(self, vepIn, format):
+        logging.info("{1}: VEP annotation: {0}}".format(os.path.basename(vepIn), time.ctime()))
         fastaDir, alleleDB, singularityVepImage, vepArgumentsList, mutationAnnotator, dataPath = self.getVepConfigurations()
         vepArguments = " ".join(vepArgumentsList)
         mutationAnnotator = dataPath +":"+ dataPath +","+ mutationAnnotator + ":" + mutationAnnotator + ":rw"
         vepWarningFile = vepIn + ".vepWarnings"
         vepOut = vepIn + ".ANN"
-        threads = cpu_count()*4
+        threads = self.threads
 
         vepCMD = """vep {0} --format {1} --fork={2} --warning_file {3} --cache --dir_cache {4} --fasta {5} -i {6} -o {7} 2>> {8}.log""" \
             .format(vepArguments, format, threads, vepWarningFile, alleleDB, fastaDir, vepIn, vepOut, join(self.parentDirectoryPath, 'annotations/annotater'))
@@ -197,7 +199,6 @@ class Annotater:
         #print(vepCMD)
 
         if not self.local:
-            logging.info("{1}: VEP annotation: {0}}".format(os.path.basename(vepIn), time.ctime()))
             returnSignal = sp.run(
                 "{0}/{1}".format(singularityVepImage, vepCMD), shell=True)
         else:
