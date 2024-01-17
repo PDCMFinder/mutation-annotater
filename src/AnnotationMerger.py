@@ -33,12 +33,13 @@ class AnnotationMerger:
 
     def read_annotation_file(self):
         start = time.time()
-        logging.info("{0}: Reading Annotation file!".format(time.ctime()))
+        #logging.info("{0}: Reading Annotation file!".format(time.ctime()))
         #print("{0}: Reading Annotation file!".format(time.ctime()))
         self.annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t', low_memory=False)
         start = time.time() - start
-        logging.info("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
+        #logging.info("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
         print("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
+        start = time.time()
         self.annoReader.columns = self.annoReader.columns.str.lower()
         self.annoReader = self.annoReader.apply(lambda x: self.generate_annotation_columns(x), axis=1)
         mapper = {'codons': 'codon_change', 'pos': 'seq_start_position', 'ref': 'ref_allele',
@@ -115,7 +116,7 @@ class AnnotationMerger:
                    "data {1}, {2}".format(index, rows_without_match.at[index, 'sample_id'],
                                           rows_without_match.at[index, 'annotation_key']))
             logging.warning(message)
-        message3 = ("{0} The completed file {1} has {2}"
+        message3 = ("{0}: Annotated file {1} has {2}"
                     " data points out of {3} attempted".format(time.ctime(), self.tsvFileName + ".ANN", annotated.shape[0],
                                                                mut_size))
         logging.info(message3)

@@ -116,8 +116,8 @@ class Annotater:
         #logging.info("Writing {0} to VCF".format(self.fileName))
         self.generate_ensembl_file(reader)
         self.generate_vcf_file(reader)
-        message = "{2}: {0} has {1} data points".format(self.fileName, (reader.shape[0]), time.ctime())
-        logging.info(message)
+        #message = "{2}: {0} has {1} data points".format(self.fileName, (reader.shape[0]), time.ctime())
+        #logging.info(message)
 
     def isRowValidForProcessing(self, df):
         indices_before = df.index
@@ -181,7 +181,7 @@ class Annotater:
         return formattedChromo
 
     def annotateFile(self, vepIn, format):
-        logging.info("{1}: VEP annotation: {0}".format(os.path.basename(vepIn), time.ctime()))
+        #logging.info("{1}: VEP annotation: {0}".format(os.path.basename(vepIn), time.ctime()))
         fastaDir, alleleDB, singularityVepImage, vepArgumentsList, mutationAnnotator, dataPath = self.getVepConfigurations()
         vepArguments = " ".join(vepArgumentsList)
         mutationAnnotator = dataPath +":"+ dataPath +","+ mutationAnnotator + ":" + mutationAnnotator + ":rw"
