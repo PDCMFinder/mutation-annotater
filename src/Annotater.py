@@ -21,7 +21,7 @@ class Annotater:
         self.configDir = configDir
         self.run_type = run_type
         self.local = local
-        self.threads = cpu_count()
+        self.threads = int(cpu_count()/2)
         self.parentDirectoryPath = os.path.dirname(self.mutTarget)
         vcf_cols = ["#chrom", "pos", "id", "ref", "alt", "qual", "filter", "info"]
         ensembl_cols = ["#chrom", "pos", "end", "ref/alt", "strand", "id"]
@@ -61,7 +61,8 @@ class Annotater:
             if self.ensemblDf.shape[0] > 0:
                 self.annotateFile(self.ensemblFilePath, "ensembl")
             files = [self.vcfFilePath+'_'+str(chr)+'.vcf' for chr in self.chromosomes]
-            with ThreadPoolExecutor(max_workers=min(len(files), self.threads)) as executor:
+            logging.info('Starting annotation using {0}'.format(self.threads))
+            with ThreadPoolExecutor(max_workers=self.threads) as executor:
                 executor.map(self.annotateFile, files, ['vcf']*len(files))
             logging.info('{0}: Merging individual ANN files to one'.format(time.ctime()))
             self.mergeVCFAnnos()
