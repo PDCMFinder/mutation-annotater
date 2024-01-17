@@ -62,6 +62,7 @@ if len(sys.argv) > 1:
                 mid = time.time() - mid
                 logging.info("{0}: Annotations for {1} took {2} mins!".format(time.ctime(), provider, round(mid/60)))
                 mid = time.time()
+                logging.info("{0}: Starting annotation merge!".format(time.ctime()))
                 annotater = AnnotationMerger(mut_path, run_type, local)
                 for mutTarget in files:
                     if os.path.isfile(mutTarget):
@@ -75,6 +76,6 @@ if len(sys.argv) > 1:
                 rmfs = ['.vcf', '.vcf.ANN', '.ensembl', '.ensembl.ANN', '.ensembl.vepWarnings', '.ANN']
                 rmtree(join(mut_path, 'annotations'))
                 end = round((time.time() - start)/60)
-                logging.info("{0}: Annotations for {1} took {2} mins!".format(time.ctime(), provider, end))
+                logging.info("{0}: Total time for annotating {1} mutation data: {2} mins!".format(time.ctime(), provider, end))
             else:
                 logging.info("Please pass the absolute path of the file to annotate")

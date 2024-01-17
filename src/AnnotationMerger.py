@@ -33,11 +33,11 @@ class AnnotationMerger:
 
     def read_annotation_file(self):
         start = time.time()
-        #logging.info("{0}: Reading Annotation file!".format(time.ctime()))
+        logging.info("{0}: Reading Annotation file!".format(time.ctime()))
         #print("{0}: Reading Annotation file!".format(time.ctime()))
         self.annoReader = pd.read_csv(self.annotationFilePath, delimiter='\t', low_memory=False)
         start = time.time() - start
-        #logging.info("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
+        logging.info("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
         print("{0}: Annotation file read in {1}s!".format(time.ctime(), start))
         self.annoReader.columns = self.annoReader.columns.str.lower()
         self.annoReader = self.annoReader.apply(lambda x: self.generate_annotation_columns(x), axis=1)
@@ -49,11 +49,15 @@ class AnnotationMerger:
                 'ref_allele', 'alt_allele', "ncbi_gene_id", "ncbi_transcript_id", "ensembl_gene_id",
                 'ensembl_transcript_id', "variation_id"]
         self.annoReader = self.annoReader[cols]
-        #logging.info("{0}: Annotation file processed in {1}s!".format(time.ctime(), time.time()-start))
+        logging.info("{0}: Annotation file processed in {1}s!".format(time.ctime(), time.time()-start))
         print("{0}: Annotation file processed in {1}s!".format(time.ctime(), time.time()-start))
 
     def mergeRowsAndWrite(self):
         #self.logBeginningOfMerge()
+        # message = ("{2}: Merging: {0} with annotated data: {1}".format(self.tsvFileName, self.annotationFilePath,
+        #                                                            time.ctime()))
+        # logging.info(message)
+
         self.iterateThroughRowsAndMerge()#tsvReader, outFileWriter)
 
     def generate_annotation_columns(self, row):
