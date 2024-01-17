@@ -197,8 +197,7 @@ class Annotater:
         #print(vepCMD)
 
         if not self.local:
-            if vepIn.__contains__('_chr1.vcf'):
-                logging.info("{2}: {0}/{1}".format(singularityVepImage, vepCMD, time.ctime()))
+            logging.info("{1}: VEP annotation: {0}}".format(os.path.basename(vepIn), time.ctime()))
             returnSignal = sp.run(
                 "{0}/{1}".format(singularityVepImage, vepCMD), shell=True)
         else:
