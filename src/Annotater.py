@@ -61,6 +61,11 @@ class Annotater:
             files = [self.vcfFilePath+'_'+str(chr)+'.vcf' for chr in self.chromosomes]
             with ThreadPoolExecutor(max_workers=self.threads) as executor:
                 executor.map(self.annotateFile, files, ['vcf']*len(files))
+            files = get_files_in_directory(os.path.dirname(self.vcfFilePath))
+            files = [f for f in files if str(f).__contains__('vcf_chr')]
+            files = [f for f in files if str(f).__contains__('.ANN')]
+            if len(files) < len(self.chromosomes):
+                logging.warning('{0}: Missed to annotate a chromosome. Please annotate the data again. {1}'.format(time.ctime(), str(files)))
             logging.info('{0}: Merging individual ANN files to one'.format(time.ctime()))
             self.mergeVCFAnnos()
             self.mergeResultAnnos(self.vcfFilePath, self.ensemblFilePath)
@@ -290,3 +295,7 @@ def sort_vcf_ensembl_df(df):
                                               categories=['chr' + str(i) for i in range(1, 23)] + ['chrX', 'chrY'])
     df = df.sort_values(by=['chromosome', 'pos']).reset_index(drop=True)
     return df[cols]
+
+def get_files_in_directory(directory_path):
+    files = [f for f in os.listdir(directory_path) if os.path.isfile(os.path.join(directory_path, f))]
+    return files
