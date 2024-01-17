@@ -197,7 +197,7 @@ class Annotater:
         #print(vepCMD)
 
         if not self.local:
-            if vepIn.__contains__('_chr1'):
+            if vepIn.__contains__('_chr1.vcf'):
                 logging.info("{2}: {0}/{1}".format(singularityVepImage, vepCMD, time.ctime()))
             returnSignal = sp.run(
                 "{0}/{1}".format(singularityVepImage, vepCMD), shell=True)
