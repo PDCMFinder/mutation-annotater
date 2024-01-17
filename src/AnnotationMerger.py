@@ -44,7 +44,7 @@ class AnnotationMerger:
                 'ref_allele', 'alt_allele', "ncbi_gene_id", "ncbi_transcript_id", "ensembl_gene_id",
                 'ensembl_transcript_id', "variation_id"]
         self.annoReader = self.annoReader[cols]
-        logging.info("{0}: Annotation file processed in {1}s!".format(time.ctime(), time.time()-start))
+        logging.info("{0}: Annotation file processed in {1} mins!".format(time.ctime(), round((time.time()-start)/60)))
 
     def mergeRowsAndWrite(self):
         self.iterateThroughRowsAndMerge()#tsvReader, outFileWriter)
