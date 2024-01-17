@@ -51,6 +51,7 @@ class Annotater:
             self.process_hgvs()
 
     def annotate(self):
+        start = time.time()
         if self.run_type == 'hgvs':
             self.annotateFile(self.hgvsFilePath, 'hgvs')
             self.process_hgvs_annotations()
@@ -64,6 +65,7 @@ class Annotater:
             logging.info('{0}: Merging individual ANN files to one'.format(time.ctime()))
             self.mergeVCFAnnos()
             self.mergeResultAnnos(self.vcfFilePath, self.ensemblFilePath)
+        end = round((time.time() - start)/60)
         #logging.info("Annotating is complete")
 
 
@@ -195,7 +197,7 @@ class Annotater:
 
         if not self.local:
             if vepIn.__contains__('_chr1'):
-                logging.info("{0}/{1}".format(singularityVepImage, vepCMD))
+                logging.info("{2}: {0}/{1}".format(singularityVepImage, vepCMD, time.ctime(c)))
             returnSignal = sp.run(
                 "{0}/{1}".format(singularityVepImage, vepCMD), shell=True)
         else:
